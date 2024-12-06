@@ -6,6 +6,7 @@ using AISmart.AgentTask;
 using AISmart.Application.Grains.Event;
 using AISmart.Dapr;
 using AISmart.Domain.Grains.Event;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -20,101 +21,103 @@ public class AgentTaskServiceTests : AISmartApplicationTestBase
     private readonly IClusterClient _clusterClient;
     private readonly ITestOutputHelper _output;
 
+    private readonly Guid _tgTemplateId;
+    private readonly ITelegramAgent _tgAgent;
+    
+    private readonly Guid _marketTemplateId;
+    private readonly IMarketLeaderAgent _marketLeaderAgent;
+    
+    private readonly Guid _marketOperatorTemplateId;
+    private readonly IMarketOperatorAgent _marketOperatorAgent;
+    
+    private readonly Guid _senderTemplateId;
+    private readonly IAgent _senderAgent;
+    
+    private readonly Guid _receiverTemplateId;
+    private readonly IAgent _receiverAgent;
+
     public AgentTaskServiceTests(ITestOutputHelper output)
     {
         _agentTaskService = GetRequiredService<AgentTaskService>();
         _clusterClient = GetRequiredService<IClusterClient>();
         _output = output;
+        
+        
+        
+        _tgTemplateId = Guid.NewGuid();
+        _tgAgent = _clusterClient.GetGrain<ITelegramAgent>(_tgTemplateId);
+        
+        _marketTemplateId = Guid.NewGuid();
+        _marketLeaderAgent = _clusterClient.GetGrain<IMarketLeaderAgent>(_marketTemplateId);
+        
+        _marketOperatorTemplateId = Guid.NewGuid();
+        _marketOperatorAgent = _clusterClient.GetGrain<IMarketOperatorAgent>(_marketOperatorTemplateId);
+        
+        
+        
+        _senderTemplateId = Guid.NewGuid();
+        _senderAgent = _clusterClient.GetGrain<IAgent>(_senderTemplateId);
+        
+        _receiverTemplateId = Guid.NewGuid();
+        _receiverAgent = _clusterClient.GetGrain<IAgent>(_receiverTemplateId);
+        
+        
     }
+    
+    
+    [Fact]
+    public async Task EventBus_Test()
+    {
+        BasicEvent basicEvent = new BasicEvent
+        {
+            AgentTopic = CommonConstants.CommonTopic,
+            Downstreams = null,
+            Content = "common message"
+        };
+        
+        await _senderAgent.PublishAsync(basicEvent);
+        
+        await _receiverAgent.HandleEventAsync(basicEvent);
+        
+    }
+    
 
     [Fact]
     public async Task Telegram_Test()
     {
-        var templateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(templateId).CreateEventNodeAsync(new EventFlowTemplateDto
+        TelegramEvent telegramEvent = new TelegramEvent
         {
-            Id = templateId,
-            AgentTopic = DaprConstants.TelegramTopic,
-            Downstreams = null
-        });
+            Id = _tgTemplateId,
+            AgentTopic = CommonConstants.TelegramTopic,
+            Downstreams = null,
+            Content = "比特币突破10万美元大关"
+        };
+        await _tgAgent.ChatAsync(telegramEvent);
+        
+        await _marketLeaderAgent.ExecuteStrategyAsync(telegramEvent);
 
-        var taskId = await _agentTaskService.CreateAgentTaskAsync(templateId, "send Telegram Message");
-        AgentTaskDto agentTaskDto = await _agentTaskService.GetAgentTaskDetailAsync(taskId);
-        agentTaskDto.EventResultDictionary.ShouldNotBeEmpty();
-        agentTaskDto.EventResultDictionary.Values.Select(o => o.Result).ShouldContain("send Telegram success");
-    }
-
-    [Fact]
-    public async Task Muti_Task_Test()
-    {
-        var telegramTemplateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(telegramTemplateId).CreateEventNodeAsync(
-            new EventFlowTemplateDto
-            {
-                Id = telegramTemplateId,
-                AgentTopic = DaprConstants.TelegramTopic,
-                Downstreams = null
-            });
-        var twitterTemplateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(twitterTemplateId).CreateEventNodeAsync(
-            new EventFlowTemplateDto
-            {
-                Id = twitterTemplateId,
-                AgentTopic = DaprConstants.TwitterTopic,
-                Downstreams = null
-            });
-        var gptTemplateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(gptTemplateId).CreateEventNodeAsync(new EventFlowTemplateDto
-        {
-            Id = gptTemplateId,
-            Description = DaprConstants.GptTopic,
-            AgentTopic = DaprConstants.GptTopic,
-            Downstreams = new List<Guid>()
-            {
-                telegramTemplateId, twitterTemplateId
-            }
-        });
-
-        var taskId = await _agentTaskService.CreateAgentTaskAsync(gptTemplateId, "send GPT Message");
-        AgentTaskDto agentTaskDto = await _agentTaskService.GetAgentTaskDetailAsync(taskId);
-
-        agentTaskDto.EventResultDictionary.ShouldNotBeEmpty();
-        foreach (var value in agentTaskDto.EventResultDictionary.Values)
-        {
-            _output.WriteLine(value.AgentTopic + "  " + value.Result);
-        }
 
     }
-
+    
     [Fact]
-    public async Task Sequential_Task_Test()
+    public async Task Multi_Agent_Test()
     {
-        var twitterTemplateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(twitterTemplateId).CreateEventNodeAsync(
-            new EventFlowTemplateDto
-            {
-                Id = twitterTemplateId,
-                AgentTopic = DaprConstants.TwitterTopic,
-                Downstreams = null
-            });
-        var gptTemplateId = Guid.NewGuid();
-        await _clusterClient.GetGrain<IEventFlowTemplateGrain>(gptTemplateId).CreateEventNodeAsync(new EventFlowTemplateDto
+        TelegramEvent telegramEvent = new TelegramEvent
         {
-            Id = gptTemplateId,
-            AgentTopic = DaprConstants.GptTopic,
-            Downstreams = new List<Guid>()
-            {
-                twitterTemplateId
-            }
-        });
+            Id = _tgTemplateId,
+            AgentTopic = CommonConstants.TelegramTopic,
+            Downstreams = null,
+            Content = "比特币突破10万美元大关"
+        };
+        await _tgAgent.ChatAsync(telegramEvent);
+        
+        await _marketLeaderAgent.ExecuteStrategyAsync(telegramEvent);
+        
 
-        var taskId = await _agentTaskService.CreateAgentTaskAsync(gptTemplateId, "比特币突破 10 万美金大关了");
-        AgentTaskDto agentTaskDto = await _agentTaskService.GetAgentTaskDetailAsync(taskId);
+        await _marketOperatorAgent.AnalyseContentAsync(new MarketLeaderCreatedEvent());
+        await _marketOperatorAgent.CompleteAnalyseContentAsync();
 
-        agentTaskDto.EventResultDictionary.ShouldNotBeEmpty();
-        foreach (var value in agentTaskDto.EventResultDictionary.Values)
-        {
-            _output.WriteLine(value.AgentTopic + "  " + value.Result);
-        }
+        await _marketLeaderAgent.CompelteStrategyAsync();
+
     }
 }

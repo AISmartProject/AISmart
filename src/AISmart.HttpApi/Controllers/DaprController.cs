@@ -20,7 +20,7 @@ public class DaprController
         _logger = logger;
     }
     [HttpGet("token")]
-    [Topic(DaprConstants.PubSubName, DaprConstants.TestGroup)]
+    [Topic(CommonConstants.PubSubName, CommonConstants.TestGroup)]
     public Task<string> GetToken( AuthorDto authorDto)
     {
         _logger.LogInformation("GetToken {Name}",authorDto.Name);

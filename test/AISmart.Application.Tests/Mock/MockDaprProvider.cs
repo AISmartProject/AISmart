@@ -30,17 +30,17 @@ public class MockDaprProvider : IDaprProvider
             return;
         switch (topicName)
         {
-            case DaprConstants.TwitterTopic:
+            case CommonConstants.TwitterTopic:
                 
                 await _serviceProvider.GetRequiredService<AgentTaskService>()
                     .CompletedEventAsync(agentEvent, true, null, agentEvent.Param.IsNullOrEmpty()?"send Twitter success":agentEvent.Param);
                 break;
-            case DaprConstants.TelegramTopic:
+            case CommonConstants.TelegramTopic:
                 // telegram execute
                 await _serviceProvider.GetRequiredService<AgentTaskService>()
                     .CompletedEventAsync(agentEvent, true, null, "send Telegram success");
                 break;
-            case DaprConstants.GptTopic:
+            case CommonConstants.GptTopic:
                 var task = await _serviceProvider.GetRequiredService<AgentTaskService>()
                     .GetAgentTaskDetailAsync(agentEvent.TaskId);
                 var assistantAgent = new OpenAIChatAgent(

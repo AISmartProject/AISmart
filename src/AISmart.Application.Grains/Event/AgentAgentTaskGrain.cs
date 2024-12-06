@@ -20,7 +20,7 @@ public class AgentAgentTaskGrain : JournaledGrain<AgentTaskState, AgentTaskEvent
 
     public async Task<List<CreatedEvent>> CreateAgentTaskAsync( Guid templateId, string param)
     {
-        var eventNodeDto = await GrainFactory.GetGrain<IEventFlowTemplateGrain>(templateId).GetEventNodeAsync();
+        var eventNodeDto = await GrainFactory.GetGrain<IAgent>(templateId).GetEventNodeAsync();
         var createTaskEvent = new CreatedEvent
         {
             TaskId = this.GetPrimaryKey(),
@@ -111,12 +111,12 @@ public class AgentAgentTaskGrain : JournaledGrain<AgentTaskState, AgentTaskEvent
         {
             return taskEvents;
         }
-        var eventNodeDto = await GrainFactory.GetGrain<IEventFlowTemplateGrain>(completeTaskEvent.TemplateId).GetEventNodeAsync();
+        var eventNodeDto = await GrainFactory.GetGrain<IAgent>(completeTaskEvent.TemplateId).GetEventNodeAsync();
         if (!eventNodeDto.Downstreams.IsNullOrEmpty())
         {
             foreach (var guid in eventNodeDto.Downstreams)
             {
-                var childNodeDto = await GrainFactory.GetGrain<IEventFlowTemplateGrain>(guid).GetEventNodeAsync();
+                var childNodeDto = await GrainFactory.GetGrain<IAgent>(guid).GetEventNodeAsync();
 
                var taskEvent =  new CreatedEvent
                 {
