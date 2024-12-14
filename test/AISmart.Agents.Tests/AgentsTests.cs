@@ -17,41 +17,77 @@ using Shouldly;
 
 namespace AISmart.Grains.Tests;
 
-public class AgentsTests : TestKitBase
+public class AgentsTests : TestKitBase, IAsyncLifetime
 {
-    [Fact]
-    public async Task GroupTest()
+    private GroupGAgent _groupAgent;
+    private PublishingGAgent _publishingAgent;
+    private XGAgent _xAgent;
+    private MarketLeaderGAgent _marketLeaderAgent;
+    private DeveloperGAgent _developerAgent;
+    private InvestmentGAgent _investmentAgent;
+
+    public async Task InitializeAsync()
     {
-        var groupAgent = await Silo.CreateGrainAsync<GroupGAgent>(Guid.NewGuid());
-        var publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(Guid.NewGuid());
-        var xAgent = await Silo.CreateGrainAsync<XGAgent>(Guid.NewGuid());
-        var marketLeaderAgent = await Silo.CreateGrainAsync<MarketLeaderGAgent>(Guid.NewGuid());
-        var developerAgent = await Silo.CreateGrainAsync<DeveloperGAgent>(Guid.NewGuid());
-        var investmentAgent = await Silo.CreateGrainAsync<InvestmentGAgent>(Guid.NewGuid());
+        _groupAgent = await Silo.CreateGrainAsync<GroupGAgent>(Guid.NewGuid());
+        _publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(Guid.NewGuid());
+        _xAgent = await Silo.CreateGrainAsync<XGAgent>(Guid.NewGuid());
+        _marketLeaderAgent = await Silo.CreateGrainAsync<MarketLeaderGAgent>(Guid.NewGuid());
+        _developerAgent = await Silo.CreateGrainAsync<DeveloperGAgent>(Guid.NewGuid());
+        _investmentAgent = await Silo.CreateGrainAsync<InvestmentGAgent>(Guid.NewGuid());
 
-        await groupAgent.Register(xAgent);
-        await groupAgent.Register(marketLeaderAgent);
-        await groupAgent.Register(developerAgent);
-        await groupAgent.Register(investmentAgent);
+        await _groupAgent.Register(_xAgent);
+        await _groupAgent.Register(_marketLeaderAgent);
+        await _groupAgent.Register(_developerAgent);
+        await _groupAgent.Register(_investmentAgent);
 
-        await publishingAgent.PublishTo(groupAgent);
+        await _publishingAgent.PublishTo(_groupAgent);
+    }
 
-        var xThreadCreatedEvent = new XThreadCreatedEvent
+    [Fact]
+    public async Task GroupPublishTest()
+    {
+        await _publishingAgent.PublishEventAsync(new XThreadCreatedEvent
         {
             Id = "mock_x_thread_id",
             Content = "BTC REACHED 100k WOOHOOOO!"
-        };
+        });
 
-        await publishingAgent.PublishEventAsync(xThreadCreatedEvent);
-
-        var xAgentState = await xAgent.GetStateAsync();
+        var xAgentState = await _xAgent.GetStateAsync();
         xAgentState.ThreadIds.Count.ShouldBe(1);
-        
-        var investmentAgentState = await investmentAgent.GetStateAsync();
+
+        var investmentAgentState = await _investmentAgent.GetStateAsync();
         investmentAgentState.Content.Count.ShouldBe(1);
-        
-        var developerAgentState = await developerAgent.GetStateAsync();
+
+        var developerAgentState = await _developerAgent.GetStateAsync();
         developerAgentState.Content.Count.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task GroupBatchPublishTest()
+    {
+        var events = new List<XThreadCreatedEvent>
+        {
+            new()
+            {
+                Id = "mock_x_thread_id_1",
+                Content = "BTC REACHED 100k WOOHOOOO!"
+            },
+            new()
+            {
+                Id = "mock_x_thread_id_2",
+                Content = "ETH REACHED 4k WOOHOOOO!"
+            }
+        };
+        await _publishingAgent.PublishEventAsync(events);
+
+        var xAgentState = await _xAgent.GetStateAsync();
+        xAgentState.ThreadIds.Count.ShouldBe(2);
+
+        var investmentAgentState = await _investmentAgent.GetStateAsync();
+        investmentAgentState.Content.Count.ShouldBe(2);
+
+        var developerAgentState = await _developerAgent.GetStateAsync();
+        developerAgentState.Content.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -77,5 +113,9 @@ public class AgentsTests : TestKitBase
 
         var aelfGAgentState = await aelfGAgent.GetAElfAgentDto();
         aelfGAgentState.PendingTransactions.Count.ShouldBe(1);
+    }
+
+    public async Task DisposeAsync()
+    {
     }
 }

@@ -34,4 +34,14 @@ public class PublishingGAgent : GAgentBase<PublishingAgentState, PublishingGEven
         Logger.LogInformation($"PublishingAgent publish {@event}");
         await PublishAsync(@event);
     }
+
+    public async Task PublishEventAsync<T>(List<T> events) where T : EventBase
+    {
+        if (events.IsNullOrEmpty())
+        {
+            throw new ArgumentNullException(nameof(events));
+        }
+
+        await PublishAsync(events);
+    }
 }

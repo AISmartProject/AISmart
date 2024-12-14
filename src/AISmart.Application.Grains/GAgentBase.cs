@@ -2,7 +2,6 @@ using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
 using Orleans.EventSourcing;
-using Orleans.Runtime;
 using Orleans.Streams;
 
 namespace AISmart.Application.Grains;
@@ -17,7 +16,7 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
     // need to use persistent storage to store this
     private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _subscriptions = new();
     private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _publishers = new();
-    private readonly List<Func<EventWrapperBase, StreamSequenceToken, Task>> _subscriptionHandlers = new();
+    private readonly List<Func<IList<SequentialItem<EventWrapperBase>>, Task>> _subscriptionHandlers = new();
     
     protected GAgentBase(ILogger logger)
     {
@@ -119,15 +118,18 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
         _subscriptionHandlers.Add(OnNextWrapperAsync);
         return Task.CompletedTask;
 
-        Task OnNextWrapperAsync(EventWrapperBase @event, StreamSequenceToken token = null)
+        Task OnNextWrapperAsync(IList<SequentialItem<EventWrapperBase>> events)
         {
-            Logger.LogInformation("Received message: {@Message}", @event);
-            if(@event is EventWrapper<T> eventWrapper)
+            foreach (var @event in events)
             {
-                Logger.LogInformation("Received EventWrapper message: {@Message}", eventWrapper);
+                Logger.LogInformation("Received message: {@Message}", @event);
+                if(@event.Item is EventWrapper<T> eventWrapper)
+                {
+                    Logger.LogInformation("Received EventWrapper message: {@Message}", eventWrapper);
 
-                onEvent(eventWrapper.Event);
-                //await DoAckAsync(eventWrapper);
+                    onEvent(eventWrapper.Event);
+                    //await DoAckAsync(eventWrapper);
+                }
             }
 
             return Task.CompletedTask;
@@ -152,7 +154,22 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
         
         foreach (var publisher in _publishers.Select(kp => kp.Value))
         {
-            await publisher.OnNextAsync(eventWrapper);
+            await publisher.OnNextBatchAsync([eventWrapper]);
+        }
+    }
+
+    protected async Task PublishAsync<T>(List<T> events) where T : EventBase
+    {
+        if(_publishers.Count == 0)
+        {
+            return;
+        }
+
+        var eventWrappers = events.Select(e => new EventWrapper<T>(e, this.GetGrainId())).ToList();
+        
+        foreach (var publisher in _publishers.Select(kp => kp.Value))
+        {
+            await publisher.OnNextBatchAsync(eventWrappers);
         }
     }
 
