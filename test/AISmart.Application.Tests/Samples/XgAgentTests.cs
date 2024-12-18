@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.Agents.Developer;
@@ -92,12 +94,12 @@ namespace AISmart.Samples
 
         private async Task<bool> CheckState(InvestmentAgentState state)
         {
-            return !state.Content.IsNullOrEmpty();
+            return !CollectionUtilities.IsNullOrEmpty(state.Content);
         }
         
         private async Task<bool> CheckState(DeveloperAgentState state)
         {
-            return !state.Content.IsNullOrEmpty();
+            return !CollectionUtilities.IsNullOrEmpty(state.Content);
         }
     }
 }

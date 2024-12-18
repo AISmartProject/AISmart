@@ -28,7 +28,6 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     {
         return Task.FromResult("Represents an agent responsible for informing other agents when a Telegram thread is published.");
     }
-    
 
     [EventHandler]
     public async Task HandleEventAsync(ReceiveMessageEvent @event)

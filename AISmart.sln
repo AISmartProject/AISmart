@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgent.Pumpfun", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.AutoGen.Tests", "test\AISmart.AutoGen.Tests\AISmart.AutoGen.Tests.csproj", "{148533FE-CAD9-4F79-872C-3608F36C2E68}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgents.Config.Tests", "test\AISmart.GAgents.Config.Tests\AISmart.GAgents.Config.Tests.csproj", "{482AC386-F3A8-4791-A708-414E52A8177A}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgent.Autogen", "src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj", "{28AC92B6-377F-4A1E-8D08-0352D3AB4663}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.Rag", "src\AISmart.Rag\AISmart.Rag.csproj", "{19B3004E-15F6-49A6-804E-1EEA1FE3A30A}"
@@ -64,6 +66,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrleansTestKit.Tests", "test\OrleansTestKit.Tests\OrleansTestKit.Tests.csproj", "{C09D0934-CD67-47A0-9179-806C05ABFB26}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.Agents.Tests", "test\AISmart.Agents.Tests\AISmart.Agents.Tests.csproj", "{BC0E7140-4A81-46BF-9A35-250996F3DC53}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgent.Config", "src\AISmart.GAgent.Config\AISmart.GAgent.Config.csproj", "{89A0820D-CBB0-4061-A939-F30EF486BA93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -167,6 +171,10 @@ Global
 		{148533FE-CAD9-4F79-872C-3608F36C2E68}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{148533FE-CAD9-4F79-872C-3608F36C2E68}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{148533FE-CAD9-4F79-872C-3608F36C2E68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{482AC386-F3A8-4791-A708-414E52A8177A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{482AC386-F3A8-4791-A708-414E52A8177A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{482AC386-F3A8-4791-A708-414E52A8177A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{482AC386-F3A8-4791-A708-414E52A8177A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{28AC92B6-377F-4A1E-8D08-0352D3AB4663}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{28AC92B6-377F-4A1E-8D08-0352D3AB4663}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28AC92B6-377F-4A1E-8D08-0352D3AB4663}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -187,6 +195,10 @@ Global
 		{BC0E7140-4A81-46BF-9A35-250996F3DC53}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC0E7140-4A81-46BF-9A35-250996F3DC53}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC0E7140-4A81-46BF-9A35-250996F3DC53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89A0820D-CBB0-4061-A939-F30EF486BA93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89A0820D-CBB0-4061-A939-F30EF486BA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89A0820D-CBB0-4061-A939-F30EF486BA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89A0820D-CBB0-4061-A939-F30EF486BA93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

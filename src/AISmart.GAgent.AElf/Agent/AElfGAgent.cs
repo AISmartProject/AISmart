@@ -94,7 +94,6 @@ public class AElfGAgent : GAgentBase<AElfAgentGState, TransactionGEvent>, IAElfA
         }
         await ConfirmEvents();
     }
-
     public async Task ExecuteTransactionAsync(CreateTransactionEvent gEventData)
     {
         await ExecuteAsync( gEventData);
@@ -107,7 +106,6 @@ public class AElfGAgent : GAgentBase<AElfAgentGState, TransactionGEvent>, IAElfA
         aelfAgentDto.PendingTransactions = State.PendingTransactions;
         return aelfAgentDto;
     }
-    
 }
 
 public interface IAElfAgent : IGrainWithGuidKey
