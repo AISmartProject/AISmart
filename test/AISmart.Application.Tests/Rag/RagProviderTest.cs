@@ -17,16 +17,7 @@ public class RagProviderTest : AISmartApplicationTestBase
     [Fact]
     public async Task StoreBatchAsync_Test()
     {
-        var configuration = ServiceProvider.GetRequiredService<IConfiguration>();
-        var apiKey = configuration["Rag:APIKey"];
-        var endpoint = configuration["AzureService:endpoint"];
-        var azureKey = configuration["AzureService:apiKey"];
-        
-        var chunker = new SimpleChunker(endpoint, azureKey); 
-        var embeddingProvider = new OpenAIEmbeddingProvider(apiKey); 
-        var vectorDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
-
-        var ragProvider = new RagProvider(chunker, embeddingProvider, vectorDatabase);
+        var ragProvider = new RagProvider();
 
         var texts = new List<string>
         {
@@ -42,13 +33,9 @@ public class RagProviderTest : AISmartApplicationTestBase
 
         var keyword = "RAG";
         var question = "what is " + keyword;
-        var queryEmbedding = await embeddingProvider.GetEmbeddingAsync(question);
-        var answer = await vectorDatabase.RetrieveAsync(queryEmbedding,3);
-        
-        foreach (var chunk in answer)
-        {
-            Assert.Contains(keyword, chunk);
-        }
+       
+        var answer = await ragProvider.RetrieveAnswerAsync(question);
+        Assert.Contains(keyword, answer);
     }
     
 }

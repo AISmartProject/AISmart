@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace AISmart.Rag;
@@ -11,9 +13,16 @@ public class OpenAIEmbeddingProvider : IEmbeddingProvider
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
 
-    public OpenAIEmbeddingProvider(string apiKey)
+    public OpenAIEmbeddingProvider()
     {
-        _apiKey = apiKey;
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables();
+
+        IConfiguration config = builder.Build();
+
+        _apiKey = config["Rag:APIKey"];
         _httpClient = new HttpClient();
     }
 

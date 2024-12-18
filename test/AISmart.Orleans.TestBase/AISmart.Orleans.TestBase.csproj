@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="7.2.6" />
-        <PackageReference Include="Volo.Abp.ObjectMapping" Version="8.2.0" />
-        <PackageReference Include="Volo.Abp.EventBus" Version="8.2.0" />
+        <PackageReference Include="Microsoft.Orleans.TestingHost" />
+        <PackageReference Include="Volo.Abp.ObjectMapping" />
+        <PackageReference Include="Volo.Abp.EventBus" />
     </ItemGroup>
 
     <ItemGroup>

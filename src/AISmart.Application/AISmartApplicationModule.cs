@@ -17,7 +17,10 @@ namespace AISmart;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpDaprModule),
     typeof(AbpAspNetCoreMvcDaprModule),
-    typeof(AIApplicationGrainsModule)
+    typeof(AIApplicationGrainsModule),
+    typeof(AISmartGAgentAElfModule),
+    typeof(AISmartGAgentTelegramModule),
+    typeof(AISmartGAgentTwitterModule)
 )]
 public class AISmartApplicationModule : AbpModule
 {
@@ -27,6 +30,6 @@ public class AISmartApplicationModule : AbpModule
         {
             options.AddMaps<AISmartApplicationModule>();
         });
-        
+
     }
 }

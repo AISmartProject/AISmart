@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace AISmart.Rag;
@@ -16,11 +18,19 @@ public class QdrantVectorDatabase : IVectorDatabase
     private readonly string _collectionName;
     private const int DefaultVectorSize = 1536;
 
-    public QdrantVectorDatabase(string qdrantUrl, string collectionName)
+    public QdrantVectorDatabase()
     {
-        _qdrantUrl = qdrantUrl;
+        // _qdrantUrl = qdrantUrl;
+        // _collectionName = collectionName;
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables();
+
+        IConfiguration config = builder.Build();
+        _qdrantUrl = config["Rag:QdrantUrl"];;
+        _collectionName = config["Rag:CollectionName"];;
         _httpClient = new HttpClient();
-        _collectionName = collectionName;
     }
     
     private async Task EnsureCollectionExistsAsync(int vectorSize)

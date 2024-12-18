@@ -16,8 +16,18 @@ public static class OrleansHostExtension
         return hostBuilder.UseOrleans((context, siloBuilder) =>
             {
                 var configSection = context.Configuration.GetSection("Orleans");
+                var isRunningInKubernetes = configSection.GetValue<bool>("IsRunningInKubernetes");
+                var advertisedIP = isRunningInKubernetes
+                    ? Environment.GetEnvironmentVariable("POD_IP")
+                    : configSection.GetValue<string>("AdvertisedIP");
+                var clusterId = isRunningInKubernetes
+                    ? Environment.GetEnvironmentVariable("ORLEANS_CLUSTER_ID")
+                    : configSection.GetValue<string>("ClusterId");
+                var serviceId = isRunningInKubernetes
+                    ? Environment.GetEnvironmentVariable("ORLEANS_SERVICE_ID")
+                    : configSection.GetValue<string>("ServiceId");
                 siloBuilder
-                    .ConfigureEndpoints(advertisedIP: IPAddress.Parse(configSection.GetValue<string>("AdvertisedIP")),
+                    .ConfigureEndpoints(advertisedIP: IPAddress.Parse(advertisedIP),
                         siloPort: configSection.GetValue<int>("SiloPort"),
                         gatewayPort: configSection.GetValue<int>("GatewayPort"), listenOnAnyHostAddress: true)
                     .UseMongoDBClient(configSection.GetValue<string>("MongoDBClient"))
@@ -45,8 +55,8 @@ public static class OrleansHostExtension
                     })
                     .Configure<ClusterOptions>(options =>
                     {
-                        options.ClusterId = configSection.GetValue<string>("ClusterId");
-                        options.ServiceId = configSection.GetValue<string>("ServiceId");
+                        options.ClusterId = clusterId;
+                        options.ServiceId = serviceId;
                     })
                     .Configure<ExceptionSerializationOptions>(options =>
                     {

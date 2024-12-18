@@ -16,6 +16,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Microsoft.OpenApi.Models;
 using AISmart.Application.Grains;
 using AISmart.Domain.Grains;
+using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Account;
@@ -66,15 +67,20 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
 
         ConfigureAuthentication(context);
         ConfigureBundles();
-        ConfigureUrls(configuration);
+       // ConfigureUrls(configuration);
         ConfigureConventionalControllers();
         ConfigureVirtualFileSystem(context);
         ConfigureCors(context, configuration);
         ConfigureAutoResponseWrapper(context);
         ConfigureSwaggerServices(context, configuration);
-        context.Services.AddDaprClient();
+        //context.Services.AddDaprClient();
+        
+        context.Services.AddMvc(options =>
+        {
+            options.Filters.Add(new IgnoreAntiforgeryTokenAttribute());
+        });
     }
-    
+
     private static void ConfigureAutoResponseWrapper(ServiceConfigurationContext context)
     {
         context.Services.AddAutoResponseWrapper();
@@ -209,8 +215,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
 
         app.UseUnitOfWork();
         app.UseDynamicClaims();
-        app.UseAuthorization();
-
+        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         app.UseSwagger();
         app.UseAbpSwaggerUI(c =>
         {

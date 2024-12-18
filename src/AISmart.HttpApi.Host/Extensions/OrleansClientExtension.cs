@@ -30,7 +30,8 @@ public static class OrleansClientExtension
                 {
                     options.ClusterId = config["Orleans:ClusterId"];
                     options.ServiceId = config["Orleans:ServiceId"];
-                });
+                })
+                .AddMemoryStreams("AISmart");
         });
     }
 }
