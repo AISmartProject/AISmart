@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using AISmart.Agents;
+using AISmart.CQRS.Provider;
 using AISmart.Dapr;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans.EventSourcing;
 using Orleans.Providers;
@@ -25,6 +27,7 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
     private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _subscriptions = new();
     private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _publishers = new();
     protected readonly List<EventWrapperBaseAsyncObserver> Observers = new();
+    private ICQRSProvider CqrsProvider { get; set; }
 
     protected GAgentBase(ILogger logger, [PersistentState("subscribers")] IPersistentState<List<GrainId>>? subscribers = null)
     {
@@ -298,6 +301,7 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await UpdateObserverList();
+        CqrsProvider = this.ServiceProvider.GetRequiredService<ICQRSProvider>();
     }
 
     private Task UpdateObserverList()
@@ -424,7 +428,15 @@ public abstract class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent
         else
         {
             throw new InvalidOperationException(
-                $"The event handler of {eventType.GetType()} needs to have a return value.");
+                $"The Cqevent handler of {eventType.GetType()} needs to have a return value.");
+        }
+
+    }
+    protected override async void OnStateChanged()
+    {
+        if (State is StateBase stateBase)
+        {
+            await CqrsProvider.PublishAsync(stateBase, this.GetGrainId().ToString());
         }
     }
 }
