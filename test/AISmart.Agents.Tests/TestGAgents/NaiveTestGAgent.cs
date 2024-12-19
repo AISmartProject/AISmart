@@ -12,7 +12,7 @@ public class NaiveTestGAgentState
 
 public class NaiveTestGEvent : GEventBase
 {
-    
+    [Id(0)] public Guid Id { get; set; }
 }
 
 [GAgent]

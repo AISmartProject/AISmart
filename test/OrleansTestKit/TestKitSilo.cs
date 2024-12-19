@@ -1,4 +1,7 @@
 ﻿using System.Linq.Expressions;
+using AISmart.EventSourcing.Core;
+using AISmart.EventSourcing.Core.LogConsistency;
+using AISmart.EventSourcing.Core.Storage;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Autogen.Common;
 using AISmart.Mock;
@@ -6,11 +9,15 @@ using AISmart.Provider;
 using AutoGen.OpenAI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
 using OpenAI.Chat;
 using Orleans.EventSourcing;
 using Orleans.Metadata;
 using Orleans.Serialization;
+using Orleans.Serialization.Cloning;
+using Orleans.Serialization.Configuration;
+using Orleans.Serialization.Serializers;
 using Orleans.TestKit.Reminders;
 using Orleans.TestKit.Services;
 using Orleans.TestKit.Storage;
@@ -51,12 +58,16 @@ public sealed class TestKitSilo
         ServiceProvider.AddService<IReminderRegistry>(ReminderRegistry);
 
         // Event Sourcing
-        LogConsistencyProvider = new TestLogConsistencyProvider();
+        var mockOptionsManager = new Mock<IOptions<TypeManifestOptions>>();
+        mockOptionsManager.Setup(m => m.Value).Returns(new TypeManifestOptions());
+        var codecProvider = new CodecProvider(ServiceProvider, mockOptionsManager.Object);
+        LogConsistencyProvider = new TestLogConsistencyProvider(ServiceProvider, TestLogConsistentStorage);
         ServiceProvider.AddKeyedService<ILogViewAdaptorFactory>("LogStorage", LogConsistencyProvider);
-        LogConsistencyProtocolServices = new TestLogConsistencyProtocolServices();
-        ServiceProvider.AddService<ILogConsistencyProtocolServices>(LogConsistencyProtocolServices);
+        ProtocolServices = new DefaultProtocolServices(new Mock<IGrainContext>().Object, NullLoggerFactory.Instance,
+            new DeepCopier(codecProvider, new CopyContextPool(codecProvider)), null!);
+        ServiceProvider.AddService<ILogConsistencyProtocolServices>(ProtocolServices);
         ServiceProvider.AddService<Factory<IGrainContext, ILogConsistencyProtocolServices>>(sp =>
-            LogConsistencyProtocolServices);
+            ProtocolServices);
 
         GrainRuntime =
             new TestGrainRuntime(GrainFactory, TimerRegistry, ReminderRegistry, ServiceProvider, StorageManager);
@@ -108,7 +119,8 @@ public sealed class TestKitSilo
     public TestTimerRegistry TimerRegistry { get; }
 
     public TestLogConsistencyProvider LogConsistencyProvider { get; set; }
-    public TestLogConsistencyProtocolServices LogConsistencyProtocolServices { get; set; }
+    public DefaultProtocolServices ProtocolServices { get; set; }
+    public InMemoryLogConsistentStorage TestLogConsistentStorage { get; set; } = new();
 
     public Task<T> CreateGrainAsync<T>(long id) where T : IGrainBase, IGrainWithIntegerKey =>
         CreateGrainAsync<T>(GrainIdKeyExtensions.CreateIntegerKey(id));
@@ -204,9 +216,8 @@ public sealed class TestKitSilo
     {
         var grainType = _grainTypeResolver.GetGrainType(typeof(T));
         var grainId = GrainId.Create(grainType, identity);
-        var context = ServiceProvider.GetService<IGrainContext>() as TestGrainActivationContext;
 
-        if (context is null || context.GrainId != grainId || context.GrainType != typeof(T))
+        if (ServiceProvider.GetService<IGrainContext>() is not TestGrainActivationContext context || context.GrainId != grainId || context.GrainType != typeof(T))
         {
             // we have not registered a context yet OR we have registered a context but it is for a different grain and we need to re-create
             context = new TestGrainActivationContext

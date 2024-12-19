@@ -48,5 +48,7 @@ public class GroupGAgent : GAgentBase<GroupAgentState, GroupGEvent>
 
         TryAddPublisher(agentGuid, stream);
         GrainTracker.GroupAgents.Enqueue(this);
+
+        State.RegisteredAgents = 0;
     }
 }

@@ -1,6 +1,4 @@
-﻿using Orleans.Runtime;
-
-namespace Orleans.TestKit.Storage;
+﻿namespace Orleans.TestKit.Storage;
 
 internal class TestStorage<TState> : IStorageStats, IPersistentState<TState>
 {

@@ -40,6 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AISmart.EventSourcing.Core\AISmart.EventSourcing.Core.csproj" />
     <ProjectReference Include="..\..\src\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
     <ProjectReference Include="..\..\src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
     <ProjectReference Include="..\AISmart.Orleans.TestBase\AISmart.Orleans.TestBase.csproj" />

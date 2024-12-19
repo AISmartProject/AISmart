@@ -1,5 +1,5 @@
 using AISmart.Agents;
-using AISmart.Application.Grains.Agents.Group;
+using AISmart.EventSourcing.Core;
 using AISmart.Grains.Tests.TestEvents;
 using AISmart.Grains.Tests.TestGAgents;
 using Shouldly;
@@ -84,5 +84,43 @@ public class GAgentBaseTests : GAgentTestKitBase
         state.SubscriptionInfo[typeof(EventHandlerTestGAgent)].Count.ShouldBe(3);
         state.SubscriptionInfo[typeof(EventHandlerWithResponseTestGAgent)].Count.ShouldBe(1);
         state.SubscriptionInfo[typeof(SubscribeTestGAgent)].Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task LogViewAdaptorTest()
+    {
+        var logViewGAgent = await Silo.CreateGrainAsync<LogViewAdaptorTestGAgent>(Guid.NewGuid());
+        var groupGAgent = await CreateGroupGAgentAsync(logViewGAgent);
+        var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
+
+        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
+        {
+            Greeting = "First event"
+        });
+
+        await TestHelper.WaitUntilAsync(_ => CheckCount(1));
+        InMemoryLogConsistentStorage.Storage.Count.ShouldBe(1);
+        InMemoryLogConsistentStorage.Storage.First().Value.Count.ShouldBe(1);
+
+        await Silo.DeactivateAsync(logViewGAgent);
+        //logViewGAgent = await Silo.CreateGrainAsync<LogViewAdaptorTestGAgent>(Guid.NewGuid());
+
+        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
+        {
+            Greeting = "Second event"
+        });
+
+        await TestHelper.WaitUntilAsync(_ => CheckCount(2));
+
+        InMemoryLogConsistentStorage.Storage.Count.ShouldBe(1);
+        InMemoryLogConsistentStorage.Storage.First().Value.Count.ShouldBe(2);
+
+        var logViewGAgentState = await logViewGAgent.GetStateAsync();
+        //logViewGAgentState.Content.Count.ShouldBe(2);
+    }
+
+    private async Task<bool> CheckCount(int expectedCount)
+    {
+        return InMemoryLogConsistentStorage.Storage.Count == expectedCount;
     }
 }
