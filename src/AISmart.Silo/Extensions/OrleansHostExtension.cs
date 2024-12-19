@@ -1,4 +1,5 @@
 using System.Net;
+using AISmart.EventSourcing.MongoDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -75,7 +76,8 @@ public static class OrleansHostExtension
                         options.CounterUpdateIntervalMs =
                             configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                     })
-                    .AddLogStorageBasedLogConsistencyProvider()
+                    .AddMongoDbStorageBasedLogConsistencyProvider()
+                    //.AddLogStorageBasedLogConsistencyProvider()
                     .AddMemoryStreams("AISmart")
                     .AddMemoryGrainStorage("PubSubStore")
                     .ConfigureLogging(logging => { logging.SetMinimumLevel(LogLevel.Debug).AddConsole(); });

@@ -1,123 +1,255 @@
+using AISmart.Agents;
+using JetBrains.Annotations;
+using Orleans;
 using Orleans.EventSourcing;
+using Orleans.EventSourcing.Common;
 using Orleans.Storage;
 
-public class TestLogViewAdaptor<TView, TEntry> : ILogViewAdaptor<TView, TEntry>
-    where TView : class, new()
-    where TEntry : class
+public class TestLogViewAdaptor<TLogView, TLogEntry> : 
+    PrimaryBasedLogViewAdaptor<TLogView, TLogEntry, SubmissionEntry<TLogEntry>>
+    where TLogView : class, new()
+    where TLogEntry : class
 {
-    private readonly ILogViewAdaptorHost<TView, TEntry> _hostGrain;
-    private readonly TView _initialState;
+    private readonly ILogViewAdaptorHost<TLogView, TLogEntry> _host;
+    private readonly TLogView _initialState;
     private readonly IGrainStorage _grainStorage;
     private readonly string _grainTypeName;
-    private readonly ILogConsistencyProtocolServices _services;
-    private readonly List<TEntry> _logEntries = new List<TEntry>();
-    private TView _tentativeView;
-    private TView _confirmedView;
-    private int _confirmedVersion;
 
-    public TestLogViewAdaptor(ILogViewAdaptorHost<TView, TEntry> hostGrain, TView initialState,
-        IGrainStorage grainStorage, string grainTypeName, ILogConsistencyProtocolServices services)
+    public static readonly ICollection<ViewStateWrapper<TLogView>> SnapshotCollection =
+        new List<ViewStateWrapper<TLogView>>();
+    public static readonly ICollection<EventLogWrapper<TLogEntry>> EventLogCollection =
+        new List<EventLogWrapper<TLogEntry>>();
+
+    private TLogView _confirmedView;
+    private int _confirmedVersion;
+    private int _globalVersion;
+
+    public TestLogViewAdaptor(ILogViewAdaptorHost<TLogView, TLogEntry> host, TLogView initialState,
+        ILogConsistencyProtocolServices services, string grainTypeName, IGrainStorage grainStorage)
+        : base(host, initialState, services)
     {
-        _hostGrain = hostGrain;
+        _host = host;
         _initialState = initialState;
         _grainStorage = grainStorage;
         _grainTypeName = grainTypeName;
-        _services = services;
-        _tentativeView = initialState;
-        _confirmedView = initialState;
+    }
+
+    protected override void InitializeConfirmedView(TLogView initialstate)
+    {
+        _confirmedView = _initialState ?? new TLogView();
         _confirmedVersion = 0;
     }
 
-    public TView TentativeView => _tentativeView;
-    public TView ConfirmedView => _confirmedView;
-    public int ConfirmedVersion => _confirmedVersion;
-    public IEnumerable<TEntry> UnconfirmedSuffix => _logEntries.Skip(_confirmedVersion);
-
-    public void Submit(TEntry entry)
+    protected override TLogView LastConfirmedView()
     {
-        _logEntries.Add(entry);
+        return _confirmedView;
     }
 
-    public void SubmitRange(IEnumerable<TEntry> entries)
+    protected override int GetConfirmedVersion() => _confirmedVersion;
+
+    protected override bool SupportSubmissions => true;
+
+    protected override async Task ReadAsync()
     {
-        _logEntries.AddRange(entries);
-    }
-
-    public Task<bool> TryAppend(TEntry entry)
-    {
-        Submit(entry);
-        return Task.FromResult(true);
-    }
-
-    public Task<bool> TryAppendRange(IEnumerable<TEntry> entries)
-    {
-        SubmitRange(entries);
-        return Task.FromResult(true);
-    }
-
-    public Task ConfirmSubmittedEntries()
-    {
-        _confirmedVersion = _logEntries.Count;
-        _confirmedView = _tentativeView;
-        foreach (var logEntry in _logEntries)
-        {
-            PerformSubmit(DateTime.UtcNow, logEntry);
-            //_hostGrain.UpdateView(_confirmedView, logEntry);
-        }
-        return Task.CompletedTask;
-    }
-
-    private const int Unconditional = -1;
-
-    private void PerformSubmit(DateTime time, TEntry logEntry, int conditionalPosition = Unconditional, TaskCompletionSource<bool> resultPromise = null)
-    {
-        // var entry = new SubmissionEntry<TEntry>
-        // {
-        //     Entry = logEntry,
-        //     SubmissionTime = time,
-        //     ResultPromise = resultPromise,
-        //     ConditionalPosition = conditionalPosition
-        // };
-
-        if (_tentativeView != null)
+        while (true)
         {
             try
             {
-                _hostGrain.UpdateView(_tentativeView, logEntry);
+                var snapshot = await GetSnapshotAsync();
+                if (_confirmedVersion < snapshot?.Version)
+                {
+                    _confirmedVersion = snapshot.Version;
+                    _confirmedView = snapshot.State;
+                }
+                var eventLogs = await GetAllEventsAsync();
+                if (!eventLogs.Any())
+                {
+                    break;
+                }
+
+                var latestVersionOfEventLog = eventLogs.OrderByDescending(e => e.Version).FirstOrDefault();
+                if (latestVersionOfEventLog == null)
+                {
+                    break;
+                }
+
+                _globalVersion = latestVersionOfEventLog.Version;
+                if (snapshot != null
+                    && snapshot.EventLogTimestamp == latestVersionOfEventLog.Timestamp
+                    && snapshot.Version == latestVersionOfEventLog.Version)
+                {
+                    _confirmedVersion = snapshot.Version;
+                    _confirmedView = snapshot.State;
+                    break;
+                }
+                
+                // TODO: Can only retrieve log segment from _confirmedVersion to _globalVersion
+ 
+                foreach (var eventLog in eventLogs)
+                {
+                    _host.UpdateView(_confirmedView, eventLog.Event);
+                }
+
+                _confirmedVersion += eventLogs.Count;
+
+                LastPrimaryIssue.Resolve(_host, Services);
+
+                break;
             }
             catch (Exception e)
             {
-                _services.CaughtUserCodeException("UpdateView", nameof(PerformSubmit), e);
+                // unwrap inner exception that was forwarded - helpful for debugging
+                if ((e as ProtocolTransportException)?.InnerException != null)
+                {
+                    e = ((ProtocolTransportException)e).InnerException!;
+                }
+                LastPrimaryIssue.Record(new ReadFromPrimaryFailed { Exception = e }, Host, Services);
             }
-        }
-
-        try
-        {
-            _hostGrain.OnViewChanged(true, false);
-        }
-        catch (Exception e)
-        {
-            _services.CaughtUserCodeException("OnViewChanged", nameof(PerformSubmit), e);
+            
+            await LastPrimaryIssue.DelayBeforeRetry();
         }
     }
 
-    public Task Synchronize()
+    protected override async Task<int> WriteAsync()
     {
-        _tentativeView = _confirmedView;
+        var snapshot = await GetSnapshotAsync() ?? new ViewStateWrapper<TLogView>
+        {
+            Version = _confirmedVersion,
+            State = _confirmedView
+        };
+
+        var latestVersion = snapshot.Version;
+        _confirmedVersion = latestVersion;
+
+        var updates = GetCurrentBatchOfUpdates();
+        var logsToUpdate = updates
+            .Select(e => e.Entry)
+            .Select(e => new EventLogWrapper<TLogEntry>
+            {
+                Version = latestVersion + 1,
+                Event = e
+            }).ToList();
+
+        // Save logs to database.
+        var lastTimestamp = await SaveEventsAsync(logsToUpdate);
+
+        // TODO: Need a easier way.
+        _globalVersion = (await GetAllEventsAsync()).Count;
+
+        // Update grain's view.
+        foreach (var eventLog in logsToUpdate)
+        {
+            _host.UpdateView(_confirmedView!, eventLog.Event);
+        }
+
+        _confirmedVersion += logsToUpdate.Count;
+
+        // Update the view to database.
+        await TakeSnapshotAsync(new ViewStateWrapper<TLogView>
+        {
+            Version = _confirmedVersion,
+            State = _confirmedView,
+            EventLogTimestamp = lastTimestamp
+        });
+
+        return updates.Length;
+    }
+
+    private Task TakeSnapshotAsync(ViewStateWrapper<TLogView> viewState)
+    {
+        SnapshotCollection.Clear();
+        SnapshotCollection.Add(viewState);
         return Task.CompletedTask;
     }
 
-    public void EnableStatsCollection() { }
-    public void DisableStatsCollection() { }
-    public LogConsistencyStatistics GetStats() => new LogConsistencyStatistics();
-
-    public Task PreOnActivate() => Task.CompletedTask;
-    public Task PostOnActivate() => Task.CompletedTask;
-    public Task PostOnDeactivate() => Task.CompletedTask;
-
-    public Task<IReadOnlyList<TEntry>> RetrieveLogSegment(int fromVersion, int toVersion)
+    private Task<DateTime> SaveEventsAsync(IEnumerable<EventLogWrapper<TLogEntry>> eventLogs)
     {
-        var segment = _logEntries.Skip(fromVersion).Take(toVersion - fromVersion).ToList();
-        return Task.FromResult<IReadOnlyList<TEntry>>(segment);
+        var timestamp = DateTime.UtcNow;
+        foreach (var eventLog in eventLogs)
+        {
+            eventLog.Timestamp = timestamp;
+            EventLogCollection.Add(eventLog);
+            timestamp = DateTime.UtcNow;
+        }
+
+        return Task.FromResult(timestamp);
+    }
+    
+    [ItemCanBeNull]
+    private Task<ViewStateWrapper<TLogView>> GetSnapshotAsync()
+    {
+        return Task.FromResult(SnapshotCollection
+            .ToList()
+            .OrderByDescending(v => v.Version)
+            .FirstOrDefault());
+    }
+
+    private Task<List<EventLogWrapper<TLogEntry>>> GetAllEventsAsync()
+    {
+        return Task.FromResult(EventLogCollection.ToList());
+    }
+
+    protected override SubmissionEntry<TLogEntry> MakeSubmissionEntry(TLogEntry entry)
+    {
+        return new SubmissionEntry<TLogEntry> { Entry = entry };
+    }
+
+    protected override Task<ILogConsistencyProtocolMessage> OnMessageReceived(ILogConsistencyProtocolMessage payload)
+    {
+        var request = (ReadRequest)payload;
+
+        var response = new ReadResponse<TLogView>() { Version = _confirmedVersion };
+
+        if (_confirmedVersion > request.KnownVersion)
+        {
+            response.Value = _confirmedView;
+        }
+
+        return Task.FromResult<ILogConsistencyProtocolMessage>(response);
+    }
+}
+
+[Serializable]
+[GenerateSerializer]
+internal sealed class ReadRequest : ILogConsistencyProtocolMessage
+{
+    [Id(0)] public int KnownVersion { get; set; }
+}
+
+[Serializable]
+[GenerateSerializer]
+internal sealed class ReadResponse<TViewType> : ILogConsistencyProtocolMessage
+{
+    [Id(0)] public int Version { get; set; }
+
+    [Id(1)] public TViewType Value { get; set; }
+}
+
+public class ViewStateWrapper<T>
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    public int Version { get; set; }
+    public T State { get; set; }
+    public DateTime EventLogTimestamp { get; set; }
+}
+
+public class EventLogWrapper<T>
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    public int Version { get; set; }
+    public T Event { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+[Serializable]
+[GenerateSerializer]
+public sealed class ReadFromPrimaryFailed : PrimaryOperationFailed
+{
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return $"read from primary failed: caught {Exception.GetType().Name}: {Exception.Message}";
     }
 }
