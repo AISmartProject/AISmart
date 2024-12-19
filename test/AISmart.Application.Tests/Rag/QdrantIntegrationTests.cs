@@ -12,7 +12,7 @@ public class QdrantIntegrationTests
     [Fact]
     public async Task TestStoreAndRetrieve()
     {
-        var qdrantDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
+        var qdrantDatabase = new QdrantVectorDatabase();
         
         string textContent = "Test chunk content.";
         float[] testVector = new float[] { 0.1f, 0.2f, 0.3f };
@@ -27,7 +27,7 @@ public class QdrantIntegrationTests
     [Fact]
     public async Task StoreBatchAsync_ShouldStoreAndRetrieveData()
     {
-        var vectorDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
+        var vectorDatabase = new QdrantVectorDatabase();
 
         var points = new List<(float[] vector, string text)>
         {

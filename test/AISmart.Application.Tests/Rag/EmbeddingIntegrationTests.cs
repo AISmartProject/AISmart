@@ -17,7 +17,7 @@ public class EmbeddingIntegrationTests : AISmartApplicationTestBase
     {
         var configuration = ServiceProvider.GetRequiredService<IConfiguration>();
         var apikey = configuration["Rag:APIKey"];
-        var embeddingProvider = new OpenAIEmbeddingProvider(apikey);
+        var embeddingProvider = new OpenAIEmbeddingProvider();
         
         string textContent = "Test chunk content.";
         
