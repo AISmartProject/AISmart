@@ -6,4 +6,5 @@ public class RagOptions
     public string CollectionName { get; set; }
     public string APIKey { get; set; }
     public int VectorSize { get; set; } = 0;
+    public int ChunkSize { get; set; } = 800;
 }

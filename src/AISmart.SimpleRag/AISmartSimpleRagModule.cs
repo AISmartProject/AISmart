@@ -8,6 +8,6 @@ namespace AISmart;
 [DependsOn(
     typeof(AISmartApplicationContractsModule)
 )]
-public class AISmartRagModule : AbpModule
+public class AISmartSimpleRagModule : AbpModule
 {
 }

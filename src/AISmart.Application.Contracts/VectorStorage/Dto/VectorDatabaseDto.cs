@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace AISmart.dto;
+namespace AISmart.VectorStorage.Dto;
 
 public class CollectionsResponse
 {

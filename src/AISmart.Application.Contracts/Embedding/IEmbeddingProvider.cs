@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace AISmart.Provider;
+namespace AISmart.Embedding;
 
 public interface IEmbeddingProvider
 {

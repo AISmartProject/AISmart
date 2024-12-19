@@ -57,7 +57,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.AutoGen.Tests", "te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgent.Autogen", "src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj", "{28AC92B6-377F-4A1E-8D08-0352D3AB4663}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.Rag", "src\AISmart.Rag\AISmart.Rag.csproj", "{19B3004E-15F6-49A6-804E-1EEA1FE3A30A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.SimpleRag", "src\AISmart.SimpleRag\AISmart.SimpleRag.csproj", "{19B3004E-15F6-49A6-804E-1EEA1FE3A30A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrleansTestKit", "test\OrleansTestKit\OrleansTestKit.csproj", "{09CDE043-09EC-4D2A-9112-6F9138455795}"
 EndProject

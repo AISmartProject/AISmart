@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AISmart.dto;
+namespace AISmart.Embedding.Dto;
 
 public class EmbedResponse
 {

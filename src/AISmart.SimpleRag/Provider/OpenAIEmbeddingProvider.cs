@@ -1,28 +1,22 @@
-using System.Collections.Generic;
-using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using AISmart.Embedding;
+using AISmart.Embedding.Dto;
+using AISmart.Rag;
 using Newtonsoft.Json;
+using Volo.Abp.DependencyInjection;
 
-namespace AISmart.Rag;
+namespace AISmart.Provider;
 
-public class OpenAIEmbeddingProvider : IEmbeddingProvider
+public class OpenAIEmbeddingProvider : IEmbeddingProvider, ISingletonDependency
 {
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
 
-    public OpenAIEmbeddingProvider()
+    public OpenAIEmbeddingProvider(string apiKey)
     {
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables();
-
-        IConfiguration config = builder.Build();
-
-        _apiKey = config["Rag:APIKey"];
+        _apiKey = apiKey;
         _httpClient = new HttpClient();
     }
 
@@ -36,15 +30,5 @@ public class OpenAIEmbeddingProvider : IEmbeddingProvider
         response.EnsureSuccessStatusCode();
         var responseString = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<EmbedResponse>(responseString).Data[0].Embedding;
-    }
-
-    private class EmbedResponse
-    {
-        public List<EmbedData> Data { get; set; }
-    }
-
-    private class EmbedData
-    {
-        public float[] Embedding { get; set; }
     }
 }

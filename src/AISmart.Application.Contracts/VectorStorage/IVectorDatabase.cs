@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace AISmart.Provider;
+namespace AISmart.VectorStorage;
 
 public interface IVectorDatabase
 {
@@ -9,3 +9,4 @@ public interface IVectorDatabase
     Task StoreBatchAsync(IEnumerable<(float[] vector, string text)> points);
     Task<List<string>> RetrieveAsync(float[] queryEmbedding, int topK = 5);
 }
+

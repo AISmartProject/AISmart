@@ -12,7 +12,7 @@ namespace AISmart.GAgent.Autogen;
 
 [DependsOn(
     typeof(AISmartApplicationContractsModule),
-    typeof(AISmartRagModule)
+    typeof(AISmartSimpleRagModule)
 )]
 public class AISmartGAgentAutogenModule : AbpModule
 {

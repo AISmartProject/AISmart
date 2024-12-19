@@ -1,4 +1,4 @@
-namespace AISmart.Rag.dto;
+namespace AISmart.Rag.Dto;
 
 public class RetrieveInput
 {

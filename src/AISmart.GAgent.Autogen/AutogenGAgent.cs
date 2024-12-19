@@ -12,6 +12,7 @@ using AISmart.GAgent.Autogen.Events;
 using AISmart.GAgent.Autogen.EventSourcingEvent;
 using AISmart.GEvents.Autogen;
 using AISmart.Provider;
+using AISmart.Rag;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json;
 using Orleans.Runtime;

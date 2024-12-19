@@ -15,6 +15,7 @@
     <ItemGroup>
         <PackageReference Include="AElf.Sdk.CSharp" />
         <PackageReference Include="Volo.Abp.AutoMapper" />
+        <PackageReference Include="OpenAI.API" />
     </ItemGroup>
 
     <ItemGroup>

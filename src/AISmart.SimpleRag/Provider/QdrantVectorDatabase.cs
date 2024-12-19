@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
-using AISmart.dto;
-using Microsoft.Extensions.Configuration;
+using AISmart.Rag;
+using AISmart.VectorStorage;
+using AISmart.VectorStorage.Dto;
 using Newtonsoft.Json;
+using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Provider;
 
-public class QdrantVectorDatabase : IVectorDatabase
+public class QdrantVectorDatabase : IVectorDatabase, ISingletonDependency
 {
     private readonly string _qdrantUrl;
     private readonly HttpClient _httpClient;

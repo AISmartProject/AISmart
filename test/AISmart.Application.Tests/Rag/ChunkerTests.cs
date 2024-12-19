@@ -1,10 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AISmart.Rag.Agent;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using AISmart.Provider;
 using Xunit;
-using Moq;
 
 namespace AISmart.Rag;
 
@@ -25,28 +22,6 @@ public class ChunkerTests : AISmartApplicationTestBase
         var simpleChunker = new SimpleChunker();
 
         Task<List<string>> result = simpleChunker.Chunk(text, 100);
-            
-        List<string> chunks = await result;
-        Assert.True(chunks.Count > 0);
-    }
-    
-    [Fact]
-    public async Task TestAzureAIChunker()
-    {
-        var azureAiChunker = new AzureAIChunker();
-
-        Task<List<string>> result = azureAiChunker.Chunk(text, 100);
-            
-        List<string> chunks = await result;
-        Assert.True(chunks.Count > 0);
-    }
-    
-    [Fact]
-    public async Task TestOpenAIChunk()
-    {
-        var openAiChunker = new OpenAIChunker();
-
-        Task<List<string>> result = openAiChunker.Chunk(text, 512);
             
         List<string> chunks = await result;
         Assert.True(chunks.Count > 0);
