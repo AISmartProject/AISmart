@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
+
 using System.Threading.Tasks;
 using AISmart.Options;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using AISmart.Provider;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -15,9 +13,8 @@ public class EmbeddingIntegrationTests : AISmartApplicationTestBase
     [Fact]
     public async Task TestEmbedding()
     {
-        var configuration = ServiceProvider.GetRequiredService<IConfiguration>();
-        var apikey = configuration["Rag:APIKey"];
-        var embeddingProvider = new OpenAIEmbeddingProvider(apikey);
+        var config = GetRequiredService<IOptionsMonitor<RagOptions>>().CurrentValue;
+        var embeddingProvider = new OpenAIEmbeddingProvider(config.APIKey);
         
         string textContent = "Test chunk content.";
         

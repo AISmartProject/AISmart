@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Application.Grains;
+using AISmart.Mock;
+using AISmart.Provider;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,7 +57,8 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                     //logging.AddProvider(loggerProvider);
                     logging.AddConsole(); // Adds console logger
                 });
-
+                var aelfNodeProvider = new MockAElfNodeProvider();
+                services.AddSingleton<IAElfNodeProvider>(aelfNodeProvider);
                 services.OnExposing(onServiceExposingContext =>
                 {
                     var implementedTypes = ReflectionHelper.GetImplementedGenericTypes(

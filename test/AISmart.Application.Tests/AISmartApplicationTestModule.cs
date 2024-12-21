@@ -1,4 +1,4 @@
-﻿using AISmart.Options;
+using AISmart.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus;
@@ -20,5 +20,6 @@ public class AISmartApplicationTestModule : AbpModule
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AISmartApplicationModule>(); });
         var configuration = context.Services.GetConfiguration();
         Configure<ChatConfigOptions>(configuration.GetSection("Chat"));   
+        Configure<RagOptions>(configuration.GetSection("Rag"));   
     }
 }

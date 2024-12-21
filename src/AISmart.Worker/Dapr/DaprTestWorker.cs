@@ -25,11 +25,5 @@ public class DaprTestWorker : AsyncPeriodicBackgroundWorkerBase
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         Logger.LogInformation("Starting dapr...");
-        await  _daprProvider.PublishEventAsync(CommonConstants.PubSubName, CommonConstants.TestGroup, new AuthorDto
-        {
-            Id = default,
-            Name = "Test",
-            ShortBio = "123"
-        });
     }
 }
