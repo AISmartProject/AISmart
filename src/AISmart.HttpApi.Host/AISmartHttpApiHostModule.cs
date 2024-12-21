@@ -16,6 +16,8 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Microsoft.OpenApi.Models;
 using AISmart.Application.Grains;
 using AISmart.Domain.Grains;
+using AISmart.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
@@ -53,7 +55,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         {
             builder.AddValidation(options =>
             {
-                options.AddAudiences("AISmart");
+                options.AddAudiences("AISmartAuthServer");
                 options.UseLocalServer();
                 options.UseAspNetCore();
             });
@@ -65,7 +67,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        ConfigureAuthentication(context);
+        ConfigureAuthentication(context, configuration);
         ConfigureBundles();
        // ConfigureUrls(configuration);
         ConfigureConventionalControllers();
@@ -93,6 +95,17 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         {
             options.IsDynamicClaimsEnabled = true;
         });
+    }
+    
+    private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
+    {
+        context.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = configuration["AuthServer:Authority"];
+                options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
+                options.Audience = "AISmartAuthServer";
+            });
     }
 
     private void ConfigureBundles()
@@ -199,6 +212,8 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             app.UseDeveloperExceptionPage();
         }
 
+        app.UseMiddleware<TimeTrackingStatisticsMiddleware>();
+
         app.UseAbpRequestLocalization();
 
         if (!env.IsDevelopment())
@@ -211,6 +226,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
+        app.UseAuthorization();
         app.UseAbpOpenIddictValidation();
 
         app.UseUnitOfWork();
@@ -225,7 +241,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
             c.OAuthScopes("AISmart");
         });
-
+        
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();

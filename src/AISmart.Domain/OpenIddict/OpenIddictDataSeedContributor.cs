@@ -79,11 +79,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
 
         var configurationSection = _configuration.GetSection("OpenIddict:Applications");
 
-
-
-
-
-
         // Swagger Client
         var swaggerClientId = configurationSection["AISmart_Swagger:ClientId"];
         if (!swaggerClientId.IsNullOrWhiteSpace())
@@ -100,6 +95,32 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 scopes: commonScopes,
                 redirectUri: $"{swaggerRootUrl}/swagger/oauth2-redirect.html",
                 clientUri: swaggerRootUrl
+            );
+        }
+        
+        var authServerClientId = configurationSection["AISmartAuthServer:ClientId"];
+        if (!authServerClientId.IsNullOrWhiteSpace())
+        {
+            var authServerRootUrl = configurationSection["AISmartAuthServer:RootUrl"]?.TrimEnd('/');
+
+            await CreateApplicationAsync(
+                name: authServerClientId!,
+                type: OpenIddictConstants.ClientTypes.Public,
+                consentType: OpenIddictConstants.ConsentTypes.Implicit,
+                displayName: "AISmartAuthServer Application",
+                secret: null,
+                grantTypes: new List<string>
+                {
+                    OpenIddictConstants.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.GrantTypes.Password,
+                    OpenIddictConstants.GrantTypes.ClientCredentials,
+                    OpenIddictConstants.GrantTypes.RefreshToken,
+                    GrantTypeConstants.SIGNATURE
+                },
+                scopes: commonScopes,
+                redirectUri: authServerRootUrl,
+                clientUri: authServerRootUrl,
+                postLogoutRedirectUri: authServerRootUrl
             );
         }
     }
