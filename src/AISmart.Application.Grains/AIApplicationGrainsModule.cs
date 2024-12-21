@@ -1,3 +1,4 @@
+using AISmart.CQRS;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus;
@@ -9,7 +10,8 @@ namespace AISmart.Application.Grains;
 [DependsOn(
     typeof(AbpAutoMapperModule),
     typeof(AbpEventBusModule),
-    typeof(AISmartApplicationContractsModule)
+    typeof(AISmartApplicationContractsModule),
+    typeof(AISmartCQRSModule)
 )]
 public class AIApplicationGrainsModule : AbpModule
  

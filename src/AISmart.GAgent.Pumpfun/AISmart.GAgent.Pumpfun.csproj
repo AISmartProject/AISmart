@@ -10,11 +10,16 @@
 
     <ItemGroup>
         <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
+        <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AElf.Sdk.CSharp" />
         <PackageReference Include="Volo.Abp.AutoMapper" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Dto\" />
     </ItemGroup>
 
 </Project>

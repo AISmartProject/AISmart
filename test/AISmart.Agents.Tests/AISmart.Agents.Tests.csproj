@@ -24,10 +24,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
-      <ProjectReference Include="..\..\src\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
-      <ProjectReference Include="..\..\src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
-      <ProjectReference Include="..\OrleansTestKit\OrleansTestKit.csproj" />
+        <ProjectReference Include="..\..\src\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
+        <ProjectReference Include="..\..\src\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
+        <ProjectReference Include="..\..\src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
+        <ProjectReference Include="..\OrleansTestKit\OrleansTestKit.csproj" />
     </ItemGroup>
 
 </Project>

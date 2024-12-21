@@ -22,6 +22,14 @@
         <PackageReference Include="Volo.Abp.Account.Application.Contracts" />
         <PackageReference Include="Volo.Abp.Identity.Application.Contracts" />
         <PackageReference Include="Volo.Abp.PermissionManagement.Application.Contracts" />
+        <PackageReference Include="Microsoft.Orleans.Core.Abstractions" />
+        <PackageReference Include="Microsoft.Orleans.Streaming" />
+        <PackageReference Include="Volo.Abp.Dapr" />
+        <PackageReference Include="Volo.Abp.AspNetCore.Mvc.Dapr.EventBus" />
+        <PackageReference Include="Volo.Abp.ObjectExtending" />
+        <PackageReference Include="Volo.Abp.Account.Application.Contracts" />
+        <PackageReference Include="Volo.Abp.Identity.Application.Contracts" />
+        <PackageReference Include="Volo.Abp.PermissionManagement.Application.Contracts" />
     </ItemGroup>
 
     <ItemGroup>

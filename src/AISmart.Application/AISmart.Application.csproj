@@ -14,12 +14,19 @@
         <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
+        <ProjectReference Include="..\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Telegram\AISmart.GAgent.Telegram.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
         <ProjectReference Include="..\AISmart.SimpleRag\AISmart.SimpleRag.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.AI.TextAnalytics" />
+        <PackageReference Include="OpenAI.API" />
+        <PackageReference Include="Volo.Abp.Account.Application" />
+        <PackageReference Include="Volo.Abp.Identity.Application" />
+        <PackageReference Include="Volo.Abp.PermissionManagement.Application" />
+        <PackageReference Include="AElf.OpenTelemetry" />
         <PackageReference Include="Azure.AI.TextAnalytics" />
         <PackageReference Include="OpenAI.API" />
         <PackageReference Include="Volo.Abp.Account.Application" />

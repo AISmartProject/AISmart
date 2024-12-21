@@ -1,8 +1,7 @@
 namespace AISmart.Dto;
 
-public class SendMessageDto
+public class PumFunResponseDto
 {
-    public string RequestMessageId { get; set; }
     public string ReplyId { get; set; }
     public string ReplyMessage { get; set; }
 }
