@@ -256,7 +256,7 @@ public sealed class TestKitSilo
         if (_createdGrains.ContainsKey(typeof(T)))
         {
             var createdGrain = (T)_createdGrains[typeof(T)];
-            if (((IGAgent)createdGrain).GetGrainId().Key == identity)
+            if (typeof(IGAgent).IsAssignableFrom(typeof(T)) && ((IGAgent)createdGrain).GetGrainId().Key == identity)
             {
                 return createdGrain;
             }

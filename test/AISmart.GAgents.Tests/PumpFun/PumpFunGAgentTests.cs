@@ -3,7 +3,6 @@ using AISmart.Agent.Grains;
 using AISmart.Application.Grains.Agents.Group;
 using AISmart.Application.Grains.Agents.Publisher;
 using AISmart.Events;
-using AISmart.GGrains.Tests;
 using AISmart.Grains;
 using AISmart.Sender;
 using Orleans.TestKit;
@@ -18,11 +17,11 @@ public class PumpFunGAgentTests : GAgentTestKitBase
         var guid = Guid.NewGuid();
         var groupAgent = await Silo.CreateGrainAsync<GroupGAgent>(Guid.NewGuid());
         var pumpFunGAgent = await Silo.CreateGrainAsync<PumpFunGAgent>(guid);
-        await groupAgent.Register(pumpFunGAgent);
+        await groupAgent.RegisterAsync(pumpFunGAgent);
         var txGrain = await Silo.CreateGrainAsync<PumpFunGrain>(guid);
         Silo.AddProbe<IPumpFunGrain>(_ => txGrain);
         var publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(guid);
-        await publishingAgent.PublishTo(groupAgent);
+        await publishingAgent.PublishToAsync(groupAgent);
         Silo.AddProbe<IPublishingGAgent>(_ => publishingAgent);
         await publishingAgent.PublishEventAsync(new ReceiveMessageEvent
         {
@@ -32,24 +31,24 @@ public class PumpFunGAgentTests : GAgentTestKitBase
             BotName = "Test"
         });
     }
-    
+
     [Fact]
     public async Task SendMessageTest()
     {
         var guid = Guid.NewGuid();
         var groupAgent = await Silo.CreateGrainAsync<GroupGAgent>(Guid.NewGuid());
         var pumpFunGAgent = await Silo.CreateGrainAsync<PumpFunGAgent>(guid);
-        await groupAgent.Register(pumpFunGAgent);
+        await groupAgent.RegisterAsync(pumpFunGAgent);
         var txGrain = await Silo.CreateGrainAsync<PumpFunGrain>(guid);
         Silo.AddProbe<IPumpFunGrain>(_ => txGrain);
         var publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(guid);
-        await publishingAgent.PublishTo(groupAgent);
+        await publishingAgent.PublishToAsync(groupAgent);
         Silo.AddProbe<IPublishingGAgent>(_ => publishingAgent);
         await publishingAgent.PublishEventAsync(new SendMessageEvent
         {
             ChatId = "12",
             Message = "bot message",
-            BotName ="Test",
+            BotName = "Test",
             ReplyMessageId = "11"
         });
     }

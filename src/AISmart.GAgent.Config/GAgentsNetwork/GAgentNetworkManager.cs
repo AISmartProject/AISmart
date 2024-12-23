@@ -70,7 +70,7 @@ public class AgentNetworkManager:IAgentNetworkManager
                 if (_agentInstances.TryGetValue(name, out var agent))
                 {
                     Debug.Assert(agent != null , "agent should not be null.");
-                    await groupGAgent?.Register(agent)!;
+                    await groupGAgent?.RegisterAsync(agent)!;
                 }
             }
 

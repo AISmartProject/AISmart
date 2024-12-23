@@ -60,12 +60,12 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}", chatId);
         autogenAgent.RegisterAgentEvent(typeof(PumpFunGAgent), [typeof(PumpFunReceiveMessageEvent), typeof(PumpFunSendMessageEvent)]);
         
-        await groupAgent.Register(autogenAgent);
-        await groupAgent.Register(pumpFunGAgent);
+        await groupAgent.RegisterAsync(autogenAgent);
+        await groupAgent.RegisterAsync(pumpFunGAgent);
         
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupAgentId);
         _logger.LogInformation("SetGroupsAsync3, groupAgentId:{groupAgentId}", JsonConvert.SerializeObject(publishingAgent));
-        await publishingAgent.PublishTo(groupAgent);
+        await publishingAgent.PublishToAsync(groupAgent);
 
         return groupAgentId.ToString();
     }

@@ -95,8 +95,8 @@ public class BasicGrainTests : TestKitBase
     {
         var grain1 = await Silo.CreateGrainAsync<LifecycleGrain>(new Random().Next());
         var grain2 = await Silo.CreateGrainAsync<LifecycleGrain>(new Random().Next());
-        // Will be the same grain.
-        grain1.GetGrainId().Should().Be(grain2.GetGrainId());
+        // Won't be the same grain.
+        grain1.GetGrainId().Should().NotBe(grain2.GetGrainId());
     }
 
     [Fact]
