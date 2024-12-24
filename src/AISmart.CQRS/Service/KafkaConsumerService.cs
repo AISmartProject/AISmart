@@ -43,21 +43,13 @@ public class KafkaConsumerService : ITransientDependency
             while (!cancellationToken.IsCancellationRequested)
             {
                 var consumeResult = consumer.Consume(cancellationToken);
-                try
-                {
-                    var messageValue = consumeResult.Message.Value;
-                    var messageIndex = JsonConvert.DeserializeObject<BaseStateIndex>(messageValue);
-                    _logger.LogInformation("Received message {message} at: {topicPartitionOffset}.",
-                        consumeResult.Message.Value,consumeResult.TopicPartitionOffset);
-                    _indexingService.CheckExistOrCreateIndex(messageIndex.StateType);
-                    await SaveIndexAsync(messageIndex.StateType, messageIndex);
-                }
-                catch (Exception e)
-                {
-                    consumer.Commit(consumeResult);
-                }
-
-               
+                var messageValue = consumeResult.Message.Value;
+                var messageIndex = JsonConvert.DeserializeObject<BaseStateIndex>(messageValue);
+                _logger.LogInformation("Received message {message} at: {topicPartitionOffset}.",
+                    consumeResult.Message.Value,consumeResult.TopicPartitionOffset);
+                _indexingService.CheckExistOrCreateIndex(messageIndex.StateType);
+                await SaveIndexAsync(messageIndex.StateType, messageIndex);
+                consumer.Commit(consumeResult);
             }
         }
         catch (OperationCanceledException)
