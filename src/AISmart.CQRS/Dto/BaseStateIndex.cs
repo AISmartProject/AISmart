@@ -8,5 +8,7 @@ public class BaseStateIndex
     [Keyword]public string Id { get; set; }
     public DateTime Ctime { get; set; }
     public string State{ get; set; }
+    
+    [Keyword]public string StateType{ get; set; }
 
 }

@@ -1,25 +1,23 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.Events;
-using AISmart.Agents.X.Events;
 using AISmart.CQRS;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Handler;
 using AISmart.CQRS.Options;
 using AISmart.CQRS.Provider;
-using AISmart.Options;
+using AISmart.CQRS.Service;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 using Moq;
-using Volo.Abp;
-using Volo.Abp.Modularity;
 
 namespace AISmart.GAgent;
 
@@ -34,6 +32,7 @@ public class CqrsTests : AISmartApplicationTestBase
     private const string Address = "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE";
     private const string IndexName = "aelfagentgstateindex";
     private const string IndexId = "1";
+    private readonly IServiceProvider _serviceProvider;
 
     public CqrsTests(ITestOutputHelper output)
     {
@@ -44,7 +43,7 @@ public class CqrsTests : AISmartApplicationTestBase
         _mockIndexingService.Setup(service => service.SaveOrUpdateIndexAsync(It.IsAny<string>(), It.IsAny<BaseStateIndex>()))
             .Returns(Task.CompletedTask);
         _mockIndexingService.Setup(b => b.QueryIndexAsync(It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync((string id, string indexName) => new BaseStateIndex { Id = IndexId.ToString(), Ctime = DateTime.Now, State = Address});
+            .ReturnsAsync((string id, string indexName) => new BaseStateIndex { Id = IndexId.ToString(), Ctime = DateTime.UtcNow, State = Address});
 
         var services = new ServiceCollection();
         services.AddSingleton<IIndexingService>(_mockIndexingService.Object); 
@@ -53,28 +52,33 @@ public class CqrsTests : AISmartApplicationTestBase
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
         services.AddSingleton<ICQRSProvider,CQRSProvider>();
         services.AddSingleton<IGrainFactory>(_clusterClient);
-        var serviceProvider = services.BuildServiceProvider();
-        _cqrsProvider = serviceProvider.GetRequiredService<ICQRSProvider>();
         
-      
-
+        //consumer
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();  
+        });
+        services.Configure<KafkaOptions>(options =>
+        {
+            options.BootstrapServers = "127.0.0.1:9092";
+            options.GroupId = "state-consumer-group";
+            options.Topic = "state-topic";
+        });
+        services.AddSingleton<ILogger<KafkaConsumerService>, Logger<KafkaConsumerService>>();
+        services.AddTransient<KafkaConsumerService>();
+        
+        _serviceProvider = services.BuildServiceProvider();
+        _cqrsProvider = _serviceProvider.GetRequiredService<ICQRSProvider>();
     }
 
     [Fact]
     public async Task SendTransactionTest()
     {
-        var services = new ServiceCollection();
-
-        var serviceProvider = services.BuildServiceProvider();
-        var serviceContext = new ServiceConfigurationContext(services);
-
-        
-        var module = new AISmartCQRSModule();
-        var appInitializationContext = new ApplicationInitializationContext(serviceProvider);
-        await module.OnApplicationInitializationAsync(appInitializationContext);
-        
-        var config = GetRequiredService<IOptionsMonitor<KafkaOptions>>().CurrentValue;
-
+        //run consumer
+        var consumerService = _serviceProvider.GetRequiredService<KafkaConsumerService>();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10)); // 设置超时
+        var consumerTask = Task.Run(() => consumerService.StartConsuming(cancellationTokenSource.Token), cancellationTokenSource.Token);
         var createTransactionEvent = new CreateTransactionEvent()
         {
             ChainId = ChainId,

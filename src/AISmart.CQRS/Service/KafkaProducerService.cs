@@ -1,5 +1,4 @@
 using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Options;
@@ -30,7 +29,14 @@ public class KafkaProducerService: ITransientDependency
         using var producer = new ProducerBuilder<Null, string>(_producerConfig).Build();
         try
         {
-            var messageValue = JsonConvert.SerializeObject(command);
+            var messageIndex = new BaseStateIndex
+            {
+                Id = command.Id,
+                Ctime = DateTime.UtcNow,
+                State = JsonConvert.SerializeObject(command.State),
+                StateType = command.State.GetType().Name.ToLower()
+            };
+            var messageValue = JsonConvert.SerializeObject(messageIndex);
             var deliveryResult = await producer.ProduceAsync(_topic, new Message<Null, string> { Value = messageValue });
             _logger.LogInformation("Delivered {result} to {topicPartitionOffset}", deliveryResult.Value, deliveryResult.TopicPartitionOffset);
         }

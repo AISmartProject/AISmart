@@ -1,11 +1,12 @@
 using System;
-using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Options;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 namespace AISmart.CQRS.Service;
 
@@ -15,10 +16,13 @@ public class KafkaConsumerService : ITransientDependency
     private readonly ConsumerConfig _consumerConfig;
     private readonly string _topic;
     private readonly IOptionsMonitor<KafkaOptions> _kafkaOptions;
+    private readonly IIndexingService  _indexingService ;
 
 
-    public KafkaConsumerService(IOptionsMonitor<KafkaOptions> kafkaOptions, ILogger<KafkaConsumerService> logger)
+    public KafkaConsumerService(IOptionsMonitor<KafkaOptions> kafkaOptions, ILogger<KafkaConsumerService> logger, IIndexingService indexingService
+    )
     {
+         _indexingService = indexingService;
         _logger = logger;
         _consumerConfig = new ConsumerConfig
         {
@@ -29,7 +33,7 @@ public class KafkaConsumerService : ITransientDependency
         _topic = kafkaOptions.CurrentValue.Topic;
     }
 
-    public void StartConsuming(CancellationToken cancellationToken)
+    public async Task StartConsuming(CancellationToken cancellationToken)
     {
         using var consumer = new ConsumerBuilder<Ignore, string>(_consumerConfig).Build();
         consumer.Subscribe(_topic);
@@ -39,15 +43,30 @@ public class KafkaConsumerService : ITransientDependency
             while (!cancellationToken.IsCancellationRequested)
             {
                 var consumeResult = consumer.Consume(cancellationToken);
-                var messageValue = consumeResult.Message.Value;
-                var command = JsonSerializer.Deserialize<SaveStateCommand>(messageValue);
-                _logger.LogInformation("Received message {message} at: {topicPartitionOffset}.",
-                    consumeResult.Message.Value,consumeResult.TopicPartitionOffset);
+                try
+                {
+                    var messageValue = consumeResult.Message.Value;
+                    var messageIndex = JsonConvert.DeserializeObject<BaseStateIndex>(messageValue);
+                    _logger.LogInformation("Received message {message} at: {topicPartitionOffset}.",
+                        consumeResult.Message.Value,consumeResult.TopicPartitionOffset);
+                    _indexingService.CheckExistOrCreateIndex(messageIndex.StateType);
+                    await SaveIndexAsync(messageIndex.StateType, messageIndex);
+                }
+                catch (Exception e)
+                {
+                    consumer.Commit(consumeResult);
+                }
+
+               
             }
         }
         catch (OperationCanceledException)
         {
             consumer.Close();
         }
+    }
+    private async Task SaveIndexAsync(string indexName , BaseStateIndex index)
+    {
+        await _indexingService.SaveOrUpdateIndexAsync(indexName, index);
     }
 }
