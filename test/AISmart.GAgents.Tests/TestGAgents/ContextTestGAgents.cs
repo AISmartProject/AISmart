@@ -2,7 +2,6 @@ using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
@@ -34,6 +33,7 @@ public class ContextTestGAgent1 : ContextTestGAgentBase
     public async Task HandleEventAsync(ContextTestEvent1 eventData)
     {
         await SetContextAsync("Set context1", "set context1");
+        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(1));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null)
         {
@@ -59,6 +59,7 @@ public class ContextTestGAgent2 : ContextTestGAgentBase
     public async Task HandleEventAsync(ContextTestEvent2 eventData)
     {
         await SetContextAsync("Set context2", "set context2");
+        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(2));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null
             && eventData.TryGetContext("Test2", out var testData2)
@@ -87,6 +88,7 @@ public class ContextTestGAgent3 : ContextTestGAgentBase
     public async Task HandleEventAsync(ContextTestEvent3 eventData)
     {
         var getContext = await GetContextAsync();
+        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(3));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null
             && eventData.TryGetContext("Test2", out var testData2)
@@ -99,6 +101,7 @@ public class ContextTestGAgent3 : ContextTestGAgentBase
                 && ((Dictionary<string, string>)eventData.ExpectedContext["Test3"]!)["testKey"].Equals("testValue"))
             {
                 State.Success = true;
+                await PublishAsync(new RequestAllSubscriptionsEvent());
             }
         }
     }

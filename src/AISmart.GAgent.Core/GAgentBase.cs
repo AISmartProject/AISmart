@@ -145,6 +145,14 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         await LoadSubscribersAsync();
 
+        if (_subscribers.State.IsNullOrEmpty())
+        {
+            return new SubscribedEventListEvent
+            {
+                GAgentType = GetType()
+            };
+        }
+
         var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
 
         if (gAgentList.IsNullOrEmpty())
@@ -193,7 +201,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
         var eventId = Guid.NewGuid();
-        var eventWrapper = new EventWrapper<T>(@event, eventId, this.GetPrimaryKey(), GetContextStorageGrainId());
+        var eventWrapper = new EventWrapper<T>(@event, eventId, this.GetGrainId(), GetContextStorageGrainId());
 
         await PublishAsync(eventWrapper);
 

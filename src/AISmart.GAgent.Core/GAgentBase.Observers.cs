@@ -33,10 +33,6 @@ public abstract partial class GAgentBase<TState, TEvent>
                 {
                     contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
                     var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.Value.GetGuidKey());
-                    if (contextStorageGrain == null)
-                    {
-                        throw new InvalidOperationException("Error while getting instance of IContextStorageGrain.");
-                    }
                     var context = await contextStorageGrain.GetContext();
                     (eventType! as EventBase)!.SetContext(context);
                 }
@@ -52,7 +48,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetPrimaryKey(),
+                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId(),
                                 contextStorageGrainId);
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
@@ -138,7 +134,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                 try
                 {
                     var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
-                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetPrimaryKey(),
+                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId(),
                         contextStorageGrainId);
                     await PublishAsync(eventWrapper);
                 }

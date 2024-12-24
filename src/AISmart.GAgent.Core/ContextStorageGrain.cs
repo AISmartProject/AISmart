@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Orleans.Storage;
 
 namespace AISmart.GAgent.Core;
 
@@ -13,14 +12,14 @@ public interface IContextStorageGrain : IGrainWithGuidKey
     Task AddContext(string key, object? value);
     Task AddContext(Dictionary<string, object?> context);
     Task<Dictionary<string, object?>> GetContext();
+    Task ResetSelfTerminateTime(TimeSpan timeSpan);
 }
 
-public class ContextStorageGrain : Grain<ContextStorageState>, IContextStorageGrain
+public class ContextStorageGrain : Grain<ContextStorageState>, IContextStorageGrain, IRemindable
 {
     private readonly IPersistentState<ContextStorageState> _context;
     private readonly ILogger<ContextStorageGrain> _logger;
-
-    private readonly IGrainStorage _grainStorage;
+    private IGrainReminder _reminder;
 
     public ContextStorageGrain([PersistentState("ContextStorage")] IPersistentState<ContextStorageState> context,
         ILogger<ContextStorageGrain> logger)
@@ -71,5 +70,31 @@ public class ContextStorageGrain : Grain<ContextStorageState>, IContextStorageGr
     {
         _context.ReadStateAsync();
         return Task.FromResult(_context.State.Context);
+    }
+
+    public async Task ReceiveReminder(string reminderName, TickStatus status)
+    {
+        if (reminderName == "DeleteSelfReminder")
+        {
+            _logger.LogInformation($"Reminder triggered for grain {this.GetGrainId()}, deleting grain.");
+            await ClearStateAsync();
+            DeactivateOnIdle();
+        }
+    }
+
+    public async Task ResetSelfTerminateTime(TimeSpan timeSpan)
+    {
+        _reminder = await this.RegisterOrUpdateReminder(
+            AISmartGAgentConstants.ContextStorageGrainSelfTerminateReminderName,
+            timeSpan, timeSpan);
+    }
+
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        _reminder = await this.RegisterOrUpdateReminder(
+            AISmartGAgentConstants.ContextStorageGrainSelfTerminateReminderName,
+            AISmartGAgentConstants.DefaultContextStorageGrainSelfDeleteTime,
+            AISmartGAgentConstants.DefaultContextStorageGrainSelfDeleteTime);
+        await base.OnActivateAsync(cancellationToken);
     }
 }
