@@ -1,8 +1,8 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
-using AISmart.Events;
-using AiSmart.GAgent.TestAgent.ConclusionAgent;
+using AiSmart.GAgent.SocialAgent.GAgent;
+using AISmart.GEvents.Social;
 using AISmart.Grains;
 using Json.Schema.Generation;
 using Microsoft.Extensions.Logging;
@@ -13,38 +13,35 @@ namespace AiSmart.GAgent.TestAgent;
 [Description("I can chat with users.")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class ChatGAgent : MicroAIGAgent, IChatGAgent
+public class SocialGAgent : MicroAIGAgent, ISocialGAgent
 {
-    public ChatGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
+    public SocialGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
 
     [EventHandler]
-    public  async Task<ChatResponseGEvent> HandleEventAsync(ChatGEvent gEvent)
+    public  async Task<SocialResponseEvent> HandleEventAsync(SocialEvent @event)
     {
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();
         list.Add(new AIReceiveMessageGEvent
         {
-            Message = new MicroAIMessage("user", gEvent.Content)
+            Message = new MicroAIMessage("user", @event.Content)
         });
 
-        ChatResponseGEvent aiResponseEvent = new ChatResponseGEvent();
+        SocialResponseEvent aiResponseEvent = new SocialResponseEvent();
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(gEvent.Content, State.RecentMessages.ToList());
+            .SendAsync(@event.Content, State.RecentMessages.ToList());
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            _logger.LogInformation("AI replyMessage:" + message.Content);
+            _logger.LogInformation(" AI replyMessage:" + message.Content);
             list.Add(new AIReplyMessageGEvent()
             {
                 Message = message
             });
 
-            aiResponseEvent.ResponseContent = "Done";
-
-            // await PublishAsync(new SendMessageEvent
-            // {
-            //     Message = message.Content
-            // });
+            aiResponseEvent.ResponseContent = message.Content;
+            aiResponseEvent.ChatId = @event.ChatId;
+            aiResponseEvent.ReplyMessageId = @event.MessageId;
         }
 
         base.RaiseEvents(list);

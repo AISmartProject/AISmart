@@ -26,6 +26,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
+        <ProjectReference Include="..\AiSmart.GAgent.SocialGAgent\AiSmart.GAgent.SocialAgent.csproj" />
         <ProjectReference Include="..\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj" />
         <ProjectReference Include="..\AISmart.EventSourcing.MongoDB\AISmart.EventSourcing.MongoDB.csproj" />
         <ProjectReference Include="..\AISmart.MongoDB\AISmart.MongoDB.csproj" />

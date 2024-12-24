@@ -15,7 +15,7 @@ namespace AiSmart.GAgent.TestAgent.ConclusionAgent;
     "I'm a  Summarizer, When I collect 7 votes, I will summarize the 7 votes and then send the information to Telegram.")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class ConclusionGAgent : MicroAIGAgent<ConclusionGEvent, ConclusionGEventResponse>, IConclusionGAgent
+public class ConclusionGAgent : MicroAIGAgent, IConclusionGAgent
 {
     private int _voteCount = 7;
 
@@ -24,7 +24,7 @@ public class ConclusionGAgent : MicroAIGAgent<ConclusionGEvent, ConclusionGEvent
     }
 
     [EventHandler]
-    public override async Task<ConclusionGEventResponse> HandleEventAsync(ConclusionGEvent @event)
+    public  async Task<ConclusionGEventResponse> HandleEventAsync(ConclusionGEvent @event)
     {
         // _logger.LogInformation("ConclusionAgent " + @event.MessageId);
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();

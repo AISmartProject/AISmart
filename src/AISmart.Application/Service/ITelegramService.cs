@@ -9,4 +9,5 @@ public interface ITelegramService
     public Task ReceiveMessagesAsync(TelegramUpdateDto updateMessage, StringValues token);
     
     public Task SetGroupsAsync();
+    Task RegisterBotAsync(RegisterTelegramDto registerTelegramDto);
 }

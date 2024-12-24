@@ -1,4 +1,5 @@
 ﻿using AISmart.Application.Grains;
+using AiSmart.GAgent.SocialAgent;
 using AiSmart.GAgent.TestAgent;
 using AISmart.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +27,9 @@ namespace AISmart;
     typeof(AISmartGAgentTelegramModule),
     typeof(AISmartGAgentTwitterModule),
     typeof(AISmartGAgentMicroAIModule),
-    typeof(AISmartGAgentTestAgentModule)
+    typeof(AISmartGAgentTestAgentModule),
+    typeof(AISmartGAgentSocialGAgentModule)
+    
 )]
 public class AISmartApplicationModule : AbpModule
 {

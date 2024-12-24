@@ -13,14 +13,14 @@ namespace AiSmart.GAgent.TestAgent.Voter;
 
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class VoteGAgent : MicroAIGAgent<VoterGEvent, VoteGEventResponse>, IVoterGAgent
+public class VoteGAgent : MicroAIGAgent, IVoterGAgent
 {
-    public VoteGAgent(ILogger<MicroAIGAgent<VoterGEvent, VoteGEventResponse>> logger) : base(logger)
+    public VoteGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
 
     [EventHandler]
-    public override async Task<VoteGEventResponse> HandleEventAsync(VoterGEvent @event)
+    public  async Task<VoteGEventResponse> HandleEventAsync(VoterGEvent @event)
     {
         // _logger.LogInformation("Vote AI ReceiveMessageEvent " + @event.MessageId);
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();

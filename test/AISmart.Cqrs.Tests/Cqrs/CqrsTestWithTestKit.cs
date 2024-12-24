@@ -15,7 +15,7 @@ using Orleans.TestKit;
 
 namespace AISmart.GAgent;
 
-public class CqrsTests : GAgentTestKitBase
+public class CqrsTestWithTestKit : GAgentTestKitBase
 {
    private readonly ITestOutputHelper _output;
     private readonly ICQRSProvider _cqrsProvider;
@@ -27,7 +27,7 @@ public class CqrsTests : GAgentTestKitBase
 
     private const string IndexId = "1";
 
-    public CqrsTests(ITestOutputHelper output)
+    public CqrsTestWithTestKit(ITestOutputHelper output)
     {
         _output = output;
         _mockIndexingService = new Mock<IIndexingService>();

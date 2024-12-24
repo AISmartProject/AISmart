@@ -8,7 +8,6 @@ namespace AISmart.DbMigrator;
 
 [DependsOn(
     typeof(AbpAutofacModule),
-    typeof(AbpCachingStackExchangeRedisModule),
     typeof(AISmartMongoDbModule),
     typeof(AISmartApplicationContractsModule)
     )]

@@ -12,13 +12,13 @@ namespace AiSmart.GAgent.TestAgent.NLPAgent;
 [Description("")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class NLPGAgent : MicroAIGAgent<NLPGEvent, NLPGEventResponse>, INLPGAgent
+public class NLPGAgent : MicroAIGAgent, INLPGAgent
 {
-    public NLPGAgent(ILogger<MicroAIGAgent<NLPGEvent, NLPGEventResponse>> logger) : base(logger)
+    public NLPGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
 
-    public override async Task<NLPGEventResponse> HandleEventAsync(NLPGEvent @event)
+    public  async Task<NLPGEventResponse> HandleEventAsync(NLPGEvent @event)
     {
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
             .SendAsync(@event.Content, State.RecentMessages.ToList());

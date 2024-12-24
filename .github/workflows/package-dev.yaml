@@ -5,7 +5,7 @@ on:
     branches:
       - "dev"
 
-run-name: Deploy AiSmart on ${{ github.ref }} to Testnet from ${{ github.sha }}
+run-name: Package AiSmart on ${{ github.ref }}
 
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"

@@ -274,10 +274,19 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
     }
 
-    protected sealed override async void OnStateChanged()
+    protected sealed override void OnStateChanged()
     {
-        HandleStateChangedAsync();
-
+        InternalOnStateChangedAsync().ContinueWith(task =>
+        {
+            if (task.Exception != null)
+            {
+                Logger.LogError(task.Exception, "InternalOnStateChangedAsync operation failed");
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+    private async Task InternalOnStateChangedAsync()
+    {
+        await HandleStateChangedAsync();
         //TODO:  need optimize use kafka,ensure Es written successfully
         await EventDispatcher.PublishAsync(State, this.GetGrainId().ToString());
     }
