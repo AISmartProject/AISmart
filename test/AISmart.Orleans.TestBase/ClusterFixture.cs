@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AISmart.Application.Grains;
 using AISmart.CQRS;
 using AISmart.CQRS.Handler;
+using AISmart.CQRS.Options;
 using AISmart.CQRS.Provider;
 using AISmart.CQRS.Service;
 using AISmart.EventSourcing.Core.Hosting;
@@ -17,6 +18,7 @@ using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Nest;
 using Orleans.Hosting;
@@ -103,6 +105,17 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 services.AddSingleton(mockElasticClient.Object);
                 var _mockIndexingService = new Mock<IIndexingService>();
                 services.AddSingleton(_mockIndexingService.Object); 
+                
+                var kafkaOptions = new KafkaOptions()
+                {
+                    Topic = "state-topic",
+                    BootstrapServers = "https://127.0.0.1:9092",
+                    GroupId = "state-consumer-group"
+                };
+                var mockOptionsMonitor = new Mock<IOptionsMonitor<KafkaOptions>>();
+                mockOptionsMonitor.Setup(m => m.CurrentValue).Returns(kafkaOptions);
+                services.AddSingleton(mockOptionsMonitor.Object); 
+
                 services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
             })
             .AddMemoryStreams("AISmart")

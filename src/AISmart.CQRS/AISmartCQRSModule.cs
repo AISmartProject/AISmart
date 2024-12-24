@@ -24,8 +24,7 @@ public class AISmartCQRSModule : AbpModule
         {
             Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AISmartCQRSModule>(); });
             var configuration = context.Services.GetConfiguration();
-            context.Services.Configure<KafkaOptions>(configuration.GetSection("Kafka"));
-            Configure<KafkaOptions>(configuration);
+            Configure<KafkaOptions>(configuration.GetSection("Kafka"));
 
             context.Services.AddTransient<KafkaProducerService>();
             context.Services.AddTransient<KafkaConsumerService>();
@@ -40,6 +39,7 @@ public class AISmartCQRSModule : AbpModule
             context.Services.AddTransient<GetStateQueryHandler>();
             context.Services.AddTransient<SendEventCommandHandler>();
             ConfigureElasticsearch(context, configuration);
+            
         }
        private static void ConfigureElasticsearch(
            ServiceConfigurationContext context,
