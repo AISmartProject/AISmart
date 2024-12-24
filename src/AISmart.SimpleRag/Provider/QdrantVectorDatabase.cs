@@ -113,6 +113,7 @@ public class QdrantVectorDatabase : IVectorDatabase, ISingletonDependency
 
     public async Task<List<string>> RetrieveAsync(float[] queryEmbedding, int topK = 5)
     {
+        await EnsureCollectionExistsAsync();
         var requestBody = new { vector = queryEmbedding, top = topK, with_payload = true };
         var response = await _httpClient.PostAsJsonAsync($"{_qdrantUrl}/collections/{_collectionName}/points/search", requestBody);
         response.EnsureSuccessStatusCode();

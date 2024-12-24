@@ -1,4 +1,5 @@
 using AISmart.Evaluate;
+using AISmart.Evaluate.Options;
 using AISmart.GAgent.Autogen.Options;
 using AISmart.Options;
 using AISmart.Provider;
@@ -27,6 +28,11 @@ public class AISmartGAgentAutogenModule : AbpModule
         // context.Services.AddTransient<ChatClient>(op => new ChatClient(autogenConfig.Model, autogenConfig.ApiKey));
         context.Services.AddTransient<IChatAgentProvider, ChatAgentProvider>();
         // context.Services.AddTransient<IChatService, ChatService>();
-        Configure<RagOptions>(configuration.GetSection("AutogenConfig:AutoGenRag"));
+        // Configure<RagOptions>(configuration.GetSection("AutogenConfig:AutoGenRag"));
+        Configure<RagOptions>("AutogenRag", configuration.GetSection("AutogenConfig:AutoGenRag"));
+        Configure<RagOptions>("EvaluateRag", configuration.GetSection("Evaluate:Rag"));
+        
+        
+        
     }
 }

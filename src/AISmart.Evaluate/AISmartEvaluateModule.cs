@@ -15,9 +15,9 @@ public class AISmartEvaluateModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        Configure<RagOptions>(configuration.GetSection("EvaluateRag"));
-        
-        context.Services.AddSingleton<IRagProvider, RagProvider>();
-        context.Services.AddSingleton<IAISmartEvaluateService, AISmartEvaluateService>();
+        // Configure<RagOptions>(configuration.GetSection("EvaluateRag"));
+        // context.Services.AddSingleton<IRagProvider, RagProvider>();
+        // context.Services.AddSingleton<IAISmartEvaluateService, AISmartEvaluateService>();
+        // Configure<RagOptions>("EvaluateRag", configuration.GetSection("Evaluate:Rag"));
     }
 }
