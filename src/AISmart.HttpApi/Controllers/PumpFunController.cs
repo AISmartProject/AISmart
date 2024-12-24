@@ -27,7 +27,8 @@ public class PumpFunController : AISmartController
         _pumpFunChatService = pumpFunChatService;
     }
     
-    [HttpPost("setGroup")]
+    [HttpPost]
+    [Route("setGroup")]
     public async Task<string> SetGroupsAsync(string chatId)
     {
         _logger.LogInformation("PumpFunController SetGroupsAsync, chatId:{chatId}, botName:{botName}", chatId);
@@ -35,7 +36,8 @@ public class PumpFunController : AISmartController
     }
     
     
-    [HttpPost("chat")]
+    [HttpPost]
+    [Route("chat")]
     [Authorize]
     public Task<PumpFunOutputDto> Chat([FromBody]PumpFunInputDto inputDto)
     {
