@@ -138,7 +138,34 @@ public class TelegramProvider : ITelegramProvider,ISingletonDependency
             _logger.LogError($"request error: {e.Message}");
         }
     }
-    
+
+    public async Task DelWebhookAsync(string token)
+    {
+        /*String account = GetAccount(token);
+        if (account.IsNullOrEmpty())
+        {
+            return;
+        }
+        string url = $"https://api.telegram.org/bot{account}/delWebhook";
+
+        var parameters = new FormUrlEncodedContent(new[]
+       );
+
+        try
+        {
+            HttpResponseMessage response = await new HttpClient().PostAsync(url, parameters);
+                
+            response.EnsureSuccessStatusCode();
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation(responseBody);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError($"request error: {e.Message}");
+        }*/
+    }
+
     private string GetAccount(string accountName)
     {
         try
