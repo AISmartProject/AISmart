@@ -109,7 +109,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 var kafkaOptions = new KafkaOptions()
                 {
                     Topic = "state-topic",
-                    BootstrapServers = "https://127.0.0.1:9092",
+                    BootstrapServers = "127.0.0.1:9092",
                     GroupId = "state-consumer-group"
                 };
                 var mockOptionsMonitor = new Mock<IOptionsMonitor<KafkaOptions>>();

@@ -33,7 +33,7 @@ public class KafkaConsumerService : ITransientDependency
     {
         using var consumer = new ConsumerBuilder<Ignore, string>(_consumerConfig).Build();
         consumer.Subscribe(_topic);
-
+        _logger.LogInformation("StartConsuming...");
         try
         {
             while (!cancellationToken.IsCancellationRequested)

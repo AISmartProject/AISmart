@@ -6,6 +6,7 @@ using AISmart.CQRS.Options;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 namespace AISmart.CQRS.Service;
 
@@ -29,7 +30,7 @@ public class KafkaProducerService: ITransientDependency
         using var producer = new ProducerBuilder<Null, string>(_producerConfig).Build();
         try
         {
-            var messageValue = JsonSerializer.Serialize(command);
+            var messageValue = JsonConvert.SerializeObject(command);
             var deliveryResult = await producer.ProduceAsync(_topic, new Message<Null, string> { Value = messageValue });
             _logger.LogInformation("Delivered {result} to {topicPartitionOffset}", deliveryResult.Value, deliveryResult.TopicPartitionOffset);
         }

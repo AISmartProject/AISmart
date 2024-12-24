@@ -18,6 +18,9 @@ using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 using Moq;
+using Volo.Abp;
+using Volo.Abp.Modularity;
+
 namespace AISmart.GAgent;
 
 public class CqrsTests : AISmartApplicationTestBase
@@ -52,11 +55,24 @@ public class CqrsTests : AISmartApplicationTestBase
         services.AddSingleton<IGrainFactory>(_clusterClient);
         var serviceProvider = services.BuildServiceProvider();
         _cqrsProvider = serviceProvider.GetRequiredService<ICQRSProvider>();
+        
+      
+
     }
 
     [Fact]
     public async Task SendTransactionTest()
     {
+        var services = new ServiceCollection();
+
+        var serviceProvider = services.BuildServiceProvider();
+        var serviceContext = new ServiceConfigurationContext(services);
+
+        
+        var module = new AISmartCQRSModule();
+        var appInitializationContext = new ApplicationInitializationContext(serviceProvider);
+        await module.OnApplicationInitializationAsync(appInitializationContext);
+        
         var config = GetRequiredService<IOptionsMonitor<KafkaOptions>>().CurrentValue;
 
         var createTransactionEvent = new CreateTransactionEvent()
