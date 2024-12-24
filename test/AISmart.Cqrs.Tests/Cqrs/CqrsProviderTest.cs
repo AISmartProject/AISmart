@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace AISmart.GAgent;
 
-public class CqrsProviderTest : AISmartApplicationTestBase
+public class CqrsProviderTest : AISmartCqrsTestBase
 {
     private readonly IClusterClient _clusterClient;
     private readonly ICQRSProvider _cqrsProvider;

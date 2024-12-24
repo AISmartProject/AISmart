@@ -25,6 +25,8 @@ public class AISmartCQRSModule : AbpModule
             Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AISmartCQRSModule>(); });
             var configuration = context.Services.GetConfiguration();
             context.Services.Configure<KafkaOptions>(configuration.GetSection("Kafka"));
+            Configure<KafkaOptions>(configuration);
+
             context.Services.AddTransient<KafkaProducerService>();
             context.Services.AddTransient<KafkaConsumerService>();
             

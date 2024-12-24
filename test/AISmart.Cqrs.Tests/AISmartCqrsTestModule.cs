@@ -1,4 +1,5 @@
-﻿using AISmart.Options;
+﻿using AISmart.CQRS.Options;
+using AISmart.Options;
 using AISmart.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
@@ -22,5 +23,7 @@ public class AISmartCqrsTestModule: AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ChatConfigOptions>(configuration.GetSection("Chat"));   
         context.Services.AddSingleton<ICqrsService, CqrsService>();
+        Configure<KafkaOptions>(configuration.GetSection("Kafka"));
+
     }
 }

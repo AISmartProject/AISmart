@@ -12,7 +12,7 @@ using Xunit.Abstractions;
 using Moq;
 namespace AISmart.GAgent;
 
-public class CqrsMqTests : AISmartApplicationTestBase
+public class CqrsMqTests : AISmartCqrsTestBase //AISmartApplicationTestBase
 {
     private readonly IClusterClient _clusterClient;
     private readonly ITestOutputHelper _output;
@@ -72,20 +72,5 @@ public class CqrsMqTests : AISmartApplicationTestBase
         esResult.Id.ShouldBe(IndexId);
     }
 
-    [Fact]
-    public async Task SendEventCommandTest()
-    {
-        var createTransactionEvent = new CreateTransactionEvent()
-        {
-            ChainId = ChainId,
-            SenderName = SenderName,
-            ContractAddress = Address,
-            MethodName = "Transfer",
-        };
-        await _cqrsProvider.SendEventCommandAsync(createTransactionEvent);
-        var command = new SendEventCommand()
-        {
-            Event = createTransactionEvent
-        };
-    }
+    
 }

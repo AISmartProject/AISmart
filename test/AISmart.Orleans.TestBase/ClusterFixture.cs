@@ -6,6 +6,7 @@ using AISmart.Application.Grains;
 using AISmart.CQRS;
 using AISmart.CQRS.Handler;
 using AISmart.CQRS.Provider;
+using AISmart.CQRS.Service;
 using AISmart.EventSourcing.Core.Hosting;
 using AISmart.GAgent.Core;
 using AISmart.Mock;
@@ -89,7 +90,8 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
                 services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
                 services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
-
+                services.AddTransient<KafkaProducerService>();
+                services.AddTransient<KafkaConsumerService>();
                 services.AddTransient<SaveStateCommandHandler>();
                 services.AddTransient<GetStateQueryHandler>();
                 services.AddTransient<SendEventCommandHandler>();

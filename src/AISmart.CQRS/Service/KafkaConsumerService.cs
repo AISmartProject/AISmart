@@ -14,17 +14,19 @@ public class KafkaConsumerService : ITransientDependency
     private readonly ILogger<KafkaConsumerService> _logger;
     private readonly ConsumerConfig _consumerConfig;
     private readonly string _topic;
+    private readonly IOptionsMonitor<KafkaOptions> _kafkaOptions;
 
-    public KafkaConsumerService(IOptions<KafkaOptions> kafkaOptions, ILogger<KafkaConsumerService> logger)
+
+    public KafkaConsumerService(IOptionsMonitor<KafkaOptions> kafkaOptions, ILogger<KafkaConsumerService> logger)
     {
         _logger = logger;
         _consumerConfig = new ConsumerConfig
         {
-            BootstrapServers = kafkaOptions.Value.BootstrapServers,
-            GroupId = kafkaOptions.Value.GroupId,
+            BootstrapServers = kafkaOptions.CurrentValue.BootstrapServers,
+            GroupId = kafkaOptions.CurrentValue.GroupId,
             AutoOffsetReset = AutoOffsetReset.Earliest,
         };
-        _topic = kafkaOptions.Value.Topic;
+        _topic = kafkaOptions.CurrentValue.Topic;
     }
 
     public void StartConsuming(CancellationToken cancellationToken)

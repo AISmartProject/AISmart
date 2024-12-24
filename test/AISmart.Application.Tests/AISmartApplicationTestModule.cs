@@ -1,5 +1,6 @@
 using System;
 using AISmart.CQRS.Handler;
+using AISmart.CQRS.Options;
 using AISmart.Options;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,5 +26,7 @@ public class AISmartApplicationTestModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<ChatConfigOptions>(configuration.GetSection("Chat"));   
         Configure<RagOptions>(configuration.GetSection("Rag"));   
+        Configure<KafkaOptions>(configuration.GetSection("Kafka"));
+
     }
 }

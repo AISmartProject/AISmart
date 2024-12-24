@@ -7,9 +7,12 @@ using AISmart.Agents.X.Events;
 using AISmart.CQRS;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Handler;
+using AISmart.CQRS.Options;
 using AISmart.CQRS.Provider;
+using AISmart.Options;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -54,6 +57,8 @@ public class CqrsTests : AISmartApplicationTestBase
     [Fact]
     public async Task SendTransactionTest()
     {
+        var config = GetRequiredService<IOptionsMonitor<KafkaOptions>>().CurrentValue;
+
         var createTransactionEvent = new CreateTransactionEvent()
         {
             ChainId = ChainId,
@@ -80,6 +85,7 @@ public class CqrsTests : AISmartApplicationTestBase
     [Fact]
     public async Task SendEventCommandTest()
     {
+
         var createTransactionEvent = new CreateTransactionEvent()
         {
             ChainId = ChainId,

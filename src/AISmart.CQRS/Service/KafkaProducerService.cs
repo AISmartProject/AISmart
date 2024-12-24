@@ -14,12 +14,14 @@ public class KafkaProducerService: ITransientDependency
     private readonly ILogger<KafkaProducerService> _logger;
     private readonly ProducerConfig _producerConfig;
     private readonly string _topic;
+    private readonly IOptionsMonitor<KafkaOptions> _kafkaOptions;
 
-    public KafkaProducerService(IOptions<KafkaOptions> kafkaOptions, ILogger<KafkaProducerService> logger)
+    public KafkaProducerService(IOptionsMonitor<KafkaOptions> kafkaOptions, ILogger<KafkaProducerService> logger)
     {
+        _kafkaOptions = kafkaOptions;
         _logger = logger;
-        _producerConfig = new ProducerConfig { BootstrapServers = kafkaOptions.Value.BootstrapServers };
-        _topic = kafkaOptions.Value.Topic;
+        _producerConfig = new ProducerConfig { BootstrapServers = kafkaOptions.CurrentValue.BootstrapServers };
+        _topic = kafkaOptions.CurrentValue.Topic;
     }
 
     public async Task SendAsync(SaveStateCommand command)
