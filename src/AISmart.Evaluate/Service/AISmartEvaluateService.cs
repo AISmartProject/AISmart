@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AISmart.Provider;
 using AISmart.Rag;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
@@ -10,11 +11,13 @@ public class AISmartEvaluateService : IAISmartEvaluateService, ISingletonDepende
 {
     private readonly ILogger<AISmartEvaluateService> _logger;
     private readonly IRagProvider _ragProvider;
+    // private readonly IOptionsMonitor<EvaluateOptions> _evaluateOptions;
+    private readonly IRagProviderFactory _ragProviderFactory;
 
-    public AISmartEvaluateService(ILogger<AISmartEvaluateService> logger, IRagProvider ragProvider)
+    public AISmartEvaluateService(ILogger<AISmartEvaluateService> logger, IRagProviderFactory ragProviderFactory)
     {
         _logger = logger;
-        _ragProvider = ragProvider;
+        _ragProvider = ragProviderFactory.GetProvider("EvaluateRag");
     }
 
     public async Task EvaluateAsync(string task, string result)

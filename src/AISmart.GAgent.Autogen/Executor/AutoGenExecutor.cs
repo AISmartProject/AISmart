@@ -74,8 +74,8 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
         _descriptionManager = GrainFactory.GetGrain<IAgentDescriptionManager>(taskInfo.AgentDescriptionManagerId);
         
         var history = ConvertMessage(taskInfo.History);
-        var exceptionAdvice = await _evaluateService.GetAdviceAsync(GetTaskDescription(taskInfo.History));
-        history.Add(new TextMessage(Role.System, exceptionAdvice));
+        // var exceptionAdvice = await _evaluateService.GetAdviceAsync(GetTaskDescription(taskInfo.History));
+        // history.Add(new TextMessage(Role.System, exceptionAdvice));
         var responsibility = await GetAgentResponsibility();
         _chatAgentProvider.SetAgent(AgentName, responsibility, GetMiddleware());
         var response = await _chatAgentProvider.SendAsync(AgentName, "What should be done next?", history);
@@ -292,7 +292,7 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
         var descriptionDic = await _descriptionManager.GetAgentDescription();
         if (descriptionDic.TryGetValue(agentName, out var eventDescription) == false)
         {
-            throw new AutogenException($"Event name:{agentName} not exist");
+            throw new AutogenException($"Agent name:{agentName} not exist");
         }
 
         var eventInfo = eventDescription.EventList.FirstOrDefault(f => f.EventName == eventName);

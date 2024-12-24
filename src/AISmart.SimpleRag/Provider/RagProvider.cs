@@ -19,23 +19,23 @@ public class RagProvider : IRagProvider, ISingletonDependency
     private readonly IEmbeddingProvider _embeddingProvider;
     private readonly IVectorDatabase _vectorDatabase;
     private readonly ILogger<RagProvider> _logger;
-    private readonly IOptionsMonitor<RagOptions> _ragOptions;
+    private readonly IOptions<RagOptions> _ragOptions;
 
-    public RagProvider(IOptionsMonitor<RagOptions> ragOptions, ILogger<RagProvider> logger)
+    public RagProvider(IOptions<RagOptions> ragOptions, ILogger<RagProvider> logger)
     {
         _ragOptions = ragOptions;
         _chunker = new SimpleChunker();
-        _embeddingProvider = new OpenAIEmbeddingProvider(_ragOptions.CurrentValue.APIKey);
-        _vectorDatabase = new QdrantVectorDatabase(_ragOptions.CurrentValue.QdrantUrl, 
-            _ragOptions.CurrentValue.CollectionName, 
-            _ragOptions.CurrentValue.VectorSize);
+        _embeddingProvider = new OpenAIEmbeddingProvider(_ragOptions.Value.APIKey);
+        _vectorDatabase = new QdrantVectorDatabase(_ragOptions.Value.QdrantUrl, 
+            _ragOptions.Value.CollectionName, 
+            _ragOptions.Value.VectorSize);
         _logger = logger;
     }
 
     public async Task StoreTextAsync(string text)
     {
         _logger.LogInformation("store text {text}", text);
-        var chunkSize = _ragOptions.CurrentValue.ChunkSize;
+        var chunkSize = _ragOptions.Value.ChunkSize;
         var chunks = await _chunker.Chunk(text, chunkSize);
         foreach (var chunk in chunks)
         {
@@ -67,7 +67,7 @@ public class RagProvider : IRagProvider, ISingletonDependency
         _logger.LogInformation("retrieve text {query}", query);
         var queryEmbedding = await _embeddingProvider.GetEmbeddingAsync(query);
         var relevantChunks = await _vectorDatabase.RetrieveAsync(queryEmbedding, 3);
-        return string.Join(" ", relevantChunks);
+        return relevantChunks.IsNullOrEmpty() ? "" : string.Join(" ", relevantChunks);
     }
     
     private async Task BatchStoreFilesAsync(IList<string> files)

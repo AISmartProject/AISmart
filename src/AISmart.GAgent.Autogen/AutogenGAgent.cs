@@ -31,9 +31,9 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
     private readonly int _maxRaiseEventCount = 50;
 
     public AutogenGAgent(ILogger<AutogenGAgent> logger,
-        IRagProvider ragProvider) : base(logger)
+        IRagProviderFactory ragProviderFactory) : base(logger)
     {
-        _ragProvider = ragProvider;
+        _ragProvider = ragProviderFactory.GetProvider("AutogenRag");
     }
 
     public async Task RegisterAgentEvent(Type agent, List<Type> eventTypes)
