@@ -1,3 +1,4 @@
+using AISmart.Evaluate;
 using AISmart.GAgent.Autogen.Options;
 using AISmart.GAgent.Core;
 using AISmart.Options;
@@ -13,7 +14,8 @@ namespace AISmart.GAgent.Autogen;
 
 [DependsOn(
     typeof(AISmartApplicationContractsModule),
-    typeof(AISmartSimpleRagModule)
+    typeof(AISmartSimpleRagModule),
+    typeof(AISmartEvaluateModule)
 )]
 public class AISmartGAgentAutogenModule : AbpModule
 {

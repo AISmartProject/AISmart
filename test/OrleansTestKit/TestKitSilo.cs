@@ -3,8 +3,10 @@ using AISmart.Agents;
 using AISmart.EventSourcing.Core;
 using AISmart.EventSourcing.Core.LogConsistency;
 using AISmart.EventSourcing.Core.Storage;
+using AISmart.Evaluate.Service;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Autogen.Common;
+using AISmart.GAgent.Autogen.DescriptionManager;
 using AISmart.Mock;
 using AISmart.Provider;
 using AutoGen.OpenAI;
@@ -76,14 +78,14 @@ public sealed class TestKitSilo
         GrainRuntime =
             new TestGrainRuntime(GrainFactory, TimerRegistry, ReminderRegistry, ServiceProvider, StorageManager);
         ServiceProvider.AddService<IGrainRuntime>(GrainRuntime);
-        _grainCreator = new TestGrainCreator(GrainRuntime, ReminderRegistry, TestGrainStorage, ServiceProvider);
+        _grainCreator = new TestGrainCreator(GrainRuntime, ReminderRegistry, ServiceProvider);
 
         ServiceProvider.AddService<IAElfNodeProvider>(new MockAElfNodeProvider());
         
-        // var manager = new AgentDescriptionManager();
-        // ServiceProvider.AddService(manager);
-        // ServiceProvider.AddService(new AutoGenExecutor(NullLogger<AutoGenExecutor>.Instance, GrainFactory, manager, new TestChatAgentProvider()));
-        ServiceProvider.AddService<IGrainStorage>(TestGrainStorage);
+        var manager = new AgentDescriptionManager();
+        ServiceProvider.AddService(manager);
+        ServiceProvider.AddService(new AutoGenExecutor(NullLogger<AutoGenExecutor>.Instance, GrainFactory, manager, new TestChatAgentProvider()));
+
         var provider = new ServiceCollection()
             .AddSingleton<GrainTypeResolver>()
             .AddSingleton<IGrainTypeProvider, AttributeGrainTypeProvider>()

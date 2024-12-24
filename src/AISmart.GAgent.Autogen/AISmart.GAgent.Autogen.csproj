@@ -10,6 +10,7 @@
         <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
         <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
         <ProjectReference Include="..\AISmart.SimpleRag\AISmart.SimpleRag.csproj" />
+        <ProjectReference Include="..\AISmart.Evaluate\AISmart.Evaluate.csproj" />
     </ItemGroup>
 
     <ItemGroup>
