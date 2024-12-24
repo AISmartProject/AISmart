@@ -83,7 +83,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         // Look for a mention that matches the token and decide accordingly.
         foreach (var entity in updateMessage.Message.Entities)
         {
-            if (entity.Type == "Mention")
+            if (entity.Type == "mention")
             {
                 var mentionText = updateMessage.Message.Text.Substring(entity.Offset, entity.Length);
                 if (mentionText.Equals("@" + token, StringComparison.OrdinalIgnoreCase))
