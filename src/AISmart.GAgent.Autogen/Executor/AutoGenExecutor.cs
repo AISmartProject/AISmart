@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AISmart.Agents;
 using AISmart.Dapr;
+using AISmart.Evaluate.Service;
 using AISmart.GAgent.Autogen.Common;
 using AISmart.GAgent.Autogen.DescriptionManager;
 using AISmart.GAgent.Autogen.Event;
@@ -24,11 +25,15 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
     private const string BreakFlag = "break";
     private Guid _taskId;
     private IAgentDescriptionManager _descriptionManager;
+    private IAISmartEvaluateService _evaluateService;
+    public string ExceptionMessage;
 
-    public AutoGenExecutor(ILogger<AutoGenExecutor> logger, IChatAgentProvider chatAgentProvider)
+    public AutoGenExecutor(ILogger<AutoGenExecutor> logger, IChatAgentProvider chatAgentProvider, 
+        IAISmartEvaluateService evaluateService)
     {
         _logger = logger;
         _chatAgentProvider = chatAgentProvider;
+        _evaluateService = evaluateService;
     }
 
     public async Task ExecuteTaskAsync(ExecutorTaskInfo taskInfo)
@@ -36,6 +41,18 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
         try
         {
             await CallAutogen(taskInfo);
+            ExceptionMessage = string.Empty;
+        }
+        catch (JsonException e)
+        {
+            await _evaluateService.AddExceptionMessageAsync(GetTaskDescription(taskInfo.History), e.ToString());
+            await PublishInternalEvent(new AutoGenExecutorEvent()
+            {
+                TaskId = _taskId,
+                ExecuteStatus = TaskExecuteStatus.Break,
+                EndContent = "Internal error",
+            });
+            ExceptionMessage = e.ToString();
         }
         catch (Exception e)
         {
@@ -57,6 +74,8 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
         _descriptionManager = GrainFactory.GetGrain<IAgentDescriptionManager>(taskInfo.AgentDescriptionManagerId);
         
         var history = ConvertMessage(taskInfo.History);
+        var exceptionAdvice = await _evaluateService.GetAdviceAsync(GetTaskDescription(taskInfo.History));
+        history.Add(new TextMessage(Role.System, exceptionAdvice));
         var responsibility = await GetAgentResponsibility();
         _chatAgentProvider.SetAgent(AgentName, responsibility, GetMiddleware());
         var response = await _chatAgentProvider.SendAsync(AgentName, "What should be done next?", history);
@@ -138,6 +157,16 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
         }
 
         return result;
+    }
+    
+    private string GetTaskDescription(List<AutogenMessage> listAutoGenMessage)
+    {
+        var list = new List<string>();
+        foreach (var item in listAutoGenMessage)
+        {
+            list.Add(item.Role + ": " + item.Content);
+        }
+        return string.Join("\n", list);
     }
 
     private Role GetRole(string roleName)

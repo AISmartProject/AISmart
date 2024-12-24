@@ -1,6 +1,8 @@
 ﻿using System.Linq.Expressions;
+using AISmart.Evaluate.Service;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Autogen.Common;
+using AISmart.GAgent.Autogen.DescriptionManager;
 using AISmart.Mock;
 using AISmart.Provider;
 using AutoGen.OpenAI;
@@ -65,10 +67,15 @@ public sealed class TestKitSilo
 
         ServiceProvider.AddService<IAElfNodeProvider>(new MockAElfNodeProvider());
         
-        var manager = new AgentDescriptionManager();
-        ServiceProvider.AddService(manager);
-        ServiceProvider.AddService(new AutoGenExecutor(NullLogger<AutoGenExecutor>.Instance, GrainFactory, manager, new TestChatAgentProvider()));
-
+        // var manager = new AgentDescriptionManager();
+        // ServiceProvider.AddService(manager);
+        var chatAgentProvider = new TestChatAgentProvider();
+        var evaluateService = new TestEvaluateService();
+        ServiceProvider.AddService<IChatAgentProvider>(chatAgentProvider);
+        ServiceProvider.AddService<IAISmartEvaluateService>(evaluateService);
+        ServiceProvider.AddService<IAutoGenExecutor>(new AutoGenExecutor(NullLogger<AutoGenExecutor>.Instance, new TestChatAgentProvider(), new TestEvaluateService()));
+        
+        
         var provider = new ServiceCollection()
             .AddSingleton<GrainTypeResolver>()
             .AddSingleton<IGrainTypeProvider, AttributeGrainTypeProvider>()

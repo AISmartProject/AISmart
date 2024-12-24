@@ -71,6 +71,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.GAgent.MicroAI", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiSmart.GAgent.TestAgent", "src\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj", "{4EBBE2C2-7C37-4D3F-9F38-916A2758BDD1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AISmart.Evaluate", "src\AISmart.Evaluate\AISmart.Evaluate.csproj", "{E6CED902-9306-4EC4-810D-A23937B4C9FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -205,6 +207,10 @@ Global
 		{4EBBE2C2-7C37-4D3F-9F38-916A2758BDD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EBBE2C2-7C37-4D3F-9F38-916A2758BDD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EBBE2C2-7C37-4D3F-9F38-916A2758BDD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6CED902-9306-4EC4-810D-A23937B4C9FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6CED902-9306-4EC4-810D-A23937B4C9FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6CED902-9306-4EC4-810D-A23937B4C9FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6CED902-9306-4EC4-810D-A23937B4C9FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -242,6 +248,7 @@ Global
 		{ADFE5268-C662-450B-A727-A6CC974FEE15} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{F8C887E6-77D0-47C2-8B6B-FFB51E094396} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 		{4EBBE2C2-7C37-4D3F-9F38-916A2758BDD1} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
+		{E6CED902-9306-4EC4-810D-A23937B4C9FC} = {CA9AC87F-097E-4F15-8393-4BC07735A5B0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28315BFD-90E7-4E14-A2EA-F3D23AF4126F}
