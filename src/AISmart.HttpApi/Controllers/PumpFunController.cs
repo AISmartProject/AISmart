@@ -15,6 +15,7 @@ namespace AISmart.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("pumpfun")]
+[Route("api/pumpfun")]
 public class PumpFunController : AISmartController
 {
     private readonly ILogger<PumpFunController> _logger;
