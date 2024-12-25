@@ -49,7 +49,7 @@ public class PumpFunProvider : IPumpFunProvider,ISingletonDependency
             _logger.LogDebug("PumpFunProvider send message to {replyId} : {replyMessage}",replyId, replyMessage);
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(_callBackUrl);
-            client.DefaultRequestHeaders.Add("Authorization", _accessToke);
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _accessToke);
             _logger.LogDebug("PumpFunProvider send message2, accessToken:" + _accessToke);
             var response = await client.PostAsync(_callBackUrl, new StringContent(json, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
