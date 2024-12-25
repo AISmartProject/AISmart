@@ -46,12 +46,13 @@ public class PumpFunProvider : IPumpFunProvider,ISingletonDependency
         });
         try
         {
-            _logger.LogDebug("send message to {replyId} : {replyMessage}",replyId, replyMessage);
+            _logger.LogDebug("PumpFunProvider send message to {replyId} : {replyMessage}",replyId, replyMessage);
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(_callBackUrl);
             client.DefaultRequestHeaders.Add("Authorization", _accessToke);
             var response = await client.PostAsync(_callBackUrl, new StringContent(json, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
+            _logger.LogDebug("PumpFunProvider send message2 to {replyId} : {response} : {replyMessage}",replyId, response, replyMessage);
             string responseBody = await response.Content.ReadAsStringAsync();
             _logger.LogInformation(responseBody);
         }

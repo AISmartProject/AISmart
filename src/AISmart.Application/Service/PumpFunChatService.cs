@@ -39,9 +39,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         {
             _logger.LogInformation("ReceiveMessagesAsync2 agentId:" + inputDto.AgentId);
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(inputDto.AgentId));
-            groupAgent.ActivateAsync();
-
-
+            await groupAgent.ActivateAsync();
             _logger.LogInformation("ReceiveMessagesAsync3 agentId:" + inputDto.AgentId);
             
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
