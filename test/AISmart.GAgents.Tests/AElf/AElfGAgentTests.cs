@@ -2,7 +2,7 @@ using AISmart.Agent;
 using AISmart.Agent.Events;
 using AISmart.Agent.Grains;
 using AISmart.Application.Grains.Agents.Publisher;
-using AISmart.GGrains.Tests;
+using AISmart.GAgents.Tests;
 using AISmart.Sender;
 using Orleans.TestKit;
 using Shouldly;

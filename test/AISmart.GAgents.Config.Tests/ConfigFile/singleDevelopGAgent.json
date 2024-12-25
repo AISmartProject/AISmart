@@ -1,0 +1,12 @@
+{
+  "NetWork": {
+    "ContractsList": [
+      {
+        "Name":"DeveloperGAgent-William",
+        "Description":"市场部，运营人员",
+        "Type":"User",
+        "GrainType":"AISmart.Application.Grains.Agents.Developer.DeveloperGAgent"
+      }
+    ]
+  }
+}

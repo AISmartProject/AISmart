@@ -5,7 +5,7 @@ on:
     branches:
       - "release/*"
 
-run-name: Deploy AiSmart on ${{ github.ref }} to Testnet from ${{ github.sha }})
+run-name: Deploy AiSmart on ${{ github.ref }} to Testnet from ${{ github.sha }}
 
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
@@ -27,9 +27,6 @@ jobs:
           ]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0"
       - name: Cache NuGet Packages
         id: nuget-packages
         uses: actions/cache@v4
@@ -37,7 +34,7 @@ jobs:
           cache-name: nuget-package-cache
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-${{ env.cache-name }}
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ matrix.servicename }}
 
       - name: List NuGet Packages
         if: ${{ steps.nuget-packages.outputs.cache-hit == 'true' }}

@@ -14,6 +14,7 @@ public class TestGrainStorage : IGrainStorage
 
     public Task ReadStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
+        stateName = $"{grainId.ToString()}.{stateName}";
         var storage = _storageManager.GetStorage<T>(stateName);
         grainState.State = storage.State;
         return Task.CompletedTask;
@@ -21,6 +22,7 @@ public class TestGrainStorage : IGrainStorage
 
     public Task WriteStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
+        stateName = $"{grainId.ToString()}.{stateName}";
         var storage = _storageManager.GetStorage<T>(stateName);
         storage.State = grainState.State;
         _storageManager.AddStorage(storage, stateName);
@@ -29,6 +31,7 @@ public class TestGrainStorage : IGrainStorage
 
     public Task ClearStateAsync<T>(string stateName, GrainId grainId, IGrainState<T> grainState)
     {
+        stateName = $"{grainId.ToString()}.{stateName}";
         var storage = _storageManager.GetStorage<T>(stateName);
         storage.State = default!;
         return Task.CompletedTask;

@@ -15,9 +15,9 @@ using Volo.Abp;
 
 namespace AISmart.Controllers;
 
-[RemoteService]
 [Area("app")]
 [ControllerName("telegram")]
+[Route("api/telegram")]
 public class TelegramController: AISmartController
 {
     private readonly ILogger<TelegramController> _logger;
@@ -56,5 +56,11 @@ public class TelegramController: AISmartController
     public async Task TestMessages(string message)
     {
         await _microAiService.ReceiveMessagesAsync(message);
+    }
+    
+    [HttpPost("registerBot")]
+    public async Task RegisterBotAsync([FromBody] RegisterTelegramDto registerTelegramDto)
+    {
+        await _telegramService.RegisterBotAsync(registerTelegramDto);
     }
 }

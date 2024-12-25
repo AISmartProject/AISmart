@@ -13,14 +13,14 @@ namespace AiSmart.GAgent.TestAgent;
 [Description("I can chat with users.")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class ChatGAgent : MicroAIGAgent<ChatGEvent, ChatResponseGEvent>, IChatGAgent
+public class ChatGAgent : MicroAIGAgent, IChatGAgent
 {
-    public ChatGAgent(ILogger<MicroAIGAgent<ChatGEvent, ChatResponseGEvent>> logger) : base(logger)
+    public ChatGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
 
     [EventHandler]
-    public override async Task<ChatResponseGEvent> HandleEventAsync(ChatGEvent gEvent)
+    public  async Task<ChatResponseGEvent> HandleEventAsync(ChatGEvent gEvent)
     {
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();
         list.Add(new AIReceiveMessageGEvent
@@ -33,7 +33,7 @@ public class ChatGAgent : MicroAIGAgent<ChatGEvent, ChatResponseGEvent>, IChatGA
             .SendAsync(gEvent.Content, State.RecentMessages.ToList());
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            _logger.LogInformation("AI AI replyMessage:" + message.Content);
+            _logger.LogInformation("AI replyMessage:" + message.Content);
             list.Add(new AIReplyMessageGEvent()
             {
                 Message = message
