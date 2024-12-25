@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -30,6 +31,10 @@ public static class OrleansClientExtension
                 {
                     options.ClusterId = config["Orleans:ClusterId"];
                     options.ServiceId = config["Orleans:ServiceId"];
+                })
+                .Configure<ClientMessagingOptions>(options =>
+                {
+                    options.ResponseTimeout = TimeSpan.FromMinutes(60);
                 })
                 .AddMemoryStreams("AISmart");
         });
