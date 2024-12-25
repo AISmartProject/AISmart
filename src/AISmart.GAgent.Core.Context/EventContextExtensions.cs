@@ -1,5 +1,3 @@
-using AISmart.GAgent.Core.Context;
-
 namespace AISmart.GAgent.Core.Context;
 
 public static class EventContextExtensions

@@ -276,11 +276,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         }
 
         await AddPublishersAsync(agentGuid, stream);
-
-        if (this is IEventContext)
-        {
-            ((IEventContext)this).GrainFactory = GrainFactory;
-        }
     }
 
     protected virtual async Task HandleStateChangedAsync()

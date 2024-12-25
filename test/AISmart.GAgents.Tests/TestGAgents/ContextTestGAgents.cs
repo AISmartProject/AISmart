@@ -15,7 +15,7 @@ public class ContextTestGAgentState : StateBase
 }
 
 [GAgent]
-public class ContextTestGAgentBase : ContextGAgentBase<ContextTestGAgentState, MessageGEvent>, IEventContext
+public class ContextTestGAgentBase : ContextGAgentBase<ContextTestGAgentState, MessageGEvent>
 {
     public ContextTestGAgentBase() : base(NullLogger<ContextTestGAgentBase>.Instance)
     {

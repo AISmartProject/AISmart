@@ -4,7 +4,7 @@ namespace AISmart.GAgent.Core.Context;
 
 public class ContextStorageHelper
 {
-    private IGrainFactory? _grainFactory;
+    private readonly IGrainFactory? _grainFactory;
 
     public ContextStorageHelper(IGrainFactory grainFactory)
     {

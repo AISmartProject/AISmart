@@ -9,14 +9,14 @@ public abstract class ContextGAgentBase<TState, TEvent> : GAgentBase<TState, TEv
     where TState : StateBase, new()
     where TEvent : GEventBase
 {
-    public ContextGAgentBase(ILogger logger) : base(logger)
+    protected ContextGAgentBase(ILogger logger) : base(logger)
     {
     }
 
     public abstract override Task<string> GetDescriptionAsync();
 
     public GrainId? ContextStorageGrainId { get; set; }
-    public IGrainFactory GrainFactory { get; set; }
+    IGrainFactory IEventContext.GrainFactory => GrainFactory;
 
     public void SetContextStorageGrainId(GrainId? grainId)
     {
