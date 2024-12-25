@@ -50,13 +50,17 @@ public class ChatTestGAgent : GAgentBase<ChatTestGAgentState, MessageGEvent>
 
     public async Task HandleEventAsync(SendMessageTestEvent eventData)
     {
-        // Call the real API to send the message.
         if (State.SendMessages.IsNullOrEmpty())
         {
             State.SendMessages = [];
         }
 
-        State.SendMessages.Add(eventData.ChatId, eventData.Message);
+        if (eventData.TryGetContext("ChatId", out var chatId)
+            && chatId != null)
+        {
+            State.SendMessages.Add((string)chatId, eventData.Message);
+        }
+
         await Task.CompletedTask;
     }
 }

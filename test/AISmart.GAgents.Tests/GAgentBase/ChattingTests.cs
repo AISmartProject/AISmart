@@ -7,6 +7,9 @@ namespace AISmart.GAgents.Tests.GAgentBase;
 [Trait("Category", "BVT")]
 public class ChattingTests : GAgentTestKitBase
 {
+    /// <summary>
+    /// Temporary demo for context operation test.
+    /// </summary>
     [Fact]
     public async Task ChatIdRelayTest()
     {

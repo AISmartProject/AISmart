@@ -24,7 +24,7 @@ public class MarketLeaderGAgent : GAgentBase<MarketLeaderAgentState, MarketLeade
 
     public async Task<ImplementationEvent> HandleEventAsync(SocialEvent eventData)
     {
-        Logger.LogInformation($"{this.GetType().ToString()} ExecuteAsync: Market Leader analyses content:{eventData.Content}");
+        Logger.LogInformation($"{GetType()} ExecuteAsync: Market Leader analyses content:{eventData.Content}");
         await PublishAsync(new SendMessageEvent
         {
             Message = "MarketLeaderGAgent Completed."

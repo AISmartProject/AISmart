@@ -9,6 +9,7 @@ namespace AISmart.GAgents.Tests.TestGAgents;
 public class SubscribeTestGAgentState : StateBase
 {
     [Id(0)]  public Dictionary<Type, List<Type>> SubscriptionInfo { get; set; }
+    [Id(1)]  public object? ContextTestData { get; set; }
 }
 
 public class SubscribeTestGEvent : GEventBase;
@@ -30,6 +31,12 @@ public class SubscribeTestGAgent : GAgentBase<SubscribeTestGAgentState, Subscrib
         if (State.SubscriptionInfo.IsNullOrEmpty())
         {
             State.SubscriptionInfo = eventData.Value;
+        }
+
+        if (eventData.TryGetContext("Test1", out var testData)
+            && testData != null)
+        {
+            State.ContextTestData = testData;
         }
     }
 }

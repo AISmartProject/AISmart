@@ -21,27 +21,26 @@ public abstract partial class GAgentBase<TState, TEvent>
                     return;
                 }
 
-                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<object>.EventId))?.GetValue(item)!;
-                var eventType = item.GetType().GetProperty(nameof(EventWrapper<object>.Event))?.GetValue(item);
+                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))?.GetValue(item)!;
+                var eventType = item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item);
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
                 var contextStorageGrainIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<object>.ContextGrainId))?
+                    .GetProperty(nameof(EventWrapper<EventBase>.ContextStorageGrainId))?
                     .GetValue(item);
+                GrainId? contextStorageGrainId = null;
                 if (contextStorageGrainIdValue != null)
                 {
-                    var contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
-                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.GetGuidKey());
-                    if (contextStorageGrain != null)
-                    {
-                        var context = await contextStorageGrain.GetContext();
-                        (eventType! as EventBase)!.SetContext(context);
-                    }
+                    contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
+                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.Value.GetGuidKey());
+                    var context = await contextStorageGrain.GetContext();
+                    (eventType! as EventBase)!.SetContext(context);
                 }
 
                 if (parameter.ParameterType == eventType!.GetType())
                 {
-                    await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
+                    await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId,
+                        contextStorageGrainId);
                 }
 
                 if (parameter.ParameterType == typeof(EventWrapperBase))
@@ -49,7 +48,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId());
+                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId(),
+                                contextStorageGrainId);
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
@@ -60,6 +60,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                             eventHandlerMethod.Name, eventType.GetType().Name);
                     }
                 }
+
+                ClearContext();
             });
 
             Observers.Add(observer, new Dictionary<StreamId, Guid>());
@@ -92,16 +94,17 @@ public abstract partial class GAgentBase<TState, TEvent>
     }
 
     private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType,
-        Guid eventId)
+        Guid eventId, GrainId? contextStorageGrainId)
     {
         if (IsEventWithResponse(parameter))
         {
-            await HandleEventWithResponseAsync(method, eventType, eventId);
+            await HandleEventWithResponseAsync(method, eventType, eventId, contextStorageGrainId);
         }
         else if (method.ReturnType == typeof(Task))
         {
             try
             {
+                SetContextStorageGrainId(contextStorageGrainId);
                 var result = method.Invoke(this, [eventType]);
                 await (Task)result!;
             }
@@ -120,7 +123,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                parameter.ParameterType.BaseType.GetGenericTypeDefinition() == typeof(EventWithResponseBase<>);
     }
 
-    private async Task HandleEventWithResponseAsync(MethodInfo method, object eventType, Guid eventId)
+    private async Task HandleEventWithResponseAsync(MethodInfo method, object eventType, Guid eventId, GrainId? contextStorageGrainId)
     {
         if (method.ReturnType.IsGenericType &&
             method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
@@ -131,7 +134,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 try
                 {
                     var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
-                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
+                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId(),
+                        contextStorageGrainId);
                     await PublishAsync(eventWrapper);
                 }
                 catch (Exception ex)

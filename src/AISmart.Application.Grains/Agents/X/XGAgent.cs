@@ -44,7 +44,7 @@ public class XGAgent : GAgentBase<XAgentState, XGEvent>
         var publishEvent = new SocialEvent
         {
             Content = $"X Thread {eventData.Content} has been published."
-        };
+        }.WithContext("ThreadId", eventData.Id);
         await PublishAsync(publishEvent);
         await PublishAsync(new RequestAllSubscriptionsEvent());
     }

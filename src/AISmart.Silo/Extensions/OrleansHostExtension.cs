@@ -55,6 +55,7 @@ public static class OrleansHostExtension
                     })
                     .UseMongoDBReminders(options =>
                     {
+                        options.CollectionPrefix = "Reminders";
                         options.DatabaseName = configSection.GetValue<string>("DataBase");
                         options.CreateShardKeyForCosmos = false;
                     })
