@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AISmart.Agents;
 using AISmart.Dapr;
+using AISmart.GAgent.Core.Context;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans.EventSourcing;
@@ -201,7 +202,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
         var eventId = Guid.NewGuid();
-        var eventWrapper = new EventWrapper<T>(@event, eventId, this.GetGrainId(), GetContextStorageGrainId());
+        var eventWrapper = new EventWrapper<T>(@event, eventId, this.GetGrainId(),
+            (this as IEventContext)?.ContextStorageGrainId);
 
         await PublishAsync(eventWrapper);
 
@@ -217,14 +219,17 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             return;
         }
 
-        var eventContext = eventWrapper.Event.GetContext();
-        if (!eventContext.IsNullOrEmpty())
+        if (this is IEventContext)
         {
-            var contextStorageGrain = eventWrapper.ContextStorageGrainId == null
-                ? GrainFactory.GetGrain<IContextStorageGrain>(Guid.NewGuid())
-                : GrainFactory.GetGrain<IContextStorageGrain>(eventWrapper.ContextStorageGrainId.Value.GetGuidKey());
-            eventWrapper.ContextStorageGrainId = contextStorageGrain.GetGrainId();
-            await contextStorageGrain.AddContext(eventContext);
+            var eventContext = eventWrapper.Event.GetContext();
+            if (!eventContext.IsNullOrEmpty())
+            {
+                var contextStorageGrain = eventWrapper.ContextStorageGrainId == null
+                    ? GrainFactory.GetGrain<IContextStorageGrain>(Guid.NewGuid())
+                    : GrainFactory.GetGrain<IContextStorageGrain>(eventWrapper.ContextStorageGrainId.Value.GetGuidKey());
+                eventWrapper.ContextStorageGrainId = contextStorageGrain.GetGrainId();
+                await contextStorageGrain.AddContext(eventContext);
+            }
         }
 
         foreach (var publisher in _publishers.State.Select(kp => kp.Value))
@@ -271,6 +276,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         }
 
         await AddPublishersAsync(agentGuid, stream);
+
+        if (this is IEventContext)
+        {
+            ((IEventContext)this).GrainFactory = GrainFactory;
+        }
     }
 
     protected virtual async Task HandleStateChangedAsync()

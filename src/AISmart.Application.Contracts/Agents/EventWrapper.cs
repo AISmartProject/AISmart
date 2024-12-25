@@ -14,13 +14,12 @@ public class EventWrapper<T> : EventWrapperBase
     [Id(3)] public GrainId? ContextStorageGrainId { get; set; } 
 
     // Constructor
-    public EventWrapper(T @event, Guid eventId, GrainId grainId, GrainId? contextStorageGrainId)
+    public EventWrapper(T @event, Guid eventId, GrainId grainId, GrainId? contextStorageGrainId = null)
     {
         Event = @event;
         EventId = eventId;
         GrainId = grainId;
         ContextStorageGrainId = contextStorageGrainId;
-
     }
 
     // Optionally, you can add methods or other functionality as needed
