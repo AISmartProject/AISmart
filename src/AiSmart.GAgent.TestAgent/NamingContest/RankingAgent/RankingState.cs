@@ -24,7 +24,7 @@ public class RankingState: StateBase
             CreativeName = @event.CreativeName
         });
         
-        value.Sort((s1,s2)=> s1.Score.CompareTo(s2.Score));
+        value.Sort((s1,s2)=> s2.Score.CompareTo(s1.Score));
     }
 
     public void Apply(RankingCleanSEvent rankingCleanSEvent)

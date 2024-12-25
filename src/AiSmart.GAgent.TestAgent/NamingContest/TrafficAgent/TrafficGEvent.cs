@@ -12,9 +12,10 @@ public class NamedCompleteGEvent:NamingContext
 }
 
 [GenerateSerializer]
-public class TrafficInformCreativeGEvent:GEventBase
+public class TrafficInformCreativeGEvent:EventBase
 {
     [Id(0)] public string NamingContent { get; set; }
+    [Id(1)] public Guid CreativeGrainId { get; set; }
 }
 
 [GenerateSerializer]

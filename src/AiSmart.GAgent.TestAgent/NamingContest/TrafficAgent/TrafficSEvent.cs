@@ -9,7 +9,7 @@ public class TrafficEventSourcingBase : GEventBase
 }
 
 [GenerateSerializer]
-public class TrafficCallCreativeSEvent : TrafficEventSourcingBase
+public class TrafficCallSelectCreativeSEvent : TrafficEventSourcingBase
 {
     public Guid CreativeGrainId { get; set; }
 }

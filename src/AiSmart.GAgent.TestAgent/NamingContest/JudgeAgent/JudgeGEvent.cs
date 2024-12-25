@@ -10,3 +10,9 @@ public class JudgeGEvent:EventBase
     [Id(2)] public string NamingReply { get; set; }
     [Id(3)] public string NamingQuestion { get; set; }
 }
+
+[GenerateSerializer]
+public class JudgeOverGEvent:EventBase
+{
+    [Id(0)] public string NamingQuestion { get; set; }
+}

@@ -63,4 +63,10 @@ public class TelegramController: AISmartController
     {
         await _telegramService.RegisterBotAsync(registerTelegramDto);
     }
+    
+    [HttpPost("setnaminggroup")]
+    public async Task SetNamingGroup()
+    {
+        await _telegramService.SetNamingGroupAsync();
+    }
 }
