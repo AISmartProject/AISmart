@@ -87,6 +87,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
     {
         _logger.LogInformation("SearchAnswerAsync, replyId:{replyId}", replyId);
         var grainId =  _clusterClient.GetGrain<IPumpFunGAgent>(Guid.Parse(replyId)).GetGrainId();
+        _logger.LogInformation("SearchAnswerAsync, grainId:{grainId}", grainId);
         // get PumpFunGAgentState
         var stateResult = await _cqrsProvider.QueryAsync("pumpfungagentstateindex", grainId.ToString());
         _logger.LogInformation("SearchAnswerAsync, stateResult:{stateResult}", JsonConvert.SerializeObject(stateResult));
