@@ -9,4 +9,5 @@ public interface ITelegramProvider
     
     public Task SendMessageAsync(string sendUser, string chatId, string message, ReplyParamDto? replyParam = null);
     public Task SendPhotoAsync(string sendUser, PhotoParamsRequest photoParams);
+    public Task SetWebhookAsync(string sendUser, string webhook, string Token);
 }

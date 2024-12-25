@@ -18,11 +18,11 @@ namespace AISmart.Agent;
 [Description("micro AI")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public abstract class MicroAIGAgent<GEvent,GEventResponse> : GAgentBase<MicroAIGAgentState, AIMessageGEvent>, IMicroAIGAgent
+public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGEvent>, IMicroAIGAgent
 {
-    protected readonly ILogger<MicroAIGAgent<GEvent,GEventResponse>> _logger;
+    protected readonly ILogger<MicroAIGAgent> _logger;
 
-    public MicroAIGAgent(ILogger<MicroAIGAgent<GEvent,GEventResponse>> logger) : base(logger)
+    public MicroAIGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
         _logger = logger;
     }
@@ -34,8 +34,7 @@ public abstract class MicroAIGAgent<GEvent,GEventResponse> : GAgentBase<MicroAIG
     }
 
 
-    [EventHandler]
-    public abstract Task<GEventResponse> HandleEventAsync(GEvent @event);
+   
 
     public async Task SetAgent(string agentName, string agentResponsibility)
     {

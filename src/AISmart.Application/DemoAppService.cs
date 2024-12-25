@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agents;
@@ -10,16 +11,16 @@ using AISmart.Agents.MarketLeader;
 using AISmart.Agents.MockA.Events;
 using AISmart.Agents.X;
 using AISmart.Agents.X.Events;
+using AISmart.Application.Grains.Agents.Draw;
+using AISmart.Application.Grains.Agents.Math;
 using AISmart.Application.Grains.Agents.MockA;
 using AISmart.Application.Grains.Agents.MockB;
 using AISmart.Application.Grains.Agents.MockC;
-using AISmart.Application.Grains.Agents.Draw;
-using AISmart.Application.Grains.Agents.Math;
 using AISmart.GAgent.Autogen;
 using AISmart.Sender;
 using Orleans;
-using Orleans.Runtime;
 using Volo.Abp.Application.Services;
+using AddNumberEvent = AISmart.Application.Grains.Agents.Math.AddNumberEvent;
 
 namespace AISmart.Application;
 
@@ -32,6 +33,13 @@ public interface IDemoAppService
 public class DemoAppService : ApplicationService, IDemoAppService
 {
     private readonly IClusterClient _clusterClient;
+    private static List<IMockAGAgentCount> MockAGAgentcount = new List<IMockAGAgentCount>();
+    private static List<IMockBGAgentCount> MockBGAgentcount = new List<IMockBGAgentCount>();
+    private static List<IMockCGAgentCount> MockCGAgentcount = new List<IMockCGAgentCount>();
+
+    private static DateTime startTime;
+    private static DateTime endTime;
+    private static TimeSpan duration;
 
     public DemoAppService(IClusterClient clusterClient)
     {
@@ -96,25 +104,37 @@ public class DemoAppService : ApplicationService, IDemoAppService
 
     public async Task AgentLoadTest(int mockAGAgentCount, int mockBGAgentCount, int mockCGAgentCount)
     {
+        startTime = DateTime.UtcNow;
+
         var groupGAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
 
+        MockAGAgentcount.Clear();
+        MockBGAgentcount.Clear();
+        MockCGAgentcount.Clear();
+
         for (int i = 0; i < mockAGAgentCount; i++)
         {
-            var aGAgent = _clusterClient.GetGrain<IStateGAgent<MockAGAgent>>(Guid.NewGuid());
+            var aGAgent = _clusterClient.GetGrain<IMockAGAgentCount>(Guid.NewGuid());
             await groupGAgent.RegisterAsync(aGAgent);
+
+            MockAGAgentcount.Add(aGAgent);
         }
 
         for (int i = 0; i < mockBGAgentCount; i++)
         {
-            var bGAgent = _clusterClient.GetGrain<IStateGAgent<MockBGAgent>>(Guid.NewGuid());
+            var bGAgent = _clusterClient.GetGrain<IMockBGAgentCount>(Guid.NewGuid());
             await groupGAgent.RegisterAsync(bGAgent);
+
+            MockBGAgentcount.Add(bGAgent);
         }
 
         for (int i = 0; i < mockCGAgentCount; i++)
         {
-            var cGAgent = _clusterClient.GetGrain<IStateGAgent<MockCGAgent>>(Guid.NewGuid());
+            var cGAgent = _clusterClient.GetGrain<IMockCGAgentCount>(Guid.NewGuid());
             await groupGAgent.RegisterAsync(cGAgent);
+
+            MockCGAgentcount.Add(cGAgent);
         }
 
         await publishingAgent.PublishToAsync(groupGAgent);
@@ -124,5 +144,49 @@ public class DemoAppService : ApplicationService, IDemoAppService
             Id = $"mock_A_thread_id",
             Content = $"Call mockAGAgent"
         });
+    }
+
+    public async Task<string> AgentLoadTestCount(int mockAGAgentCount, int mockBGAgentCount, int mockCGAgentCount)
+    {
+        int totalMockAGCount = 0;
+        int totalMockBGCount = 0;
+        int totalMockCGCount = 0;
+
+        foreach (var agent in MockAGAgentcount)
+        {
+            totalMockAGCount += await agent.GetMockAGAgentCount();
+        }
+
+        foreach (var agent in MockBGAgentcount)
+        {
+            totalMockBGCount += await agent.GetMockBGAgentCount();
+        }
+
+        foreach (var agent in MockCGAgentcount)
+        {
+            totalMockCGCount += await agent.GetMockCGAgentCount();
+        }
+
+        if (totalMockCGCount == mockAGAgentCount * mockBGAgentCount * mockCGAgentCount)
+        {
+            endTime = DateTime.UtcNow;
+            duration = endTime - startTime;
+        }
+
+        var result = new
+        {
+            MockAGAgentCount = totalMockAGCount,
+            MockBGAgentCount = totalMockBGCount,
+            MockCGAgentCount = totalMockCGCount,
+            StartTime = startTime.ToString("o"),
+            EndTime = endTime.ToString("o"),
+            DurationMs = duration.TotalMilliseconds
+        };
+
+        return await Task.FromResult(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            code = "20000",
+            data = result
+        }));
     }
 }

@@ -6,7 +6,6 @@ namespace AISmart.Agents;
 
 [GenerateSerializer]
 public class EventWrapper<T> : EventWrapperBase
-    where T : EventBase
 {
     // Properties with getters and setters
     [Id(0)] public T Event { get; private set; }
@@ -21,6 +20,7 @@ public class EventWrapper<T> : EventWrapperBase
         EventId = eventId;
         GrainId = grainId;
         ContextStorageGrainId = contextStorageGrainId;
+
     }
 
     // Optionally, you can add methods or other functionality as needed
