@@ -42,7 +42,7 @@ public class MicroAIService : ApplicationService, IMicroAIService
     {
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
-        await telegramAgent.SetTelegramConfig("Test", "");
+        await telegramAgent.RegisterTelegramAsync("Test", "");
         await groupAgent.RegisterAsync(telegramAgent);
 
         var autogenAgent = _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());

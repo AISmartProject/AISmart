@@ -42,4 +42,9 @@ public class TelegramGrain : Grain<TelegramState>, ITelegramGrain
     {
         await _telegramProvider.SetWebhookAsync(sendUser, _telegramOptions.CurrentValue.Webhook,token);
     }
+
+    public async Task UnRegisterTelegramAsync(string token)
+    {
+        await _telegramProvider.DelWebhookAsync(token);
+    }
 }

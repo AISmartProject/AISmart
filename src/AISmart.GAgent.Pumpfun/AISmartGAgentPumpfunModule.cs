@@ -17,7 +17,7 @@ public class AISmartGAgentPumpfunModule : AbpModule
             options.AddMaps<AISmartGAgentPumpfunModule>();
         });
         var configuration = context.Services.GetConfiguration();
-        Configure<PumpfunServiceOptions>(configuration.GetSection("PumpfunService")); 
+        Configure<PumpfunOptions>(configuration.GetSection("Pumpfun")); 
 
     }
 }

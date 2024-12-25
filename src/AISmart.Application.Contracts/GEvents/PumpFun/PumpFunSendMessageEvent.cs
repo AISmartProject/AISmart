@@ -4,11 +4,11 @@ using Orleans;
 
 namespace AISmart.Events;
 
-[Description("Represents an event to send a PumpFun message within a chat.")]
+[Description("Send a mesage to PumpFunAgent.")]
 [GenerateSerializer]
 public class PumpFunSendMessageEvent : EventBase
 {
-    [Description("ReplyId is from PumpFunReceiveMessageGEvent")]
+    [Description("ReplyId is from PumpFunSendMessageGEvent")]
     [Id(1)]
     public string? ReplyId { get; set; }
 
