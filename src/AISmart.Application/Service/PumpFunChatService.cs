@@ -5,6 +5,7 @@ using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.Agents.Group;
 using AISmart.Application.Grains.Agents.Group;
+using AISmart.Common;
 using AISmart.CQRS.Provider;
 using AISmart.Dto;
 using AISmart.Events;
@@ -63,7 +64,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
     public async Task<string> SetGroupsAsync(string chatId)
     {
         _logger.LogInformation("SetGroupsAsync, chatId:{chatId}", chatId);
-        Guid groupAgentId = Guid.NewGuid();
+        Guid groupAgentId = GuidUtil.StringToGuid(chatId);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
         var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(Guid.NewGuid());
         _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}", chatId);
