@@ -70,7 +70,7 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
             });
             await ConfirmEvents();
             _logger.LogInformation("PumpFunSendMessageEvent2:" + JsonConvert.SerializeObject(@event));
-            await GrainFactory.GetGrain<IPumpFunGrain>(Guid.NewGuid())
+            await GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId))
                 .SendMessageAsync(@event.ReplyId, @event.ReplyMessage);
         }
     }
