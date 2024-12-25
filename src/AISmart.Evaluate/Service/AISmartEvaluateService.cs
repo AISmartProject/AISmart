@@ -28,7 +28,10 @@ public class AISmartEvaluateService : IAISmartEvaluateService, ISingletonDepende
     public async Task AddExceptionMessageAsync(string task, string exceptionMessage)
     {
         var text =
-            $"Task is: {task}, and exception {exceptionMessage} was caught during execution, please pay attention";
+            $"""
+             Task is: {task} 
+             Exception {exceptionMessage} was caught during execution, please pay attention!
+             """;
         await _ragProvider.StoreTextAsync(text);
     }
     
