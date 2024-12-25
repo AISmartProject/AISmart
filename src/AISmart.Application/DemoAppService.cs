@@ -102,20 +102,17 @@ public class DemoAppService : ApplicationService, IDemoAppService
     }
 
     public async Task AgentLoadAsyncTest(int groupGAgentCount, int mockAGAgentCount, int mockBGAgentCount,
-        int mockCGAgentCount)
+        int mockCGAgentCount, bool shouldDelay)
     {
         MockAGAgentcount.Clear();
         MockBGAgentcount.Clear();
         MockCGAgentcount.Clear();
 
-        startTime = DateTime.UtcNow;
-        endTime = null;
-        duration = null;
-
+        var groupGAgents = new List<IStateGAgent<GroupAgentState>>();
         for (int j = 0; j < groupGAgentCount; j++)
         {
             var groupGAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
-            var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            groupGAgents.Add(groupGAgent);
 
             var tasks = new List<Task>();
 
@@ -123,7 +120,11 @@ public class DemoAppService : ApplicationService, IDemoAppService
             {
                 var aGAgent = _clusterClient.GetGrain<IMockAGAgentCount>(Guid.NewGuid());
                 tasks.Add(RegisterAgentAsync(groupGAgent, aGAgent));
-                await Task.Delay(2000);
+                if (shouldDelay)
+                {
+                    await Task.Delay(2000);
+                }
+
                 MockAGAgentcount.Add(aGAgent);
             }
 
@@ -131,7 +132,11 @@ public class DemoAppService : ApplicationService, IDemoAppService
             {
                 var bGAgent = _clusterClient.GetGrain<IMockBGAgentCount>(Guid.NewGuid());
                 tasks.Add(RegisterAgentAsync(groupGAgent, bGAgent));
-                await Task.Delay(2000);
+                if (shouldDelay)
+                {
+                    await Task.Delay(2000);
+                }
+
                 MockBGAgentcount.Add(bGAgent);
             }
 
@@ -139,18 +144,30 @@ public class DemoAppService : ApplicationService, IDemoAppService
             {
                 var cGAgent = _clusterClient.GetGrain<IMockCGAgentCount>(Guid.NewGuid());
                 tasks.Add(RegisterAgentAsync(groupGAgent, cGAgent));
-                await Task.Delay(2000);
+                if (shouldDelay)
+                {
+                    await Task.Delay(2000);
+                }
+
                 MockCGAgentcount.Add(cGAgent);
             }
 
             await Task.WhenAll(tasks);
+        }
 
+        startTime = DateTime.UtcNow;
+        endTime = null;
+        duration = null;
+
+        foreach (var groupGAgent in groupGAgents)
+        {
+            var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             await publishingAgent.PublishToAsync(groupGAgent);
 
             await publishingAgent.PublishEventAsync(new MockAThreadCreatedEvent
             {
-                Id = $"mock_A_thread_id_{j}",
-                Content = $"Call mockAGAgent for group {j + 1}"
+                Id = $"mock_A_thread_id_{groupGAgents.IndexOf(groupGAgent)}",
+                Content = $"Call mockAGAgent for group {groupGAgents.IndexOf(groupGAgent) + 1}"
             });
         }
     }
