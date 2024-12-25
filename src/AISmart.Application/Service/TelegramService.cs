@@ -83,7 +83,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         // Look for a mention that matches the token and decide accordingly.
         foreach (var entity in updateMessage.Message.Entities)
         {
-            if (entity.Type == "Mention")
+            if (entity.Type == "mention")
             {
                 var mentionText = updateMessage.Message.Text.Substring(entity.Offset, entity.Length);
                 if (mentionText.Equals("@" + token, StringComparison.OrdinalIgnoreCase))
@@ -100,7 +100,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         var groupId = GuidUtil.StringToGuid("Test");
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
-        await telegramAgent.SetTelegramConfig( "Test","");
+        await telegramAgent.RegisterTelegramAsync( "Test","");
         var developerAgent = _clusterClient.GetGrain<IStateGAgent<DeveloperAgentState>>(Guid.NewGuid());
         var investmentAgent = _clusterClient.GetGrain<IStateGAgent<InvestmentAgentState>>(Guid.NewGuid());
         var marketLeaderAgent = _clusterClient.GetGrain<IStateGAgent<MarketLeaderAgentState>>(Guid.NewGuid());
@@ -127,7 +127,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         var groupId = GuidUtil.StringToGuid("Test");
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
-        await telegramAgent.SetTelegramConfig( "Test","");
+        await telegramAgent.RegisterTelegramAsync( "Test","");
         await groupAgent.RegisterAsync(telegramAgent);
 
         // var autogenAgent = _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());
@@ -187,12 +187,23 @@ public class TelegramService :  ApplicationService,ITelegramService
         var socialAgent=  _clusterClient.GetGrain<ISocialGAgent>(Guid.NewGuid());
         await socialAgent.SetAgent(registerTelegramDto.BotName, "You need to answer all the questions you know.");
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
-        await telegramAgent.SetTelegramConfig( registerTelegramDto.BotName,registerTelegramDto.Token);
-        var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
+        await telegramAgent.RegisterTelegramAsync( registerTelegramDto.BotName,registerTelegramDto.Token);
+        var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         await groupAgent.RegisterAsync(telegramAgent);
         await groupAgent.RegisterAsync(socialAgent);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
         await publishingAgent.PublishToAsync(groupAgent);
+      
+    }
+
+    public async Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto)
+    {
+        var groupId = GuidUtil.StringToGuid(unRegisterTelegramDto.BotName);
+        var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(groupId);
+        await telegramAgent.UnRegisterTelegramAsync( unRegisterTelegramDto.BotName);
+        var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
+        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
+        await publishingAgent.UnpublishFromAsync(groupAgent);
     }
     
 }
