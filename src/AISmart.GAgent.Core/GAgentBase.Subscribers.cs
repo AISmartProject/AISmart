@@ -15,6 +15,8 @@ public abstract partial class GAgentBase<TState, TEvent>
     private readonly IGrainState<Dictionary<Guid, string>> _publishers =
         new GrainState<Dictionary<Guid, string>>();
 
+    private IDisposable _timer;
+
     private async Task LoadSubscribersAsync()
     {
         if (_subscribers.State.IsNullOrEmpty())
@@ -29,8 +31,6 @@ public abstract partial class GAgentBase<TState, TEvent>
         await LoadSubscribersAsync();
         _subscribers.State ??= [];
         _subscribers.State.Add(grainId);
-        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
-            _subscribers);
     }
 
     private async Task RemoveSubscriberAsync(GrainId grainId)
@@ -42,8 +42,6 @@ public abstract partial class GAgentBase<TState, TEvent>
         }
 
         _subscribers.State.Remove(grainId);
-        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
-            _subscribers);
     }
 
     private async Task LoadSubscriptionsAsync()
@@ -78,7 +76,11 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task LoadStateAsync(IGrainState<Dictionary<Guid, string>> state, string stateName)
     {
-        await GrainStorage.ReadStateAsync(stateName, this.GetGrainId(), state);
+        // Only load the state from storeage if it is null.
+        if (state.State.IsNullOrEmpty())
+        {
+            await GrainStorage.ReadStateAsync(stateName, this.GetGrainId(), state);
+        }
     }
 
     private async Task<bool> AddStreamAsync(Guid streamGuid, IAsyncStream<EventWrapperBase> stream,
@@ -88,7 +90,6 @@ public abstract partial class GAgentBase<TState, TEvent>
         state.State ??= [];
         var streamIdentity = GetStreamIdentityJson(streamGuid, stream);
         var success = state.State.TryAdd(streamGuid, streamIdentity);
-        await GrainStorage.WriteStateAsync(stateName, this.GetGrainId(), state);
         return success;
     }
 
@@ -96,18 +97,8 @@ public abstract partial class GAgentBase<TState, TEvent>
         string stateName)
     {
         await LoadStateAsync(state, stateName);
-        if (state.State.IsNullOrEmpty())
-        {
-            return false;
-        }
-
-        if (!state.State.Remove(streamGuid))
-        {
-            return false;
-        }
-
-        await GrainStorage.WriteStateAsync(stateName, this.GetGrainId(), state);
-        return true;
+        return !state.State.IsNullOrEmpty()
+               && state.State.Remove(streamGuid);
     }
 
     private string GetStreamIdentityJson(Guid streamGuid, IAsyncStream<EventWrapperBase> stream)
@@ -121,6 +112,16 @@ public abstract partial class GAgentBase<TState, TEvent>
         var streamId = StreamId.Create(streamIdentity!.Namespace, streamIdentity.Guid);
         var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
         return stream;
+    }
+
+    private async Task SaveStates(CancellationToken cancellationToken)
+    {
+        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
+            _subscribers);
+        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.PublishersStateName, this.GetGrainId(),
+            _publishers);
+        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscriptionsStateName, this.GetGrainId(),
+            _subscriptions);
     }
 }
 

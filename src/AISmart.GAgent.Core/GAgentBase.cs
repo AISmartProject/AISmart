@@ -268,6 +268,19 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         }
 
         await AddPublishersAsync(agentGuid, stream);
+
+        _timer = this.RegisterGrainTimer(
+            callback: SaveStates,
+            dueTime: AISmartGAgentConstants.StateSaveTimerDueTime,
+            period: AISmartGAgentConstants.StateSaveTimerPeriod
+        );
+    }
+
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        _timer.Dispose();
+        await SaveStates(cancellationToken);
+        await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
     protected virtual async Task HandleStateChangedAsync()
