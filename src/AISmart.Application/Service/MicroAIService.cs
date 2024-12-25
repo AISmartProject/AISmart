@@ -43,10 +43,10 @@ public class MicroAIService : ApplicationService, IMicroAIService
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
         await telegramAgent.SetTelegramConfig("-1002473003637", "Test");
-        await groupAgent.Register(telegramAgent);
+        await groupAgent.RegisterAsync(telegramAgent);
 
         var autogenAgent = _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());
-        await groupAgent.Register(autogenAgent);
+        await groupAgent.RegisterAsync(autogenAgent);
         int voterCount = 7;
         List<string> descriptions = new List<string>()
         {
@@ -63,7 +63,7 @@ public class MicroAIService : ApplicationService, IMicroAIService
             var voteAgent = _clusterClient.GetGrain<IVoterGAgent>(Guid.NewGuid());
             await voteAgent.SetAgent($"Vote:{i}",
                 $"You are a voter,and {descriptions[i]}. Based on a proposal, provide a conclusion of agreement or disagreement and give reasons.");
-            await groupAgent.Register(voteAgent);
+            await groupAgent.RegisterAsync(voteAgent);
         }
 
         await autogenAgent.RegisterAgentEvent("Vote",
@@ -74,10 +74,10 @@ public class MicroAIService : ApplicationService, IMicroAIService
         await conclusionAgent.SetAgent("Conclusion",
             "I'm a  Summarizer, When I collect 7 votes, I will summarize the 7 votes and then send the information to Telegram.");
         await conclusionAgent.SetVoteCount(voterCount);
-        await groupAgent.Register(conclusionAgent);
+        await groupAgent.RegisterAsync(conclusionAgent);
 
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(PublishId);
-        await publishingAgent.PublishTo(groupAgent);
+        await publishingAgent.PublishToAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }

@@ -4,7 +4,7 @@ using AISmart.CQRS;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Handler;
 using AISmart.CQRS.Provider;
-using AISmart.GGrains.Tests;
+using AISmart.GAgents.Tests;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

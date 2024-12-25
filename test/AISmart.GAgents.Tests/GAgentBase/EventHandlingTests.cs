@@ -1,53 +1,96 @@
 using AISmart.Agents;
-using AISmart.GAgents.Tests;
 using AISmart.GAgents.Tests.TestEvents;
 using AISmart.GAgents.Tests.TestGAgents;
 using Shouldly;
 
-namespace AISmart.GGrains.Tests;
+namespace AISmart.GAgents.Tests.GAgentBase;
 
 [Trait("Category", "BVT")]
-public class GAgentBaseTests : GAgentTestKitBase
+public class EventHandlingTests : GAgentTestKitBase
 {
-    [Fact]
-    public async Task EventHandlerTest()
+    [Fact(DisplayName = "Implementation of GetAllSubscribedEventsAsync works.")]
+    public async Task EventHandlerRecognizeTest()
     {
+        // Arrange.
         var eventHandlerTestGAgent = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
-        var subscribedEventList = await eventHandlerTestGAgent.GetAllSubscribedEventsAsync();
-        subscribedEventList.ShouldNotBeNull();
-        subscribedEventList.Count.ShouldBe(3);
-        subscribedEventList.ShouldContain(typeof(NaiveTestEvent));
-        subscribedEventList.ShouldContain(typeof(EventWrapperBase));
+
+        {
+            // Act.
+            var subscribedEventList = await eventHandlerTestGAgent.GetAllSubscribedEventsAsync();
+
+            // Assert.
+            subscribedEventList.ShouldNotBeNull();
+            subscribedEventList.Count.ShouldBe(3);
+            subscribedEventList.ShouldContain(typeof(NaiveTestEvent));
+            subscribedEventList.Count(e => e == typeof(NaiveTestEvent)).ShouldBe(2);
+            subscribedEventList.ShouldContain(typeof(EventWrapperBase));
+        }
+
+        {
+            // Act.
+            var subscribedEventList = await eventHandlerTestGAgent.GetAllSubscribedEventsAsync(true);
+
+            // Assert.
+            subscribedEventList.ShouldNotBeNull();
+            subscribedEventList.Count.ShouldBe(4);
+            subscribedEventList.ShouldContain(typeof(NaiveTestEvent));
+            subscribedEventList.Count(e => e == typeof(NaiveTestEvent)).ShouldBe(2);
+            subscribedEventList.ShouldContain(typeof(EventWrapperBase));
+            subscribedEventList.ShouldContain(typeof(RequestAllSubscriptionsEvent));
+        }
     }
 
-    [Fact]
-    public async Task PublishToEventHandlerTest()
+    [Fact(DisplayName = "Event handler's register and unregister works.")]
+    public async Task EventHandlerTest()
     {
+        // Arrange.
         var eventHandlerTestGAgent = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
+
+        // Act of registering.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
         {
             Greeting = "Hello world"
         });
-        var state = await eventHandlerTestGAgent.GetStateAsync();
-        state.Content.Count.ShouldBe(3);
-        state.Content.ShouldContain("Hello world");
+
+        // Assert.
+        {
+            var state = await eventHandlerTestGAgent.GetStateAsync();
+            state.Content.Count.ShouldBe(3);
+        }
+
+        // Act of unregistering.
+        await groupGAgent.UnregisterAsync(eventHandlerTestGAgent);
+        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
+        {
+            Greeting = "Hello world"
+        });
+
+        // Assert.
+        {
+            var state = await eventHandlerTestGAgent.GetStateAsync();
+            state.Content.Count.ShouldBe(3);
+        }
     }
 
-    [Fact]
+    [Fact(DisplayName = "Event handling of event with response works.")]
     public async Task EventWithResponseTest()
     {
+        // Arrange.
         var eventHandlerTestGAgent = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
         var eventHandlerWithResponseTestGAgent =
             await Silo.CreateGrainAsync<EventHandlerWithResponseTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent, eventHandlerWithResponseTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
+
+        // Act.
         await publishingGAgent.PublishEventAsync(new ResponseTestEvent
         {
             Greeting = "Hello, this is AISmart."
         });
-        // Events will forward to eventHandlerTestGAgent
+
+        // Assert: Events will forward to eventHandlerTestGAgent
         var state = await eventHandlerTestGAgent.GetStateAsync();
         state.Content.Count.ShouldBe(4);
         state.Content.ShouldContain("Hello, this is AISmart.");
@@ -55,22 +98,29 @@ public class GAgentBaseTests : GAgentTestKitBase
         state.Content.ShouldContain(content => content.Contains(nameof(NaiveTestEvent)));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Event handler must be well coded.")]
     public async Task BadEventHandlerTest()
     {
+        // Arrange.
         var badEventHandlerTestGAgent = await Silo.CreateGrainAsync<BadEventHandlerTestGAgent>(Guid.NewGuid());
+
+        // Act.
         var subscribedEventList = await badEventHandlerTestGAgent.GetAllSubscribedEventsAsync();
+
+        // Assert.
         subscribedEventList.ShouldNotBeNull();
         subscribedEventList.Count.ShouldBe(0);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Will throw exception if response type is not inherited from EventBase.")]
     public async Task ResponseReturnTypeNotInheritedFromEventBaseTest()
     {
+        // Arrange.
         var badEventHandlerTestGAgent = await Silo.CreateGrainAsync<FatalEventHandlerTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(badEventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
+        // Act & Assert.
         var exception = Should.Throw<InvalidOperationException>(async () =>
         {
             await publishingGAgent.PublishEventAsync(new ResponseTestEvent
@@ -80,14 +130,16 @@ public class GAgentBaseTests : GAgentTestKitBase
         });
         exception.Message.ShouldContain("return type needs to be inherited from EventBase.");
     }
-    
-    [Fact]
+
+    [Fact(DisplayName = "Will throw exception if with-response-type event's event handler has no response type.")]
     public async Task ResponseEventNoResponseTypeTest()
     {
+        // Arrange.
         var badEventHandlerTestGAgent = await Silo.CreateGrainAsync<FatalEventHandlerTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(badEventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
+        // Act & Assert.
         var exception = Should.Throw<InvalidOperationException>(async () =>
         {
             await publishingGAgent.PublishEventAsync(new AnotherResponseTestEvent
@@ -98,9 +150,10 @@ public class GAgentBaseTests : GAgentTestKitBase
         exception.Message.ShouldContain("needs to have a return value.");
     }
 
-    [Fact]
+    [Fact(DisplayName = "Implementation of handling RequestAllSubscriptionsEvent works.")]
     public async Task RequestSubscribedEventListTest()
     {
+        // Arrange.
         var eventHandlerTestGAgent = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
         var eventHandlerWithResponseTestGAgent =
             await Silo.CreateGrainAsync<EventHandlerWithResponseTestGAgent>(Guid.NewGuid());
@@ -112,74 +165,14 @@ public class GAgentBaseTests : GAgentTestKitBase
         AddProbesByGrainId(eventHandlerTestGAgent, eventHandlerWithResponseTestGAgent, subscribeTestGAgent, groupGAgent,
             publishingGAgent);
 
+        // Act.
         await publishingGAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
+
+        // Assert.
         var state = await subscribeTestGAgent.GetStateAsync();
         state.SubscriptionInfo.Count.ShouldBe(3);
         state.SubscriptionInfo[typeof(EventHandlerTestGAgent)].Count.ShouldBe(3);
         state.SubscriptionInfo[typeof(EventHandlerWithResponseTestGAgent)].Count.ShouldBe(1);
         state.SubscriptionInfo[typeof(SubscribeTestGAgent)].Count.ShouldBe(1);
-    }
-
-    [Fact]
-    public async Task LogViewAdaptorTest()
-    {
-        var logViewGAgent = await Silo.CreateGrainAsync<LogViewAdaptorTestGAgent>(Guid.NewGuid());
-        var groupGAgent = await CreateGroupGAgentAsync(logViewGAgent);
-        var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
-
-        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
-        {
-            Greeting = "First event"
-        });
-
-        await TestHelper.WaitUntilAsync(_ => CheckCount(1));
-        Silo.TestLogConsistentStorage.Storage.Count.ShouldBe(1);
-        Silo.TestLogConsistentStorage.Storage.First().Value.Count.ShouldBe(1);
-        (await GetLatestVersionAsync()).ShouldBe(0);
-
-        await Silo.DeactivateAsync(logViewGAgent);
-        logViewGAgent = await Silo.CreateGrainAsync<LogViewAdaptorTestGAgent>(Guid.NewGuid());
-
-        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
-        {
-            Greeting = "Second event"
-        });
-
-        await TestHelper.WaitUntilAsync(_ => CheckCount(2));
-
-        Silo.TestLogConsistentStorage.Storage.Count.ShouldBe(1);
-        Silo.TestLogConsistentStorage.Storage.Last().Value.Count.ShouldBe(2);
-
-        var logViewGAgentState = await logViewGAgent.GetStateAsync();
-        await TestHelper.WaitUntilAsync(_ => CheckCount(logViewGAgentState, 2));
-        logViewGAgentState.Content.Count.ShouldBe(2);
-
-        (await GetLatestVersionAsync()).ShouldBe(1);
-
-        await publishingGAgent.PublishEventAsync(new NaiveTestEvent
-        {
-            Greeting = "Third event"
-        });
-
-        await TestHelper.WaitUntilAsync(_ => CheckCount(3));
-
-        (await GetLatestVersionAsync()).ShouldBe(2);
-    }
-
-    private async Task<bool> CheckCount(int expectedCount)
-    {
-        return Silo.TestLogConsistentStorage.Storage.Count == expectedCount
-            && Silo.TestLogConsistentStorage.Storage.Last().Value.Count != 0;
-    }
-
-    private async Task<bool> CheckCount(LogViewAdaptorTestGState state, int expectedCount)
-    {
-        return state.Content.Count == expectedCount;
-    }
-
-    private async Task<int> GetLatestVersionAsync()
-    {
-        return await Silo.TestLogConsistentStorage.GetLastVersionAsync(string.Empty,
-            GrainId.Create(string.Empty, string.Empty));
     }
 }

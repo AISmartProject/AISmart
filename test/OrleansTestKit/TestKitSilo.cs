@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using AISmart.Agents;
 using AISmart.EventSourcing.Core;
 using AISmart.EventSourcing.Core.LogConsistency;
 using AISmart.EventSourcing.Core.Storage;
@@ -254,7 +255,11 @@ public sealed class TestKitSilo
     {
         if (_createdGrains.ContainsKey(typeof(T)))
         {
-            return (T)_createdGrains[typeof(T)];
+            var createdGrain = (T)_createdGrains[typeof(T)];
+            if (typeof(IGAgent).IsAssignableFrom(typeof(T)) && ((IGAgent)createdGrain).GetGrainId().Key == identity)
+            {
+                return createdGrain;
+            }
         }
 
         // Add state attribute mapping for storage facets

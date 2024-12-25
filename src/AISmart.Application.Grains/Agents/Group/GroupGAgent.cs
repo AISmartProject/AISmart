@@ -4,7 +4,6 @@ using AISmart.Dapr;
 using AISmart.GAgent.Core;
 using Microsoft.Extensions.Logging;
 using Orleans.Providers;
-using Orleans.Storage;
 
 namespace AISmart.Application.Grains.Agents.Group;
 
@@ -33,21 +32,8 @@ public class GroupGAgent : GAgentBase<GroupAgentState, GroupGEvent>
         return Task.CompletedTask;
     }
     
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    protected override async Task OnGAgentActivateAsync(CancellationToken cancellationToken)
     {
-        await base.OnActivateAsync(cancellationToken);
-        
-        // Register to itself.
-        var agentGuid = this.GetPrimaryKey();
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-        var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-        foreach (var observer in Observers)
-        {
-            await stream.SubscribeAsync(observer);
-        }
-
-        TryAddPublisher(agentGuid, stream);
-
         State.RegisteredAgents = 0;
     }
 }

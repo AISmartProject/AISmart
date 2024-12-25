@@ -22,10 +22,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected readonly ILogger Logger;
     protected readonly IGrainStorage GrainStorage;
 
-    // need to use persistent storage to store this
-    private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _subscriptions = new();
-    private readonly Dictionary<Guid, IAsyncStream<EventWrapperBase>> _publishers = new();
-    protected readonly List<EventWrapperBaseAsyncObserver> Observers = new();
+    /// <summary>
+    /// Observer -> StreamId -> HandleId
+    /// </summary>
+    private readonly Dictionary<EventWrapperBaseAsyncObserver, Dictionary<StreamId, Guid>> Observers = new();
+
     private IEventDispatcher EventDispatcher { get; set; }
 
     protected GAgentBase(ILogger logger)
@@ -41,12 +42,12 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return Task.CompletedTask;
     }
 
-    public async Task<bool> SubscribeTo(IGAgent agent)
+    public async Task<bool> SubscribeToAsync(IGAgent gAgent)
     {
-        var agentGuid = agent.GetPrimaryKey();
+        var agentGuid = gAgent.GetPrimaryKey();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-        if (!_subscriptions.TryAdd(agentGuid, stream))
+        if (!await AddSubscriptionsAsync(agentGuid, stream))
         {
             return false;
         }
@@ -55,94 +56,104 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return true;
     }
 
-    public Task<bool> UnsubscribeFrom(IGAgent agent)
+    public async Task<bool> UnsubscribeFromAsync(IGAgent gAgent)
     {
-        var agentGuid = agent.GetPrimaryKey();
-        if (!_subscriptions.ContainsKey(agentGuid))
+        var agentGuid = gAgent.GetPrimaryKey();
+        if (await RemoveSubscriptionsAsync(agentGuid))
         {
-            return Task.FromResult(false);
+            var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+            var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
+            var handlers = await stream.GetAllSubscriptionHandles();
+            var streamHandlerIds = Observers.Select(o =>
+            {
+                o.Value.TryGetValue(streamId, out var handleId);
+                return handleId;
+            }).ToList();
+
+            foreach (var handle in handlers.Where(h => streamHandlerIds.Contains(h.HandleId)))
+            {
+                await handle.UnsubscribeAsync();
+            }
+
+            return true;
         }
 
-        _subscriptions.Remove(agentGuid);
-        //TODO: Unsubscribe from stream
-        return Task.FromResult(true);
+        return false;
     }
 
-    public Task<bool> PublishTo(IGAgent agent)
+    public async Task<bool> PublishToAsync(IGAgent gAgent)
     {
-        var agentGuid = agent.GetPrimaryKey();
+        var agentGuid = gAgent.GetPrimaryKey();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-        return Task.FromResult(TryAddPublisher(agentGuid, stream));
+        return await AddPublishersAsync(agentGuid, stream);
     }
 
-    protected bool TryAddPublisher(Guid agentGuid, IAsyncStream<EventWrapperBase> stream)
+    public async Task<bool> UnpublishFromAsync(IGAgent gAgent)
     {
-        return _publishers.TryAdd(agentGuid, stream);
+        return await RemovePublishersAsync(gAgent.GetPrimaryKey());
     }
 
-    public Task<bool> UnpublishFrom(IGAgent agent)
+    public async Task RegisterAsync(IGAgent gAgent)
     {
-        if (!_publishers.ContainsKey(agent.GetPrimaryKey()))
-        {
-            return Task.FromResult(false);
-        }
-
-        _publishers.Remove(agent.GetPrimaryKey());
-        return Task.FromResult(true);
-    }
-
-    public async Task Register(IGAgent agent)
-    {
-        var success = await agent.SubscribeTo(this);
-        success = await agent.PublishTo(this) | success;
+        var success = await gAgent.SubscribeToAsync(this);
+        success = await gAgent.PublishToAsync(this) | success;
 
         if (!success)
         {
             return;
         }
 
-        var guid = agent.GetPrimaryKey();
+        var guid = gAgent.GetPrimaryKey();
 
-        await AddSubscriberAsync(agent.GetGrainId());
+        await AddSubscriberAsync(gAgent.GetGrainId());
 
         await OnRegisterAgentAsync(guid);
     }
 
-    public async Task Unregister(IGAgent agent)
+    public async Task UnregisterAsync(IGAgent gAgent)
     {
-        var success = await agent.UnsubscribeFrom(this);
-        success = await agent.UnpublishFrom(this) | success;
+        var success = await gAgent.UnsubscribeFromAsync(this);
+        success = await gAgent.UnpublishFromAsync(this) | success;
 
         if (!success)
         {
             return;
         }
 
-        await OnUnregisterAgentAsync(agent.GetPrimaryKey());
+        await RemoveSubscriberAsync(gAgent.GetGrainId());
+
+        await OnUnregisterAgentAsync(gAgent.GetPrimaryKey());
     }
 
-    public async Task<List<Type>?> GetAllSubscribedEventsAsync()
+    public async Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false)
     {
         var eventHandlerMethods = GetEventHandlerMethods();
         var handlingTypes = eventHandlerMethods
-            .Select(m => m.GetParameters().First().ParameterType)
-            .Where(t => t != typeof(RequestAllSubscriptionsEvent))
-            .ToList();
-        return handlingTypes;
+            .Select(m => m.GetParameters().First().ParameterType);
+        if (!includeBaseHandlers)
+        {
+            handlingTypes = handlingTypes.Where(t => t != typeof(RequestAllSubscriptionsEvent));
+        }
+
+        return handlingTypes.ToList();
     }
 
     [EventHandler]
-    public async Task<SubscribedEventListEvent> HandleRequestAllSubscriptionsEventAsync(RequestAllSubscriptionsEvent request)
+    public async Task<SubscribedEventListEvent> HandleRequestAllSubscriptionsEventAsync(
+        RequestAllSubscriptionsEvent request)
     {
-        if (_subscribers == null)
+        await LoadSubscribersAsync();
+
+        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
+
+        if (gAgentList.IsNullOrEmpty())
         {
             return new SubscribedEventListEvent
             {
                 GAgentType = GetType()
             };
         }
-        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
 
         if (gAgentList.Any(grain => grain == null))
         {
@@ -191,91 +202,74 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task PublishAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        if (_publishers.Count == 0)
+        await LoadPublishersAsync();
+        if (_publishers.State.Count == 0)
         {
             return;
         }
 
-        foreach (var publisher in _publishers.Select(kp => kp.Value))
+        var contextStorageGrain = eventWrapper.ContextGrainId == null
+            ? GrainFactory.GetGrain<IContextStorageGrain>(Guid.NewGuid())
+            : GrainFactory.GetGrain<IContextStorageGrain>(eventWrapper.ContextGrainId.Value);
+        eventWrapper.ContextGrainId = contextStorageGrain.GetGrainId();
+
+        await contextStorageGrain.AddContext(eventWrapper.Event.GetContext());
+
+        var eventType = typeof(T);
+        var properties = eventType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        foreach (var property in properties)
         {
-            await publisher.OnNextAsync(eventWrapper);
+            var propertyValue = property.GetValue(eventWrapper.Event);
+            Logger.LogInformation($"Add Context: {property.Name} - {propertyValue}");
+            await contextStorageGrain.AddContext($"{eventType}.{property.Name}", propertyValue);
+        }
+
+        foreach (var publisher in _publishers.State.Select(kp => kp.Value))
+        {
+            var stream = GetStream(publisher);
+            await stream.OnNextAsync(eventWrapper);
         }
     }
-
-    private async Task AckAsync(EventWrapper<TEvent> eventWrapper)
-    {
-        // var pubAgent = _clusterClient.GetGrain<IAgent<TState>>(eventWrapper.GrainId);
-        //
-        // try
-        // {
-        //     await ExecuteAsync(eventWrapper.Event);
-        // }
-        // catch (Exception e)
-        // {
-        //     Logger.LogError(e, "Error executing event");
-        // }
-        //
-        // await ((pubAgent as GAgent<TState,TEvent>)!).DoAckAsync(eventWrapper);
-    }
-
-    private async Task DoAckAsync(EventWrapper<TEvent> eventWrapper)
-    {
-        // eventWrapper.count ++;
-        //
-        // RaiseEvent(eventWrapper.Event);
-        // await ConfirmEvents();
-        //
-        // var stream = this.GetStreamProvider(CommonConstants.StreamProvider)
-        //     .GetStream<EventWrapperBase>(StreamId);
-        // var subscriptionHandles =  stream.GetAllSubscriptionHandles();
-        // // The count of current subscriptions (consumers).
-        // var subscriberCount = subscriptionHandles.Result.Count;
-        //
-        // if (eventWrapper.count == subscriberCount)
-        // {
-        //     await CompleteAsync(eventWrapper.Event);
-        // }
-    }
-
-
-
-
-    // Agent3 -> Agent2 -> Agent3 dependencies through messages
-    // strong typed messages
-    // 3 messages sub -> 2 messages pub -> 3 messages pub
-
-    // twitter and telegram as a agent
-    // twitter and telegram agent publish message
-    // market leader agent subscribe to twitter and telegram agent
-    // market leader agent publish message to agentA and agentB
-    // agentA (investment) and agentB (developer) subscribe to market leader agent
-    // market leader agent waits for agentA and agentB to complete
-    // market leader agent execute something
-    // market leader agent publish message to twitter and telegram agent
-
-    // variation 2
-    // agentB sends to agentC to do transaction on chain
-
-    // how does dependency work between agents? just pub/sub messages enough?
 
     private async Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream)
     {
-        foreach (var observer in Observers)
+        var streamId = stream.StreamId;
+        foreach (var observer in Observers.Keys)
         {
-            await stream.SubscribeAsync(observer);
+            var handle = await stream.SubscribeAsync(observer);
+            var handleId = handle.HandleId;
+            Observers[observer][streamId] = handleId;
         }
     }
 
-    private async Task HandleEventAsync(EventWrapperBase item)
+    public sealed override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        Logger.LogInformation("Received message: {@Message}", item);
+        await BaseOnActivateAsync(cancellationToken);
+        await OnGAgentActivateAsync(cancellationToken);
     }
 
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    protected virtual async Task OnGAgentActivateAsync(CancellationToken cancellationToken)
     {
-        await UpdateObserverList();
+        // Derived classes can override this method.
     }
-    
+
+    private async Task BaseOnActivateAsync(CancellationToken cancellationToken)
+    {
+        // This must be called first to initialize Observers field.
+        await UpdateObserverList();
+
+        // Register to itself.
+        var agentGuid = this.GetPrimaryKey();
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
+        foreach (var observer in Observers.Keys)
+        {
+            await stream.SubscribeAsync(observer);
+        }
+
+        await AddPublishersAsync(agentGuid, stream);
+    }
+
     protected virtual async Task HandleStateChangedAsync()
     {
     }

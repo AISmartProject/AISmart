@@ -14,6 +14,8 @@
         <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
+        <ProjectReference Include="..\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
+        <ProjectReference Include="..\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Telegram\AISmart.GAgent.Telegram.csproj" />
         <ProjectReference Include="..\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />

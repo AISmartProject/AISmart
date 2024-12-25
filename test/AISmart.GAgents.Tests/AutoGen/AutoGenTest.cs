@@ -5,7 +5,7 @@ using AISmart.Application.Grains.Agents.Math;
 using AISmart.Application.Grains.Agents.Publisher;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Autogen.Events;
-using AISmart.GGrains.Tests;
+using AISmart.GAgents.Tests;
 using AISmart.Sender;
 using Orleans.TestKit;
 
@@ -28,14 +28,14 @@ public class AutoGenTest : GAgentTestKitBase
 
         AddProbesByGrainId(autogenGAgent, drawGAgent, mathGAgent, publishingGAgent, groupGAgent);
 
-        await groupGAgent.Register(autogenGAgent);
-        await groupGAgent.Register(drawGAgent);
-        await groupGAgent.Register(mathGAgent);
+        await groupGAgent.RegisterAsync(autogenGAgent);
+        await groupGAgent.RegisterAsync(drawGAgent);
+        await groupGAgent.RegisterAsync(mathGAgent);
 
         Silo.AddProbe<IPublishingGAgent>(_ => publishingGAgent);
         Silo.AddProbe<IAutoGenExecutor>(_ => autoGenExecutor);
 
-        await publishingGAgent.PublishTo(groupGAgent);
+        await publishingGAgent.PublishToAsync(groupGAgent);
 
         Silo.AddStreamProbe<AutoGenInternalEventBase>();
 

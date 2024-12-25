@@ -18,13 +18,13 @@ public interface IGAgent : IGrainWithGuidKey
 
     //Function to get agent description
     Task<string> GetDescriptionAsync();
-    Task<bool> SubscribeTo(IGAgent agent);
-    Task<bool> UnsubscribeFrom(IGAgent agent);
-    Task<bool> PublishTo(IGAgent agent);
-    Task<bool> UnpublishFrom(IGAgent agent);
-    Task Register(IGAgent agent);
-    Task Unregister(IGAgent agent);
-    Task<List<Type>?> GetAllSubscribedEventsAsync();
+    Task<bool> SubscribeToAsync(IGAgent gAgent);
+    Task<bool> UnsubscribeFromAsync(IGAgent gAgent);
+    Task<bool> PublishToAsync(IGAgent gAgent);
+    Task<bool> UnpublishFromAsync(IGAgent gAgent);
+    Task RegisterAsync(IGAgent gAgent);
+    Task UnregisterAsync(IGAgent gAgent);
+    Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
 }
 
 public interface IStateGAgent<TState> : IGAgent

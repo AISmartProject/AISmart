@@ -20,10 +20,25 @@ public abstract partial class GAgentBase<TState, TEvent>
                     // Skip the event if it is sent by itself.
                     return;
                 }
-                
+
                 var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<object>.EventId))?.GetValue(item)!;
                 var eventType = item.GetType().GetProperty(nameof(EventWrapper<object>.Event))?.GetValue(item);
                 var parameter = eventHandlerMethod.GetParameters()[0];
+
+                var contextStorageGrainIdValue = item.GetType()
+                    .GetProperty(nameof(EventWrapper<object>.ContextGrainId))?
+                    .GetValue(item);
+                if (contextStorageGrainIdValue != null)
+                {
+                    var contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
+                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.GetGuidKey());
+                    if (contextStorageGrain != null)
+                    {
+                        var context = await contextStorageGrain.GetContext();
+                        (eventType! as EventBase)!.SetContext(context);
+                    }
+                }
+
                 if (parameter.ParameterType == eventType!.GetType())
                 {
                     await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
@@ -33,19 +48,21 @@ public abstract partial class GAgentBase<TState, TEvent>
                 {
                     try
                     {
-                        var invokeParameter = new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetPrimaryKey());
+                        var invokeParameter =
+                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetPrimaryKey());
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
                     catch (Exception ex)
                     {
                         // TODO: Make this better.
-                        Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", eventHandlerMethod.Name, eventType.GetType().Name);
+                        Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}",
+                            eventHandlerMethod.Name, eventType.GetType().Name);
                     }
                 }
             });
 
-            Observers.Add(observer);
+            Observers.Add(observer, new Dictionary<StreamId, Guid>());
         }
 
         return Task.CompletedTask;
@@ -66,7 +83,7 @@ public abstract partial class GAgentBase<TState, TEvent>
             //     and the parameter is not EventWrapperBase 
             //     and the parameter is inherited from EventBase
             ((methodInfo.GetCustomAttribute<EventHandlerAttribute>() != null ||
-              methodInfo.Name == nameof(HandleEventAsync)) &&
+              methodInfo.Name == AISmartGAgentConstants.EventHandlerDefaultMethodName) &&
              methodInfo.GetParameters()[0].ParameterType != typeof(EventWrapperBase) &&
              typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType))
             // Or the method has the AllEventHandlerAttribute and the parameter is EventWrapperBase
@@ -74,7 +91,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase)));
     }
 
-    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType, Guid eventId)
+    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType,
+        Guid eventId)
     {
         if (IsEventWithResponse(parameter))
         {
@@ -90,7 +108,8 @@ public abstract partial class GAgentBase<TState, TEvent>
             catch (Exception ex)
             {
                 // TODO: Make this better.
-                Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", method.Name, eventType.GetType().Name);
+                Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", method.Name,
+                    eventType.GetType().Name);
             }
         }
     }
@@ -118,7 +137,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 catch (Exception ex)
                 {
                     // TODO: Make this better.
-                    Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", method.Name, eventType.GetType().Name);
+                    Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", method.Name,
+                        eventType.GetType().Name);
                 }
             }
             else

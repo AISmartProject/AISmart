@@ -1,5 +1,6 @@
 using System;
 using Orleans;
+using Orleans.Runtime;
 
 namespace AISmart.Agents;
 
@@ -10,6 +11,7 @@ public class EventWrapper<T> : EventWrapperBase
     [Id(0)] public T Event { get; private set; }
     [Id(1)] public Guid EventId { get; private set; }
     [Id(2)] public Guid GrainId { get; private set; }
+    [Id(3)] public GrainId? ContextGrainId { get; set; } 
 
     // Constructor
     public EventWrapper(T @event, Guid eventId, Guid grainId)
@@ -17,6 +19,7 @@ public class EventWrapper<T> : EventWrapperBase
         Event = @event;
         EventId = eventId;
         GrainId = grainId;
+        ContextGrainId = null;
     }
 
     // Optionally, you can add methods or other functionality as needed
