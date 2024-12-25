@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using AISmart.Agents;
 using Microsoft.Extensions.Logging;
@@ -14,32 +15,35 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
-                var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
+                var grainId =
+                    (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
                 if (grainId == this.GetGrainId())
                 {
                     // Skip the event if it is sent by itself.
                     return;
                 }
 
-                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<object>.EventId))?.GetValue(item)!;
-                var eventType = item.GetType().GetProperty(nameof(EventWrapper<object>.Event))?.GetValue(item);
+                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))?.GetValue(item)!;
+                var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))
+                    ?.GetValue(item)!;
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                /*var contextStorageGrainIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<object>.ContextGrainId))?
+                var contextStorageGrainIdValue = item.GetType()
+                    .GetProperty(nameof(EventWrapper<EventBase>.ContextGrainId))?
                     .GetValue(item);
                 if (contextStorageGrainIdValue != null)
                 {
                     var contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
-                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.GetGuidKey());
+                    var contextStorageGrain =
+                        GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.GetGuidKey());
                     if (contextStorageGrain != null)
                     {
                         var context = await contextStorageGrain.GetContext();
-                        (eventType! as EventBase)!.SetContext(context);
+                        eventType.SetContext(context);
                     }
-                }*/
+                }
 
-                if (parameter.ParameterType == eventType!.GetType())
+                if (parameter.ParameterType == eventType.GetType())
                 {
                     await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
                 }
@@ -49,9 +53,12 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId());
-                        var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
-                        await (Task)result!;
+                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId());
+                        var instance = Expression.Constant(this);
+                        var methodCall = Expression.Call(instance, eventHandlerMethod,
+                            Expression.Constant(invokeParameter));
+                        var lambda = Expression.Lambda<Func<Task>>(methodCall).Compile();
+                        await lambda();
                     }
                     catch (Exception ex)
                     {
@@ -77,21 +84,77 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private bool IsEventHandlerMethod(MethodInfo methodInfo)
     {
-        return methodInfo.GetParameters().Length == 1 && (
-            // Either the method has the EventHandlerAttribute
-            // Or is named HandleEventAsync
-            //     and the parameter is not EventWrapperBase 
-            //     and the parameter is inherited from EventBase
-            ((methodInfo.GetCustomAttribute<EventHandlerAttribute>() != null ||
-              methodInfo.Name == AISmartGAgentConstants.EventHandlerDefaultMethodName) &&
-             methodInfo.GetParameters()[0].ParameterType != typeof(EventWrapperBase) &&
-             typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType))
-            // Or the method has the AllEventHandlerAttribute and the parameter is EventWrapperBase
-            || (methodInfo.GetCustomAttribute<AllEventHandlerAttribute>() != null &&
-                methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase)));
+        var methodInfoParam = Expression.Parameter(typeof(MethodInfo), "methodInfo");
+
+        // methodInfo.GetParameters().Length == 1
+        var getParametersCall = Expression.Call(methodInfoParam, nameof(MethodInfo.GetParameters), Type.EmptyTypes);
+        var lengthProperty = Expression.Property(getParametersCall, nameof(Array.Length));
+        var lengthCheck = Expression.Equal(lengthProperty, Expression.Constant(1));
+
+        // methodInfo.GetCustomAttribute<EventHandlerAttribute>() != null
+        var getCustomAttributeCall = Expression.Call(
+            typeof(CustomAttributeExtensions),
+            nameof(CustomAttributeExtensions.GetCustomAttribute),
+            new[] { typeof(EventHandlerAttribute) },
+            methodInfoParam
+        );
+        var customAttributeCheck = Expression.NotEqual(getCustomAttributeCall,
+            Expression.Constant(null, typeof(EventHandlerAttribute)));
+
+        // methodInfo.Name == AISmartGAgentConstants.EventHandlerDefaultMethodName
+        var nameProperty = Expression.Property(methodInfoParam, nameof(MethodInfo.Name));
+        var nameCheck = Expression.Equal(nameProperty,
+            Expression.Constant(AISmartGAgentConstants.EventHandlerDefaultMethodName));
+
+        // methodInfo.GetParameters()[0].ParameterType != typeof(EventWrapperBase)
+        var firstParameter = Expression.ArrayIndex(getParametersCall, Expression.Constant(0));
+        var parameterTypeProperty = Expression.Property(firstParameter, nameof(ParameterInfo.ParameterType));
+        var parameterTypeCheck =
+            Expression.NotEqual(parameterTypeProperty, Expression.Constant(typeof(EventWrapperBase)));
+
+        // typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType)
+        var eventBaseType = Expression.Constant(typeof(EventBase), typeof(Type));
+        var isAssignableFromCall = Expression.Call(
+            eventBaseType,
+            nameof(Type.IsAssignableFrom),
+            Type.EmptyTypes,
+            parameterTypeProperty
+        );
+
+        // methodInfo.GetCustomAttribute<AllEventHandlerAttribute>() != null
+        var getAllCustomAttributeCall = Expression.Call(
+            typeof(CustomAttributeExtensions),
+            nameof(CustomAttributeExtensions.GetCustomAttribute),
+            new[] { typeof(AllEventHandlerAttribute) },
+            methodInfoParam
+        );
+        var allCustomAttributeCheck = Expression.NotEqual(getAllCustomAttributeCall,
+            Expression.Constant(null, typeof(AllEventHandlerAttribute)));
+
+        // methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase)
+        var allParameterTypeCheck =
+            Expression.Equal(parameterTypeProperty, Expression.Constant(typeof(EventWrapperBase)));
+
+        // Combine all conditions
+        var combinedCondition = Expression.OrElse(
+            Expression.AndAlso(
+                lengthCheck,
+                Expression.OrElse(
+                    Expression.AndAlso(
+                        Expression.OrElse(customAttributeCheck, nameCheck),
+                        Expression.AndAlso(parameterTypeCheck, isAssignableFromCall)
+                    ),
+                    Expression.AndAlso(allCustomAttributeCheck, allParameterTypeCheck)
+                )
+            ),
+            Expression.AndAlso(allCustomAttributeCheck, allParameterTypeCheck)
+        );
+
+        var lambda = Expression.Lambda<Func<MethodInfo, bool>>(combinedCondition, methodInfoParam).Compile();
+        return lambda(methodInfo);
     }
 
-    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType,
+    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, EventBase eventType,
         Guid eventId)
     {
         if (IsEventWithResponse(parameter))
@@ -102,8 +165,10 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             try
             {
-                var result = method.Invoke(this, [eventType]);
-                await (Task)result!;
+                var instance = Expression.Constant(this);
+                var methodCall = Expression.Call(instance, method, Expression.Constant(eventType));
+                var lambda = Expression.Lambda<Func<Task>>(methodCall).Compile();
+                await lambda();
             }
             catch (Exception ex)
             {
@@ -120,41 +185,46 @@ public abstract partial class GAgentBase<TState, TEvent>
                parameter.ParameterType.BaseType.GetGenericTypeDefinition() == typeof(EventWithResponseBase<>);
     }
 
-    private async Task HandleEventWithResponseAsync(MethodInfo method, object eventType, Guid eventId)
+    private async Task HandleEventWithResponseAsync(MethodInfo method, EventBase eventType, Guid eventId)
     {
-        if (method.ReturnType.IsGenericType &&
-            method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+        var eventHandler = CreateEventHandlerDelegate(method, eventType.GetType());
+
+        if (eventHandler != null)
         {
-            var resultType = method.ReturnType.GetGenericArguments()[0];
-            if (typeof(EventBase).IsAssignableFrom(resultType))
-            {
-                try
-                {
-                    var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
-                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
-                    await PublishAsync(eventWrapper);
-                }
-                catch (Exception ex)
-                {
-                    // TODO: Make this better.
-                    Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}", method.Name,
-                        eventType.GetType().Name);
-                }
-            }
-            else
-            {
-                var errorMessage =
-                    $"The event handler of {eventType.GetType()}'s return type needs to be inherited from EventBase.";
-                Logger.LogError(errorMessage);
-                throw new InvalidOperationException(errorMessage);
-            }
+            var eventResult = await eventHandler(eventType);
+            var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
+            await PublishAsync(eventWrapper);
         }
         else
         {
             var errorMessage =
-                $"The event handler of {eventType.GetType()} needs to have a return value.";
+                $"The event handler of {eventType.GetType()}'s return type needs to be inherited from EventBase.";
             Logger.LogError(errorMessage);
             throw new InvalidOperationException(errorMessage);
         }
+    }
+
+    private Func<EventBase, Task<EventBase>>? CreateEventHandlerDelegate(MethodInfo method, Type eventType)
+    {
+        var instance = Expression.Constant(this);
+        var parameter = Expression.Parameter(typeof(EventBase), "eventType");
+        var castParameter = Expression.Convert(parameter, eventType);
+        var call = Expression.Call(instance, method, castParameter);
+
+        if (method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+        {
+            var resultType = method.ReturnType.GetGenericArguments()[0];
+            if (typeof(EventBase).IsAssignableFrom(resultType))
+            {
+                var convertCall = Expression.Call(
+                    typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(typeof(EventBase)),
+                    Expression.Convert(Expression.Property(call, nameof(Task<object>.Result)), typeof(EventBase))
+                );
+                var lambda = Expression.Lambda<Func<EventBase, Task<EventBase>>>(convertCall, parameter);
+                return lambda.Compile();
+            }
+        }
+
+        return null;
     }
 }

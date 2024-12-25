@@ -147,7 +147,7 @@ public class EventHandlingTests : GAgentTestKitBase
                 Greeting = "Expecting an exception."
             });
         });
-        exception.Message.ShouldContain("needs to have a return value.");
+        exception.Message.ShouldContain("return type needs");
     }
 
     [Fact(DisplayName = "Implementation of handling RequestAllSubscriptionsEvent works.")]
