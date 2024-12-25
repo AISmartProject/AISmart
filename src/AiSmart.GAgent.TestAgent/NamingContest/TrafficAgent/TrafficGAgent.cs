@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
-public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, ITrafficGAgent
+public class TrafficGAgent : GAgentBase<TrafficState, TrafficEventSourcingBase>, ITrafficGAgent
 {
     public TrafficGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
@@ -17,19 +17,18 @@ public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, I
 
     [EventHandler]
     public async Task HandleEventAsync(ReceiveMessageEvent @event)
-    { 
+    {
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
             .SendAsync(@event.Message, new List<MicroAIMessage>());
         if (message.Content("True"))
         {
-            RaiseEvent(new TrafficNameStartSEvent{Content = @event.Message});
+            RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
             await base.ConfirmEvents();
-            
+
             // todo:call creative agent
         }
-
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(NamedCompleteGEvent @event)
     {
@@ -37,7 +36,7 @@ public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, I
         {
             Logger.LogError("Traffic TrafficInformCreativeEvent");
         }
-        
+
         base.RaiseEvent(new TrafficCreativeFinishSEvent()
         {
             CreativeGrainId = @event.GrainGuid,
@@ -51,7 +50,7 @@ public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, I
             NamingReply = @event.NamingReply,
             NamingQuestion = State.NamingContent,
         });
-        
+
         await DispatchCreativeAgent();
     }
 
@@ -67,6 +66,12 @@ public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, I
 
     private async Task DispatchCreativeAgent()
     {
+        await LoadSubscribersAsync();
+        foreach (var grainId in _subscribers.State)
+        {
+            
+        }
+        ;
         // todo:call next creative agent
         // todo:call judge creative agent
         // todo: when over raise TrafficNamingContestOver event
@@ -80,12 +85,18 @@ public class TrafficGAgent:GAgentBase<TrafficState, TrafficEventSourcingBase>, I
             Description = agentResponsibility
         });
         await ConfirmEvents();
-        
+
         await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
     }
 
     public Task<MicroAIGAgentState> GetAgentState()
     {
         throw new NotImplementedException();
+    }
+
+    public async Task AddCreativeAgent(Guid creativeGrainId)
+    {
+        RaiseEvent(new AddCreativeAgent() { CreativeGrainId = creativeGrainId });
+        await base.ConfirmEvents();
     }
 }

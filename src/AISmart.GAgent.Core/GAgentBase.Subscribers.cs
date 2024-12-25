@@ -5,7 +5,7 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    private readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
+    protected readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
 
     private readonly IGrainState<Dictionary<Guid, StreamIdentity>> _subscriptions =
         new GrainState<Dictionary<Guid, StreamIdentity>>();
@@ -13,7 +13,7 @@ public abstract partial class GAgentBase<TState, TEvent>
     private readonly IGrainState<Dictionary<Guid, StreamIdentity>> _publishers =
         new GrainState<Dictionary<Guid, StreamIdentity>>();
 
-    private async Task LoadSubscribersAsync()
+    protected async Task LoadSubscribersAsync()
     {
         if (_subscribers.State.IsNullOrEmpty())
         {
