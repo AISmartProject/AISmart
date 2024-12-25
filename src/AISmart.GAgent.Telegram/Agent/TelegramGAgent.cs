@@ -34,7 +34,7 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
             "Represents an agent responsible for informing other agents when a Telegram thread is published.");
     }
 
-    public async Task SetTelegramConfig(string botName, string token)
+    public async Task RegisterTelegramAsync(string botName, string token)
     {
         RaiseEvent(new SetTelegramConfigEvent()
         {
@@ -45,7 +45,13 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
         await GrainFactory.GetGrain<ITelegramGrain>(botName).RegisterTelegramAsync(
             State.BotName, State.Token);
     }
-   
+
+    public async Task UnRegisterTelegramAsync(string botName)
+    {
+        await GrainFactory.GetGrain<ITelegramGrain>(botName).UnRegisterTelegramAsync(
+            State.BotName);
+    }
+
 
     [EventHandler]
     public async Task HandleEventAsync(ReceiveMessageEvent @event)
@@ -108,5 +114,8 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
 
 public interface ITelegramGAgent : IStateGAgent<TelegramGAgentState>
 {
-    Task SetTelegramConfig( string botName,string token);
+    Task RegisterTelegramAsync( string botName,string token);
+    
+    Task UnRegisterTelegramAsync( string botName);
+    
 }

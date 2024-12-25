@@ -17,6 +17,7 @@ namespace AISmart.Silo;
     typeof(AbpAutofacModule),
     typeof(OpenTelemetryModule),
     typeof(AISmartGAgentAElfModule),
+    typeof(AISmartGAgentPumpfunModule),
     typeof(AISmartGAgentTelegramModule),
     typeof(AISmartGAgentTwitterModule),
     typeof(AISmartGAgentAutogenModule),

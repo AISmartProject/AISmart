@@ -63,4 +63,10 @@ public class TelegramController: AISmartController
     {
         await _telegramService.RegisterBotAsync(registerTelegramDto);
     }
+    
+    [HttpPost("unregisterBot")]
+    public async Task UnRegisterBotAsync([FromBody] UnRegisterTelegramDto unRegisterTelegramDto)
+    {
+        await _telegramService.UnRegisterBotAsync(unRegisterTelegramDto);
+    }
 }
