@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AISmart.CQRS.Dto;
 using Microsoft.Extensions.Logging;
 using Nest;
+using Newtonsoft.Json;
 
 namespace AISmart.CQRS;
 
@@ -39,11 +40,14 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateIndexAsync(string typeName, BaseStateIndex baseStateIndex)
     {
+        _logger.LogInformation("save state info start....index:{index},id:{id}",typeName,baseStateIndex.Id);
         var indexName = typeName.ToLower() + "index";
         await _elasticClient.IndexAsync(baseStateIndex, i => i
             .Index(indexName)
             .Id(baseStateIndex.Id)
         );
+        _logger.LogInformation("save state info end....index:{index},id:{id},state:{state}",typeName,baseStateIndex.Id,JsonConvert.SerializeObject(baseStateIndex));
+
     }
 
     public async Task<BaseStateIndex> QueryIndexAsync(string id,string indexName)
