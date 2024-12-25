@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AISmart.CQRS.Dto;
 using Microsoft.Extensions.Logging;
@@ -40,14 +41,23 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateIndexAsync(string typeName, BaseStateIndex baseStateIndex)
     {
-        _logger.LogInformation("save state info start....index:{index},id:{id}",typeName,baseStateIndex.Id);
-        var indexName = typeName.ToLower() + "index";
-        await _elasticClient.IndexAsync(baseStateIndex, i => i
-            .Index(indexName)
-            .Id(baseStateIndex.Id)
-        );
-        _logger.LogInformation("save state info end....index:{index},id:{id},state:{state}",typeName,baseStateIndex.Id,JsonConvert.SerializeObject(baseStateIndex));
+        try
+        {
+            _logger.LogInformation("save state info start....index:{index},id:{id}",typeName,baseStateIndex.Id);
+            var indexName = typeName.ToLower() + "index";
+            await _elasticClient.IndexAsync(baseStateIndex, i => i
+                .Index(indexName)
+                .Id(baseStateIndex.Id)
+            );
+            _logger.LogInformation("save state info end....index:{index},id:{id},state:{state}",typeName,baseStateIndex.Id,JsonConvert.SerializeObject(baseStateIndex));
 
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"save state info error....index:{index},id:{id}",typeName,baseStateIndex.Id);
+        }
+
+        
     }
 
     public async Task<BaseStateIndex> QueryIndexAsync(string id,string indexName)
