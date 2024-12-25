@@ -104,18 +104,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 var mockElasticClient = new Mock<IElasticClient>();
                 services.AddSingleton(mockElasticClient.Object);
                 var _mockIndexingService = new Mock<IIndexingService>();
-                services.AddSingleton(_mockIndexingService.Object); 
-                
-                var kafkaOptions = new KafkaOptions()
-                {
-                    Topic = "state-topic",
-                    BootstrapServers = "127.0.0.1:9092",
-                    GroupId = "state-consumer-group"
-                };
-                var mockOptionsMonitor = new Mock<IOptionsMonitor<KafkaOptions>>();
-                mockOptionsMonitor.Setup(m => m.CurrentValue).Returns(kafkaOptions);
-                services.AddSingleton(mockOptionsMonitor.Object); 
-
+                services.AddSingleton(_mockIndexingService.Object);
                 services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
             })
             .AddMemoryStreams("AISmart")

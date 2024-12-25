@@ -1,18 +1,14 @@
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.Events;
 using AISmart.CQRS;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Handler;
-using AISmart.CQRS.Options;
 using AISmart.CQRS.Provider;
-using AISmart.CQRS.Service;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -52,21 +48,7 @@ public class CqrsTests : AISmartApplicationTestBase
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
         services.AddSingleton<ICQRSProvider,CQRSProvider>();
         services.AddSingleton<IGrainFactory>(_clusterClient);
-        
-        //consumer
-        services.AddLogging(builder =>
-        {
-            builder.AddConsole();  
-        });
-        services.Configure<KafkaOptions>(options =>
-        {
-            options.BootstrapServers = "127.0.0.1:9092";
-            options.GroupId = "state-consumer-group";
-            options.Topic = "state-topic";
-        });
-        services.AddSingleton<ILogger<KafkaConsumerService>, Logger<KafkaConsumerService>>();
-        services.AddTransient<KafkaConsumerService>();
-        
+
         _serviceProvider = services.BuildServiceProvider();
         _cqrsProvider = _serviceProvider.GetRequiredService<ICQRSProvider>();
     }
@@ -74,11 +56,6 @@ public class CqrsTests : AISmartApplicationTestBase
     [Fact]
     public async Task SendTransactionTest()
     {
-        //run consumer
-        var consumerService = _serviceProvider.GetRequiredService<KafkaConsumerService>();
-        using var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
-        var consumerTask = Task.Run(() => consumerService.StartConsuming(cancellationTokenSource.Token), cancellationTokenSource.Token);
         var createTransactionEvent = new CreateTransactionEvent()
         {
             ChainId = ChainId,
