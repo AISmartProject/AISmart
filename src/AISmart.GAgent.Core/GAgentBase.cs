@@ -246,6 +246,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         await BaseOnActivateAsync(cancellationToken);
         await OnGAgentActivateAsync(cancellationToken);
+        RequestContext.Set("RequestTimeout", TimeSpan.FromMinutes(5));
     }
 
     protected virtual async Task OnGAgentActivateAsync(CancellationToken cancellationToken)
