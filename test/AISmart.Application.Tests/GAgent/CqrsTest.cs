@@ -77,7 +77,7 @@ public class CqrsTests : AISmartApplicationTestBase
         //run consumer
         var consumerService = _serviceProvider.GetRequiredService<KafkaConsumerService>();
         using var cancellationTokenSource = new CancellationTokenSource();
-        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10)); // 设置超时
+        cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
         var consumerTask = Task.Run(() => consumerService.StartConsuming(cancellationTokenSource.Token), cancellationTokenSource.Token);
         var createTransactionEvent = new CreateTransactionEvent()
         {
