@@ -47,11 +47,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         var agentGuid = gAgent.GetPrimaryKey();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-        if (!await AddSubscriptionsAsync(agentGuid, stream))
-        {
-            return false;
-        }
-
+        await AddSubscriptionsAsync(agentGuid, stream);
         await SubscribeAsync(stream);
         return true;
     }
@@ -265,6 +261,16 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         foreach (var observer in Observers.Keys)
         {
             await stream.SubscribeAsync(observer);
+        }
+
+        await LoadSubscribersAsync();
+        if (_subscribers.State != null)
+        {
+            foreach (var subscriber in _subscribers.State)
+            {
+                var gAgent = GrainFactory.GetGrain<IGAgent>(subscriber);
+                await gAgent.SubscribeToAsync(this);
+            }
         }
 
         await AddPublishersAsync(agentGuid, stream);
