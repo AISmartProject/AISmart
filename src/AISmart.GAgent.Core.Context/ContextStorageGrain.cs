@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace AISmart.GAgent.Core;
+namespace AISmart.GAgent.Core.Context;
 
 public sealed class ContextStorageState
 {
@@ -85,16 +85,16 @@ public class ContextStorageGrain : Grain<ContextStorageState>, IContextStorageGr
     public async Task ResetSelfTerminateTime(TimeSpan timeSpan)
     {
         _reminder = await this.RegisterOrUpdateReminder(
-            AISmartGAgentConstants.ContextStorageGrainSelfTerminateReminderName,
+            AISmartGAgentContextConstants.ContextStorageGrainSelfTerminateReminderName,
             timeSpan, timeSpan);
     }
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         _reminder = await this.RegisterOrUpdateReminder(
-            AISmartGAgentConstants.ContextStorageGrainSelfTerminateReminderName,
-            AISmartGAgentConstants.DefaultContextStorageGrainSelfDeleteTime,
-            AISmartGAgentConstants.DefaultContextStorageGrainSelfDeleteTime);
+            AISmartGAgentContextConstants.ContextStorageGrainSelfTerminateReminderName,
+            AISmartGAgentContextConstants.DefaultContextStorageGrainSelfDeleteTime,
+            AISmartGAgentContextConstants.DefaultContextStorageGrainSelfDeleteTime);
         await base.OnActivateAsync(cancellationToken);
     }
 }

@@ -1,6 +1,7 @@
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
+using AISmart.GAgent.Core.Context;
 using AISmart.GAgents.Tests.TestEvents;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -14,7 +15,7 @@ public class ContextTestGAgentState : StateBase
 }
 
 [GAgent]
-public class ContextTestGAgentBase : GAgentBase<ContextTestGAgentState, MessageGEvent>
+public class ContextTestGAgentBase : ContextGAgentBase<ContextTestGAgentState, MessageGEvent>
 {
     public ContextTestGAgentBase() : base(NullLogger<ContextTestGAgentBase>.Instance)
     {
@@ -32,8 +33,8 @@ public class ContextTestGAgent1 : ContextTestGAgentBase
 {
     public async Task HandleEventAsync(ContextTestEvent1 eventData)
     {
-        await SetContextAsync("Set context1", "set context1");
-        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(1));
+        await this.SetContextAsync("Set context1", "set context1");
+        await this.ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(1));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null)
         {
@@ -58,8 +59,8 @@ public class ContextTestGAgent2 : ContextTestGAgentBase
 {
     public async Task HandleEventAsync(ContextTestEvent2 eventData)
     {
-        await SetContextAsync("Set context2", "set context2");
-        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(2));
+        await this.SetContextAsync("Set context2", "set context2");
+        await this.ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(2));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null
             && eventData.TryGetContext("Test2", out var testData2)
@@ -87,8 +88,8 @@ public class ContextTestGAgent3 : ContextTestGAgentBase
 {
     public async Task HandleEventAsync(ContextTestEvent3 eventData)
     {
-        var getContext = await GetContextAsync();
-        await ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(3));
+        var getContext = await this.GetContextAsync();
+        await this.ResetContextStorageGrainTerminateTimeAsync(TimeSpan.FromMinutes(3));
         if (eventData.TryGetContext("Test1", out var testData)
             && testData != null
             && eventData.TryGetContext("Test2", out var testData2)

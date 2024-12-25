@@ -1,5 +1,6 @@
 using System.Reflection;
 using AISmart.Agents;
+using AISmart.GAgent.Core.Context;
 using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgent.Core;
@@ -14,27 +15,26 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
-                var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
+                var grainId =
+                    (GrainId)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
                 if (grainId == this.GetGrainId())
                 {
                     // Skip the event if it is sent by itself.
                     return;
                 }
 
-                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))?.GetValue(item)!;
+                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))
+                    ?.GetValue(item)!;
                 var eventType = item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item);
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                var contextStorageGrainIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<EventBase>.ContextStorageGrainId))?
-                    .GetValue(item);
                 GrainId? contextStorageGrainId = null;
-                if (contextStorageGrainIdValue != null)
+
+                if (this is IEventContext)
                 {
-                    contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
-                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.Value.GetGuidKey());
-                    var context = await contextStorageGrain.GetContext();
-                    (eventType! as EventBase)!.SetContext(context);
+                    var contextStorageHelper = new ContextStorageHelper(GrainFactory);
+                    contextStorageGrainId = await contextStorageHelper.SetContextAsync(item, (EventBase)eventType!);
+                    ((IEventContext)this).SetContextStorageGrainId(contextStorageGrainId);
                 }
 
                 if (parameter.ParameterType == eventType!.GetType())
@@ -61,7 +61,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                     }
                 }
 
-                ClearContext();
+                (this as IEventContext)?.ClearContext();
             });
 
             Observers.Add(observer, new Dictionary<StreamId, Guid>());
@@ -104,7 +104,6 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             try
             {
-                SetContextStorageGrainId(contextStorageGrainId);
                 var result = method.Invoke(this, [eventType]);
                 await (Task)result!;
             }

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace AISmart.GAgents.Tests.TestGAgents;
 
 [GAgent]
-public class RelayTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
+public class RelayTestGAgent : ContextGAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
 {
     public RelayTestGAgent(ILogger logger) : base(logger)
     {

@@ -14,7 +14,7 @@ public class ChatTestGAgentState : StateBase
 }
 
 [GAgent]
-public class ChatTestGAgent : GAgentBase<ChatTestGAgentState, MessageGEvent>
+public class ChatTestGAgent : ContextGAgentBase<ChatTestGAgentState, MessageGEvent>
 {
     public ChatTestGAgent(ILogger logger) : base(logger)
     {

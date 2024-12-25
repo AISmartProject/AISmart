@@ -1,4 +1,5 @@
 using AISmart.GAgent.Core;
+using AISmart.GAgent.Core.Context;
 using AISmart.GAgents.Tests.TestEvents;
 using AISmart.GAgents.Tests.TestGAgents;
 using Shouldly;
@@ -37,7 +38,7 @@ public class ContextTests : GAgentTestKitBase
         var reminderList = await Silo.ReminderRegistry.GetReminders(contextStorageGrain.GetGrainId());
         reminderList.Count.ShouldBe(1);
         var reminder = (Orleans.TestKit.Reminders.TestReminder)reminderList.First();
-        reminder.ReminderName.ShouldBe(AISmartGAgentConstants.ContextStorageGrainSelfTerminateReminderName);
+        reminder.ReminderName.ShouldBe(AISmartGAgentContextConstants.ContextStorageGrainSelfTerminateReminderName);
         reminder.DueTime.ShouldBe(TimeSpan.FromMinutes(3));
         reminder.Period.ShouldBe(TimeSpan.FromMinutes(3));
     }
