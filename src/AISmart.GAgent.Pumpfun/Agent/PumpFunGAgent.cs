@@ -65,6 +65,7 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
         {
             RaiseEvent(new PumpFunSendMessageGEvent()
             {
+                Id = Guid.Parse(@event.ReplyId),
                 ReplyId = @event.ReplyId,
                 ReplyMessage = @event.ReplyMessage
             });
