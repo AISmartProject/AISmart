@@ -18,8 +18,11 @@ using AISmart.Application.Grains;
 using AISmart.Domain.Grains;
 using AISmart.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Validation.AspNetCore;
+using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
@@ -75,6 +78,8 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         ConfigureCors(context, configuration);
         ConfigureAutoResponseWrapper(context);
         ConfigureSwaggerServices(context, configuration);
+        ConfigureRedis(context, configuration, hostingEnvironment);
+
         //context.Services.AddDaprClient();
         
         context.Services.AddMvc(options =>
@@ -107,6 +112,21 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
                 options.Audience = "AISmartAuthServer";
             });
     }
+    
+    private void ConfigureRedis(
+        ServiceConfigurationContext context,
+        IConfiguration configuration,
+        IWebHostEnvironment hostingEnvironment)
+    {
+        if (!hostingEnvironment.IsDevelopment())
+        {
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            context.Services
+                .AddDataProtection()
+                .PersistKeysToStackExchangeRedis(redis, "AISmartAuthServer-Protection-Keys");
+        }
+    }
+
 
     private void ConfigureBundles()
     {
