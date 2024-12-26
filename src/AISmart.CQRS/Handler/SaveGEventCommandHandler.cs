@@ -22,18 +22,12 @@ public class SaveGEventCommandHandler : IRequestHandler<SaveGEventCommand>
     public async Task<Unit> Handle(SaveGEventCommand request, CancellationToken cancellationToken)
     {
         _indexingService.CheckExistOrCreateGEventIndex(request.GEvent);
-       // await SaveIndexAsync(request);
+        await SaveIndexAsync(request);
         return Unit.Value;
     }
 
-    private async Task SaveIndexAsync(SaveStateCommand request)
+    private async Task SaveIndexAsync(SaveGEventCommand request)
     {
-        var index = new BaseStateIndex
-        {
-            Id = request.Id,
-            Ctime = DateTime.Now,
-            State = JsonConvert.SerializeObject(request.State)
-        };
-        await _indexingService.SaveOrUpdateIndexAsync(request.State.GetType().Name, index);
+        await _indexingService.SaveOrUpdateGEventIndexAsync(request.GEvent);
     }
 }

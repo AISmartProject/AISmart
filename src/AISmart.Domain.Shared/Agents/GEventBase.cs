@@ -6,5 +6,5 @@ namespace AISmart.Agents;
 [GenerateSerializer] 
 public abstract class GEventBase
 {
-    [Id(0)] public Guid Id { get; set; }
+    [Id(0)] public virtual Guid Id { get; set; }
 }

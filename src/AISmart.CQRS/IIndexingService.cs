@@ -13,7 +13,7 @@ public interface IIndexingService
 
     public void CheckExistOrCreateGEventIndex<T>(T gEvent) where T : GEventBase;
     
-    public Task SaveOrUpdateGEventIndexAsync(string typeName,BaseStateIndex baseStateIndex);
+    public Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase;
 
 
 

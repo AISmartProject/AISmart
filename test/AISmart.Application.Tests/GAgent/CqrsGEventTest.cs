@@ -3,19 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.Events;
-using AISmart.Agents.X.Events;
-using AISmart.CQRS;
-using AISmart.CQRS.Dto;
-using AISmart.CQRS.Handler;
 using AISmart.CQRS.Provider;
-using MediatR;
-using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
-using Moq;
-using Nest;
 
 namespace AISmart.GAgent;
 
@@ -42,7 +34,7 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         _mockIndexingService.Setup(b => b.QueryIndexAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((string id, string indexName) => new BaseStateIndex { Id = IndexId.ToString(), Ctime = DateTime.Now, State = Address});*/
 
-        var services = new ServiceCollection();
+        /*var services = new ServiceCollection();
         //services.AddSingleton<IIndexingService>(_mockIndexingService.Object); 
         services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
         services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
@@ -58,7 +50,9 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         services.AddSingleton<ICQRSProvider,CQRSProvider>();
         services.AddSingleton<IGrainFactory>(_clusterClient);
         var serviceProvider = services.BuildServiceProvider();
-        _cqrsProvider = serviceProvider.GetRequiredService<ICQRSProvider>();
+        _cqrsProvider = serviceProvider.GetRequiredService<ICQRSProvider>();*/
+        _cqrsProvider = GetRequiredService<ICQRSProvider>();
+
     }
 
     [Fact]
