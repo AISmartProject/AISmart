@@ -44,4 +44,14 @@ public class CQRSProvider : ICQRSProvider, ISingletonDependency
         };
         await _mediator.Send(command);
     }
+    
+    public async Task PublishGEventAsync(GEventBase eventBase, string id)
+    {
+        var command = new SaveGEventCommand
+        {
+            Id = id,
+            GEvent = eventBase
+        };
+        await _mediator.Send(command);
+    }
 }

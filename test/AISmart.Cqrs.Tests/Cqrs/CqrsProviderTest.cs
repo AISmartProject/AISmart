@@ -39,6 +39,7 @@ public class CqrsProviderTest : AISmartApplicationTestBase
         services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
         services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
+        services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
         services.AddSingleton<IEventDispatcher,CQRSProvider>();
         services.AddSingleton<ICQRSProvider,CQRSProvider>();
         services.AddSingleton<IGrainFactory>(_clusterClient);
