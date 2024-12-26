@@ -239,7 +239,7 @@ public class TelegramService : ApplicationService, ITelegramService
             "You are a shy Teacher.",
             "You are a generous Lawyer."
         };
-
+        
         // var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(GuidUtil.StringToGuid("NamingGroup"));
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         // var trafficAgent = _clusterClient.GetGrain<ITrafficGAgent>(GuidUtil.StringToGuid("Traffic"));
@@ -278,7 +278,7 @@ public class TelegramService : ApplicationService, ITelegramService
         var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
         await groupAgent.RegisterAsync(rankingAgent);
 
-        var publishId = GuidUtil.StringToGuid("TelegramNamingContestDemo");
+        var publishId = GuidUtil.StringToGuid(_telegramTestOptions.BotName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
         await publishingAgent.PublishToAsync(groupAgent);
     }
