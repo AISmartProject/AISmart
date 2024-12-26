@@ -16,7 +16,7 @@ public abstract class GAgentTestKitBase : TestKitBase, IAsyncLifetime
         Silo.AddProbe<IPublishingGAgent>(_ => publishingGAgent);
         foreach (var gAgent in gAgentsToPublish)
         {
-            await publishingGAgent.PublishToAsync(gAgent);
+            await publishingGAgent.RegisterAsync(gAgent);
         }
 
         return publishingGAgent;

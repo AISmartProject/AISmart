@@ -117,7 +117,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         await groupAgent.RegisterAsync(marketLeaderAgent);
         
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }
@@ -176,7 +176,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         await groupAgent.RegisterAsync(conclusionAgent);
 
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }
@@ -192,7 +192,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         await groupAgent.RegisterAsync(telegramAgent);
         await groupAgent.RegisterAsync(socialAgent);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
       
     }
 
@@ -203,7 +203,7 @@ public class TelegramService :  ApplicationService,ITelegramService
         await telegramAgent.UnRegisterTelegramAsync( unRegisterTelegramDto.BotName);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.UnpublishFromAsync(groupAgent);
+        await publishingAgent.UnregisterAsync(groupAgent);
     }
     
 }

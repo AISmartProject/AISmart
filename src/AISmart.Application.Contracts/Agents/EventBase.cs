@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Orleans;
+using Orleans.Runtime;
 
 namespace AISmart.Agents;
 
@@ -7,6 +8,18 @@ namespace AISmart.Agents;
 public abstract class EventBase
 {
     [Id(999)]  private Dictionary<string, object?> _context = new();
+    
+    private StreamId? _originStreamId;
+    
+    public void SetOriginStreamId(StreamId? originStreamId)
+    {
+        _originStreamId = originStreamId;
+    }
+    
+    public StreamId? GetOriginStreamId()
+    {
+        return _originStreamId;
+    }
 
     public void AddContext(string key, object value)
     {

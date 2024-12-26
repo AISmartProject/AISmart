@@ -59,7 +59,7 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         var groupGAgent =
             _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupGuid);
         await groupGAgent.ActivateAsync();
-        await publishingGAgent.PublishToAsync(groupGAgent);
+        await publishingGAgent.RegisterAsync(groupGAgent);
         await publishingGAgent.PublishEventAsync(new GroupReloadTestEvent
         {
             GroupManagerGuid = groupGuid
