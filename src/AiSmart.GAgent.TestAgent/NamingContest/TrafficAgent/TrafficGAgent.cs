@@ -100,6 +100,19 @@ public class TrafficGAgent : GAgentBase<TrafficState, TrafficEventSourcingBase>,
         await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
     }
 
+    public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature, int? seed = null,
+        int? maxTokens = null)
+    {
+        RaiseEvent(new TrafficSetAgentSEvent
+        {
+            AgentName = agentName,
+            Description = agentResponsibility
+        });
+        await ConfirmEvents();
+
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentWithTemperature(agentResponsibility, temperature, seed, maxTokens);
+    }
+
     public Task<MicroAIGAgentState> GetAgentState()
     {
         throw new NotImplementedException();
