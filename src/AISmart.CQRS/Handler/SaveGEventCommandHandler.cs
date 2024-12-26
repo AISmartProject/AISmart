@@ -29,5 +29,12 @@ public class SaveGEventCommandHandler : IRequestHandler<SaveGEventCommand>
     private async Task SaveIndexAsync(SaveGEventCommand request)
     {
         await _indexingService.SaveOrUpdateGEventIndexAsync(request.GEvent);
+        var id = "c07bc5c5-2e02-456a-81c8-e6e0e975947d";
+        var result = await _indexingService.QueryEventIndexV2Async(id, "createtransactiongeventindex");
+        foreach (var document in result.Documents)
+        {
+            var deserializedObject = JsonConvert.DeserializeObject(document,typeof(CreateTransactionGEventIndex));
+            deserializedObject.ToString();
+        }
     }
 }

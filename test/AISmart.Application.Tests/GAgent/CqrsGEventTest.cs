@@ -74,7 +74,7 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         grainResult.PendingTransactions.Count.ShouldBe(1);
         grainResult.PendingTransactions.FirstOrDefault().Value.ChainId.ShouldBe(createTransactionEvent.ChainId);
         
-        //get cqrs
+        //get cqrs event
         var grainId =  _clusterClient.GetGrain<IAElfAgent>(guid).GetGrainId();
         var esResult = await _cqrsProvider.QueryAsync(IndexName, grainId.ToString());
         esResult.State.ShouldContain(Address);
