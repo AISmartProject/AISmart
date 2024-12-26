@@ -45,8 +45,6 @@ public class TelegramService :  ApplicationService,ITelegramService
         // To filter only messages that mention the bot, check if message.Entities.type == "mention".
         // Group message auto-reply, just add the bot as a group admin.
         _logger.LogInformation("IPublishingGAgent {token}",token);
-       
-       
         {
             if (NeedReply(updateMessage, token))
             {
@@ -184,11 +182,11 @@ public class TelegramService :  ApplicationService,ITelegramService
     public async Task RegisterBotAsync(RegisterTelegramDto registerTelegramDto)
     {
         var groupId = GuidUtil.StringToGuid(registerTelegramDto.BotName);
-        var socialAgent=  _clusterClient.GetGrain<ISocialGAgent>(Guid.NewGuid());
+        var socialAgent=  _clusterClient.GetGrain<ISocialGAgent>(groupId);
         await socialAgent.SetAgent(registerTelegramDto.BotName, "You need to answer all the questions you know.");
-        var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(Guid.NewGuid());
+        var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(groupId);
         await telegramAgent.RegisterTelegramAsync( registerTelegramDto.BotName,registerTelegramDto.Token);
-        var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
+        var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
         await groupAgent.RegisterAsync(telegramAgent);
         await groupAgent.RegisterAsync(socialAgent);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
