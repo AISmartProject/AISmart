@@ -27,7 +27,7 @@ public class Program
 
         try
         {
-            Log.Information("Starting AISmartAuthServer.AuthServer.");
+            Log.Information("Starting AISmartAuthServer.AuthServer ..");
             var builder = WebApplication.CreateBuilder(args);
             // builder.Configuration.AddJsonFile("apollo.appsettings.json");
             builder.Host.AddAppSettingsSecretsJson()
