@@ -5,9 +5,11 @@ using AISmart.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Providers;
 
 namespace AISmart.Grains;
 
+[StorageProvider(ProviderName = "PubSubStore")]
 public class TwitterGrain : Grain<TwitterState>, ITwitterGrain
 {
     private readonly ITwitterProvider _twitterProvider;
@@ -23,13 +25,13 @@ public class TwitterGrain : Grain<TwitterState>, ITwitterGrain
         _twitterOptions = twitterOptions;
     }
     
-    public async Task CreateTweetAsync(string text, string accountName)
+    public async Task CreateTweetAsync(string text, string token, string tokenSecret)
     {
-        await _twitterProvider.PostTwitterAsync(text, accountName);
+        await _twitterProvider.PostTwitterAsync(text, token, tokenSecret);
     }
     
-    public async Task ReplyTweetAsync(string text, string tweetId)
-    {
-        await _twitterProvider.ReplyAsync(text, tweetId);
-    }
+    // public async Task ReplyTweetAsync(string text, string token, string tokenSecret)
+    // {
+    //     await _twitterProvider.ReplyAsync(text, token, tokenSecret);
+    // }
 }

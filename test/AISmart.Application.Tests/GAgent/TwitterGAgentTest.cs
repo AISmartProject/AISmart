@@ -4,6 +4,7 @@ using AElf.Contracts.MultiToken;
 using AElf.Types;
 using AISmart.Provider;
 using Newtonsoft.Json;
+using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -35,15 +36,9 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
     [Fact]
     public async Task PostTwittersAsyncTest ()
     {
-        var twittersAsync = await _twitterProvider.PostTwitterAsync( "Hello Wednesday", "accountName");
-        _output.WriteLine("twitter: Id" + twittersAsync);
+        var accesstoken = "";
+        var accessTokenSecret = "";
+        var resp = await _twitterProvider.PostTwitterAsync( "where to go at nye?", accesstoken, accessTokenSecret);
+        resp.ShouldContain("id");
     }
-    
-    [Fact]
-    public async Task ReplyAsyncTest ()
-    {
-        var twittersAsync = await _twitterProvider.ReplyAsync( "Good night", "1871867545378258972");
-        _output.WriteLine("twitter: Id" + twittersAsync);
-    }
-
 }

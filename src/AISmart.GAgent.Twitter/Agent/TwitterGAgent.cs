@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
@@ -7,9 +8,13 @@ using AISmart.GEvents.Social;
 using AISmart.GEvents.Twitter;
 using AISmart.Grains;
 using Microsoft.Extensions.Logging;
+using Orleans.Providers;
 
 namespace AISmart.Agent;
 
+[Description("Handle telegram")]
+[StorageProvider(ProviderName = "PubSubStore")]
+[LogConsistencyProvider(ProviderName = "LogStorage")]
 public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitterGAgent
 {
     private readonly ILogger<TwitterGAgent> _logger;
@@ -59,32 +64,49 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         // await ConfirmEvents();
         
         _logger.LogDebug("Create Tweet: " + @event.Text);
-        await GrainFactory.GetGrain<ITwitterGrain>(Guid.Parse(Guid.NewGuid().ToString())).CreateTweetAsync(
-            @event.Text, State.AccountName);
+        await PublishAsync(new SocialEvent()
+        {
+            Content = @event.Text
+        });
     }
     
     [EventHandler]
     public async Task HandleEventAsync(SocialResponseEvent @event)
     {
-        if (@event.TweetId.IsNullOrEmpty())
-        {
-            return;
-        }
-        
-        RaiseEvent(new ReplyTweetGEvent()
-        {
-            Text = @event.ResponseContent,
-            TweetId = @event.TweetId
-        });
-        await ConfirmEvents();
+        // RaiseEvent(new ReplyTweetGEvent()
+        // {
+        //     Text = @event.ResponseContent,
+        //     TweetId = @event.TweetId
+        // });
+        // await ConfirmEvents();
         
         _logger.LogDebug("SocialResponse for tweet Message: " + @event.ResponseContent);
-        await GrainFactory.GetGrain<ITwitterGrain>(Guid.Parse(@event.TweetId)).ReplyTweetAsync(
-            @event.ResponseContent, @event.TweetId);
+        await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).CreateTweetAsync(
+            @event.ResponseContent, State.Token, State.TokenSecret);
+    }
+    
+    public async Task BindTwitterAccount(string userId, string token, string tokenSecret)
+    {
+        RaiseEvent(new BindTwitterAccountEvent()
+        {
+            UserId = userId,
+            Token = token,
+            TokenSecret = tokenSecret
+        });
+        await ConfirmEvents();
+    }
+    
+    public async Task UnbindTwitterAccount()
+    {
+        RaiseEvent(new UnbindTwitterAccountEvent()
+        {
+        });
+        await ConfirmEvents();
     }
 }
 
 public interface ITwitterGAgent : IStateGAgent<TwitterGAgentState>
 {
-    // Task SetTelegramConfig( string botName,string token);
+    Task BindTwitterAccount(string userId, string token, string tokenSecret);
+    Task UnbindTwitterAccount();
 }
