@@ -5,6 +5,7 @@ using AISmart.Agents;
 using AISmart.CQRS.Dto;
 using Microsoft.Extensions.Logging;
 using Nest;
+using Newtonsoft.Json;
 
 namespace AISmart.CQRS;
 
@@ -13,7 +14,7 @@ public class ElasticIndexingService : IIndexingService
     private readonly IElasticClient _elasticClient;
     private readonly ILogger<ElasticIndexingService> _logger;
     private const string IndexSuffix = "index";
-    private const string CTime = "ctime";
+    private const string CTime = "CTime";
 
     public ElasticIndexingService(ILogger<ElasticIndexingService> logger, IElasticClient elasticClient)
     {
@@ -152,63 +153,17 @@ public class ElasticIndexingService : IIndexingService
             _logger.LogInformation("{indexName} save Successfully.");
         }
     }
-    
-    public async Task QueryEventIndexAsync<T>(string id) where T : GEventBase
-    {
-        var indexName = typeof(T).Name.ToLower() + "index";
-        var searchResponse = await _elasticClient.SearchAsync<T>(s => s
-            .Index(indexName) 
-            .From(0)   
-            .Size(10) 
-            .Query(q => 
-                    //q.MatchAll() 
-                 q.Term(t => t.Field(f => f.Id).Value("c07bc5c5-2e02-456a-81c8-e6e0e975947d"))
-            )
-        );
 
-        if (searchResponse.IsValid)
+    public async Task<BaseEventIndex> QueryEventIndexAsync<T>(string id, string indexName) where T : BaseEventIndex
+    { 
+        var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
+        var source = response.Source;
+        if (source is not IDictionary<string, object> sourceDict || !sourceDict.TryGetValue("document", out var value))
         {
-            foreach (var hit in searchResponse.Hits)
-            {
-                Console.WriteLine($"Document ID: {hit.Id}");
-                Console.WriteLine($"Source: {hit.Source}");
-            }
-        }
-        else
-        {
-            Console.WriteLine("Error searching the index: " + searchResponse.ServerError);
-        }
-    }
-
-    public async Task<ISearchResponse<dynamic>> QueryEventIndexV2Async(string id, string indexName)
-    {
-        var errMsg = "";
-        ISearchResponse<dynamic> response = null;
-        try
-        {
-            response = await _elasticClient.SearchAsync<dynamic>(s => s
-                .Index(indexName)
-                .Query(q => 
-                    //q.MatchAll()
-                    //q.Term(t => t.Field("Id").Value(id))
-                    q.Term(t => t
-                        .Field("document.Id.keyword") // Use "keyword" if the field has keyword subfield
-                        .Value(id)
-                    )
-                    )
-            );
-            if (!response.IsValid)
-            {
-                Console.WriteLine("Search not valid: " + response.DebugInformation);
-            }
-        }
-        catch (Exception e)
-        {
-            errMsg = e.Message;
+            return null;
         }
 
-       
-
-        return response;
+        var documentContent = JsonConvert.SerializeObject(value);
+        return JsonConvert.DeserializeObject<T>(documentContent);
     }
 }

@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.CQRS.Dto;
-using Nest;
 
 namespace AISmart.CQRS;
 
@@ -16,9 +15,8 @@ public interface IIndexingService
     
     public Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase;
 
-    public Task QueryEventIndexAsync<T>(string id) where T : GEventBase;
+    public Task<BaseEventIndex> QueryEventIndexAsync<T>(string id, string indexName) where T : BaseEventIndex;
 
-    public Task<ISearchResponse<dynamic>> QueryEventIndexV2Async(string id, string indexName);
 
 
 }
