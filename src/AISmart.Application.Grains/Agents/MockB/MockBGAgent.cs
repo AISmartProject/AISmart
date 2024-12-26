@@ -11,13 +11,10 @@ namespace AISmart.Application.Grains.Agents.MockB;
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-public class MockBGAgent : GAgentBase<MockBAgentState, MockBGEvent>
+public class MockBGAgent : GAgentBase<MockBAgentState, MockBGEvent>, IMockBGAgentCount
 {
-    private readonly IMockBGAgentCount _mockBGAgentCount;
-
-    public MockBGAgent(ILogger<MockBGAgent> logger, IMockBGAgentCount mockBGAgentCount) : base(logger)
+    public MockBGAgent(ILogger<MockBGAgent> logger) : base(logger)
     {
-        _mockBGAgentCount = mockBGAgentCount;
     }
 
     public override Task<string> GetDescriptionAsync()
@@ -36,6 +33,9 @@ public class MockBGAgent : GAgentBase<MockBAgentState, MockBGEvent>
     {
         Logger.LogInformation($"{GetType()} ExecuteAsync: BAgent analyses content: {eventData.Content}");
 
+        RaiseEvent(new MockBAddNumberEvent());
+        await base.ConfirmEvents();
+
         if (State.ThreadIds.IsNullOrEmpty())
         {
             State.ThreadIds = new List<string>();
@@ -50,7 +50,10 @@ public class MockBGAgent : GAgentBase<MockBAgentState, MockBGEvent>
         };
 
         await PublishAsync(publishEvent);
+    }
 
-        _mockBGAgentCount.BGAgentCount();
+    public Task<int> GetMockBGAgentCount()
+    {
+        return Task.FromResult(State.Number);
     }
 }

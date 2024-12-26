@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AISmart.Agents;
 using Orleans.Streams;
 
@@ -7,11 +9,11 @@ public abstract partial class GAgentBase<TState, TEvent>
 {
     private readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
 
-    private readonly IGrainState<Dictionary<Guid, StreamIdentity>> _subscriptions =
-        new GrainState<Dictionary<Guid, StreamIdentity>>();
+    private readonly IGrainState<Dictionary<Guid, string>> _subscriptions =
+        new GrainState<Dictionary<Guid, string>>();
 
-    private readonly IGrainState<Dictionary<Guid, StreamIdentity>> _publishers =
-        new GrainState<Dictionary<Guid, StreamIdentity>>();
+    private readonly IGrainState<Dictionary<Guid, string>> _publishers =
+        new GrainState<Dictionary<Guid, string>>();
 
     private async Task LoadSubscribersAsync()
     {
@@ -74,26 +76,23 @@ public abstract partial class GAgentBase<TState, TEvent>
         return await RemoveStreamAsync(streamGuid, _publishers, AISmartGAgentConstants.PublishersStateName);
     }
 
-    private async Task LoadStateAsync(IGrainState<Dictionary<Guid, StreamIdentity>> state, string stateName)
+    private async Task LoadStateAsync(IGrainState<Dictionary<Guid, string>> state, string stateName)
     {
-        if (state.State.IsNullOrEmpty())
-        {
-            await GrainStorage.ReadStateAsync(stateName, this.GetGrainId(), state);
-        }
+        await GrainStorage.ReadStateAsync(stateName, this.GetGrainId(), state);
     }
 
     private async Task<bool> AddStreamAsync(Guid streamGuid, IAsyncStream<EventWrapperBase> stream,
-        IGrainState<Dictionary<Guid, StreamIdentity>> state, string stateName)
+        IGrainState<Dictionary<Guid, string>> state, string stateName)
     {
         await LoadStateAsync(state, stateName);
         state.State ??= [];
-        var streamIdentity = GetStreamIdentity(streamGuid, stream);
+        var streamIdentity = GetStreamIdentityJson(streamGuid, stream);
         var success = state.State.TryAdd(streamGuid, streamIdentity);
         await GrainStorage.WriteStateAsync(stateName, this.GetGrainId(), state);
         return success;
     }
 
-    private async Task<bool> RemoveStreamAsync(Guid streamGuid, IGrainState<Dictionary<Guid, StreamIdentity>> state,
+    private async Task<bool> RemoveStreamAsync(Guid streamGuid, IGrainState<Dictionary<Guid, string>> state,
         string stateName)
     {
         await LoadStateAsync(state, stateName);
@@ -111,15 +110,30 @@ public abstract partial class GAgentBase<TState, TEvent>
         return true;
     }
 
-    private StreamIdentity GetStreamIdentity(Guid streamGuid, IAsyncStream<EventWrapperBase> stream)
+    private string GetStreamIdentityJson(Guid streamGuid, IAsyncStream<EventWrapperBase> stream)
     {
-        return new StreamIdentity(streamGuid, stream.StreamId.GetNamespace());
+        return JsonSerializer.Serialize(new StreamIdentity(streamGuid, stream.StreamId.GetNamespace()!));
     }
 
-    private IAsyncStream<EventWrapperBase> GetStream(StreamIdentity streamIdentity)
+    private IAsyncStream<EventWrapperBase> GetStream(string streamIdentityJson)
     {
-        var streamId = StreamId.Create(streamIdentity.Namespace, streamIdentity.Guid);
+        var streamIdentity = JsonSerializer.Deserialize<StreamIdentity>(streamIdentityJson);
+        var streamId = StreamId.Create(streamIdentity!.Namespace, streamIdentity.Guid);
         var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
         return stream;
     }
+}
+
+public class StreamIdentity
+{
+    [JsonConstructor]
+    public StreamIdentity(Guid guid, string @namespace)
+    {
+        Guid = guid;
+        Namespace = @namespace;
+    }
+
+    [JsonPropertyName("guid")] public Guid Guid { get; }
+
+    [JsonPropertyName("namespace")] public string Namespace { get; }
 }

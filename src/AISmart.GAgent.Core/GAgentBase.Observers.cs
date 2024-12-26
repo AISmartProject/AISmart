@@ -14,8 +14,8 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
-                var grainId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
-                if (grainId == this.GetPrimaryKey())
+                var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
+                if (grainId == this.GetGrainId())
                 {
                     // Skip the event if it is sent by itself.
                     return;
@@ -25,7 +25,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                 var eventType = item.GetType().GetProperty(nameof(EventWrapper<object>.Event))?.GetValue(item);
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                var contextStorageGrainIdValue = item.GetType()
+                /*var contextStorageGrainIdValue = item.GetType()
                     .GetProperty(nameof(EventWrapper<object>.ContextGrainId))?
                     .GetValue(item);
                 if (contextStorageGrainIdValue != null)
@@ -37,7 +37,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                         var context = await contextStorageGrain.GetContext();
                         (eventType! as EventBase)!.SetContext(context);
                     }
-                }
+                }*/
 
                 if (parameter.ParameterType == eventType!.GetType())
                 {
@@ -49,7 +49,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetPrimaryKey());
+                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId());
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
@@ -131,7 +131,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                 try
                 {
                     var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
-                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetPrimaryKey());
+                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
                     await PublishAsync(eventWrapper);
                 }
                 catch (Exception ex)
