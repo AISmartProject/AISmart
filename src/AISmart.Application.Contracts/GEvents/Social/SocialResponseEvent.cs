@@ -12,4 +12,5 @@ public class SocialResponseEvent:EventBase
     [Id(1)]  public string ChatId { get; set; }
     [Description("Optional ID of the message to which this message is a reply.")]
     [Id(2)]   public string? ReplyMessageId { get; set; }
+    [Id(3)]   public string? TweetId { get; set; }
 }

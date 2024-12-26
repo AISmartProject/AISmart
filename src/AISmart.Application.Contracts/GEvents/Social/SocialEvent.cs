@@ -13,4 +13,5 @@ public class SocialEvent:EventWithResponseBase<SocialResponseEvent>
     [Id(1)]  public string MessageId { get; set; }
     [Description("Unique identifier for the chat from which the message was received.")]
     [Id(2)]  public string ChatId { get; set; }
+    [Id(3)]  public string TweetId { get; set; }
 }

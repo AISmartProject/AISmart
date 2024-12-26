@@ -35,7 +35,14 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
     [Fact]
     public async Task PostTwittersAsyncTest ()
     {
-        var twittersAsync = await _twitterProvider.PostTwitterAsync("Test", "twitter test");
+        var twittersAsync = await _twitterProvider.PostTwitterAsync( "Hello Wednesday", "accountName");
+        _output.WriteLine("twitter: Id" + twittersAsync);
+    }
+    
+    [Fact]
+    public async Task ReplyAsyncTest ()
+    {
+        var twittersAsync = await _twitterProvider.ReplyAsync( "Good night", "1871867545378258972");
         _output.WriteLine("twitter: Id" + twittersAsync);
     }
 
