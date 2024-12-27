@@ -110,10 +110,8 @@ public class NamingContestService : ApplicationService, INamingContestService
             
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
 
-            var trafficAgent = _clusterClient.GetGrain<ITrafficGAgent>(Guid.NewGuid());
-            await trafficAgent.SetAgent("Traffic",
-                "You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
-            
+            var trafficAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
+
             await groupAgent.RegisterAsync(trafficAgent);
             
             
