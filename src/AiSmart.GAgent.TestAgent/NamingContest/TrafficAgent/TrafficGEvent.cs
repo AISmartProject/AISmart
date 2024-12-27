@@ -4,7 +4,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.Common;
 namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
 [GenerateSerializer]
-public class NamedCompleteGEvent:NamingContext
+public class NamedCompleteGEvent:NameContentGEvent
 {
     [Id(0)] public Guid GrainGuid { get; set; }
     [Id(1)] public string CreativeName { get; set; }
@@ -14,9 +14,11 @@ public class NamedCompleteGEvent:NamingContext
 [GenerateSerializer]
 public class NameContentGEvent:NamingContext
 {
-    [Id(0)] public string eventId { get; set; }
+    [Id(0)] public string EventId { get; set; }
     [Id(1)] public string AgentId { get; set; }
     [Id(2)] public string AgentName { get; set; }
+    [Id(3)] public string Scheme { get; set; }
+
 }
 
 

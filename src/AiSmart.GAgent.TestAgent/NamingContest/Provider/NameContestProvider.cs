@@ -44,7 +44,7 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
             
             var response = await client.PostAsync(callBackUrl, new StringContent(json, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}",nameContentGEvent.eventId, response);
+            _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}",nameContentGEvent.EventId, response);
             var responseBody = await response.Content.ReadAsStringAsync();
             _logger.LogInformation(responseBody);
         }

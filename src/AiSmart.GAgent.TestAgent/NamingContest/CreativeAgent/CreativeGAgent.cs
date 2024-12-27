@@ -35,7 +35,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
         IChatAgentGrain chatAgentGrain =
             GrainFactory.GetGrain<IChatAgentGrain>(_nameContestOptions.CreativeGAgent[@event.GetType().Name]);
             
-        var message = await chatAgentGrain.SendAsync(_nameContestOptions.CreativeGAgent[@event.GetType().Name], new List<MicroAIMessage>());
+        var message = await chatAgentGrain.SendAsync(_nameContestOptions.CreativeGAgent[@event.GetType().Name]+" "+@event.NamingContent, new List<MicroAIMessage>());
         if (message != null && !message.Content.IsNullOrEmpty())
         {
             var namingReply = message.Content;

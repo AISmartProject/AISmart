@@ -238,7 +238,9 @@ namespace AISmart.Samples
             };
                 
             await _namingContestService.StartGroupAsync(groupDto);
-            
+
+            await Task.Delay(1000 * 10);
+
         }
 
     }

@@ -2,12 +2,14 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using AISmart.Agent.Grains;
 using AISmart.Application.Grains;
 using AISmart.CQRS;
 using AISmart.CQRS.Handler;
 using AISmart.CQRS.Provider;
 using AISmart.EventSourcing.Core.Hosting;
 using AISmart.GAgent.Core;
+using AISmart.Grains;
 using AISmart.Mock;
 using AISmart.Options;
 using AISmart.Provider;
@@ -109,6 +111,8 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 var _mockIndexingService = new Mock<IIndexingService>();
                 services.AddSingleton(_mockIndexingService.Object); 
                 services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
+                
+                services.AddSingleton(typeof(INameContestProvider), typeof(NameContestProvider));
             })
             .AddMemoryStreams("AISmart")
             .AddMemoryGrainStorage("PubSubStore")
