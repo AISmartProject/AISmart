@@ -26,6 +26,15 @@ public class TrafficCreativeCompleteGEvent : TrafficEventSourcingBase
     [Id(0)] public Guid CompleteGrainId { get; set; }
 }
 
+
+[GenerateSerializer]
+public class TrafficDebateCompleteGEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public Guid CompleteGrainId { get; set; }
+}
+
+
+
 [GenerateSerializer]
 public class TrafficNameStartSEvent:TrafficEventSourcingBase
 {
