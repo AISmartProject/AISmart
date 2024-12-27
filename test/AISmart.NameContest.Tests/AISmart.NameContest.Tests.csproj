@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\common.props" />
+    
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <RootNamespace>AISmart.NameContest.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\AISmart.Application\AISmart.Application.csproj" />
+      <ProjectReference Include="..\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj" />
+      <ProjectReference Include="..\AISmart.TestBase\AISmart.TestBase.csproj" />
+
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Volo.Abp.AutoMapper" />
+      <PackageReference Include="Volo.Abp.Core" />
+    </ItemGroup>
+
+</Project>

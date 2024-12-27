@@ -21,9 +21,9 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto, StringValues token);
-    public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto, StringValues token);
-    public Task StartGroupAsync(GroupDto groupDto, StringValues token);
+    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
+    public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
+    public Task StartGroupAsync(GroupDto groupDto);
     
 }
 
@@ -44,7 +44,7 @@ public class NamingContestService : ApplicationService, INamingContestService
         _telegramOptions = telegramOption.Value;
     }
 
-    public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto, StringValues token)
+    public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
         var random = new Random();
 
@@ -101,7 +101,7 @@ public class NamingContestService : ApplicationService, INamingContestService
         return agentResponse;
     }
 
-    public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto, StringValues token)
+    public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
         GroupResponse groupResponse = new GroupResponse();
         
@@ -166,7 +166,7 @@ public class NamingContestService : ApplicationService, INamingContestService
         return groupResponse;
     }
 
-    public async Task StartGroupAsync(GroupDto groupDto, StringValues token)
+    public async Task StartGroupAsync(GroupDto groupDto)
     {
         foreach (var groupId in groupDto.GroupIdList)
         {
