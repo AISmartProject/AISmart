@@ -86,7 +86,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
     {
         _logger.LogInformation("SearchAnswerAsync, replyId:{replyId}", replyId);
         // get PumpFunGAgentState
-        var eventResult = await _cqrsService.QueryGEventAsync<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>("pumpfungagentstateindex", replyId);
+        var eventResult = await _cqrsService.QueryGEventAsync<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>("pumpfunsendmessagegeventindex", replyId);
         _logger.LogInformation("SearchAnswerAsync, eventResult:{eventResult}", JsonConvert.SerializeObject(eventResult));
         PumFunResponseDto answer = new PumFunResponseDto
         {
