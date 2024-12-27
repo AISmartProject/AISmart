@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using Orleans;
@@ -11,17 +12,26 @@ public class TwitterGAgentState : StateBase
     [Id(1)] public string UserId { get; set; }
     [Id(2)] public string Token { get; set; }
     [Id(3)] public string TokenSecret { get; set; }
+    [Id(4)] public Dictionary<string, string> RepliedTweets { get; set; }
     
-    public void Apply(BindTwitterAccountEvent bindTwitterAccountEvent)
+    public void Apply(BindTwitterAccountGEvent bindTwitterAccountGEvent)
     {
-        UserId = bindTwitterAccountEvent.UserId;
-        Token = bindTwitterAccountEvent.Token;
-        TokenSecret = bindTwitterAccountEvent.TokenSecret;
+        UserId = bindTwitterAccountGEvent.UserId;
+        Token = bindTwitterAccountGEvent.Token;
+        TokenSecret = bindTwitterAccountGEvent.TokenSecret;
     }
     
     public void Apply(UnbindTwitterAccountEvent unbindTwitterAccountEvent)
     {
         Token = "";
         TokenSecret = "";
+    }
+    
+    public void Apply(ReplyTweetGEvent replyTweetGEvent)
+    {
+        if (!replyTweetGEvent.TweetId.IsNullOrEmpty())
+        {
+            RepliedTweets[replyTweetGEvent.TweetId] = replyTweetGEvent.Text;
+        }
     }
 }

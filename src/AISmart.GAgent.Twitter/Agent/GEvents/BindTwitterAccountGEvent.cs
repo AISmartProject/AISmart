@@ -2,7 +2,7 @@ using Orleans;
 
 namespace AISmart.Agent.GEvents;
 
-public class BindTwitterAccountEvent : TweetGEvent
+public class BindTwitterAccountGEvent : TweetGEvent
 {
     [Id(0)] public string UserId { get; set; }
     [Id(1)] public string Token { get; set; }

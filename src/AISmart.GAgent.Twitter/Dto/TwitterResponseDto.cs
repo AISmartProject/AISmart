@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace AElfScanServer.Worker.Core.Dtos;
+namespace AISmart.Dto;
 
 public class Tweet
 {
@@ -28,7 +28,7 @@ public class Meta
 public class TwitterResponseDto
 {
     [JsonProperty("data")]
-    public List<Tweet> Tweets { get; set; }
+    public List<Tweet> Data { get; set; }
     
     [JsonProperty("meta")]
     public Meta Meta { get; set; }

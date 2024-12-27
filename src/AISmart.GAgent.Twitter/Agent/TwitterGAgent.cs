@@ -30,7 +30,6 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
             "Represents an agent responsible for informing other agents when a twitter thread is published.");
     }
     
-
     [EventHandler]
     public async Task HandleEventAsync(ReceiveReplyEvent @event)
     {
@@ -57,12 +56,6 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
             return;
         }
         
-        // RaiseEvent(new CreateTweetGEvent()
-        // {
-        //     Text = @event.Text,
-        // });
-        // await ConfirmEvents();
-        
         _logger.LogDebug("Create Tweet: " + @event.Text);
         await PublishAsync(new SocialEvent()
         {
@@ -73,21 +66,48 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
     [EventHandler]
     public async Task HandleEventAsync(SocialResponseEvent @event)
     {
-        // RaiseEvent(new ReplyTweetGEvent()
-        // {
-        //     Text = @event.ResponseContent,
-        //     TweetId = @event.TweetId
-        // });
-        // await ConfirmEvents();
-        
         _logger.LogDebug("SocialResponse for tweet Message: " + @event.ResponseContent);
-        await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).CreateTweetAsync(
-            @event.ResponseContent, State.Token, State.TokenSecret);
+
+        if (@event.TweetId.IsNullOrEmpty())
+        {
+            await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).CreateTweetAsync(
+                @event.ResponseContent, State.Token, State.TokenSecret);
+        }
+        else
+        {
+            RaiseEvent(new ReplyTweetGEvent
+            {
+                TweetId = @event.TweetId,
+                Text = @event.ResponseContent
+            });
+            await ConfirmEvents();
+            
+            await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).ReplyTweetAsync(
+                @event.ResponseContent, @event.TweetId, State.Token, State.TokenSecret);
+        }
+    }
+    
+    [EventHandler]
+    public async Task HandleEventAsync(ReplyMentionEvent @event)
+    {
+        _logger.LogDebug("Handle ReplyMentionEvent");
+        var mentionTweets = await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).GetRecentMentionAsync();
+        foreach (var tweet in mentionTweets)
+        {
+            if (!State.RepliedTweets.Keys.Contains(tweet.Id))
+            {
+                await PublishAsync(new SocialEvent()
+                {
+                    Content = tweet.Text,
+                    TweetId = tweet.Id
+                });
+            }
+        }
     }
     
     public async Task BindTwitterAccount(string userId, string token, string tokenSecret)
     {
-        RaiseEvent(new BindTwitterAccountEvent()
+        RaiseEvent(new BindTwitterAccountGEvent()
         {
             UserId = userId,
             Token = token,

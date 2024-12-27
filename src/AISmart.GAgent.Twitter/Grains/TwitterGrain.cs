@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.Dto;
 using AISmart.Options;
@@ -30,8 +31,13 @@ public class TwitterGrain : Grain<TwitterState>, ITwitterGrain
         await _twitterProvider.PostTwitterAsync(text, token, tokenSecret);
     }
     
-    // public async Task ReplyTweetAsync(string text, string token, string tokenSecret)
-    // {
-    //     await _twitterProvider.ReplyAsync(text, token, tokenSecret);
-    // }
+    public async Task ReplyTweetAsync(string text, string tweetId, string token, string tokenSecret)
+    {
+        await _twitterProvider.ReplyAsync(text, tweetId, token, tokenSecret);
+    }
+
+    public async Task<List<Tweet>> GetRecentMentionAsync()
+    {
+        return await _twitterProvider.GetMentionsAsync();
+    }
 }
