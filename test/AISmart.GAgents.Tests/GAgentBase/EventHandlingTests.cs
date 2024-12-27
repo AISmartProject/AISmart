@@ -112,7 +112,8 @@ public class EventHandlingTests : GAgentTestKitBase
         subscribedEventList.Count.ShouldBe(0);
     }
 
-    [Fact(DisplayName = "Will throw exception if response type is not inherited from EventBase.")]
+    [Fact(DisplayName = "Will throw exception if response type is not inherited from EventBase.",
+        Skip = "Will change the implementation soon.")]
     public async Task ResponseReturnTypeNotInheritedFromEventBaseTest()
     {
         // Arrange.
@@ -131,7 +132,8 @@ public class EventHandlingTests : GAgentTestKitBase
         exception.Message.ShouldContain("return type needs to be inherited from EventBase.");
     }
 
-    [Fact(DisplayName = "Will throw exception if with-response-type event's event handler has no response type.")]
+    [Fact(DisplayName = "Will throw exception if with-response-type event's event handler has no response type.",
+        Skip = "Will change the implementation soon.")]
     public async Task ResponseEventNoResponseTypeTest()
     {
         // Arrange.

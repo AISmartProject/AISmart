@@ -1,6 +1,7 @@
 ﻿using AISmart.Application.Grains;
 using AiSmart.GAgent.SocialAgent;
 using AiSmart.GAgent.TestAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AISmart.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
@@ -42,5 +43,6 @@ public class AISmartApplicationModule : AbpModule
         
         var configuration = context.Services.GetConfiguration();
         Configure<RagOptions>(configuration.GetSection("Rag"));
+        Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
     }
 }
