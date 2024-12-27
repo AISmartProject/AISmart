@@ -86,8 +86,8 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
     {
         var url = "https://api.twitter.com/2/tweets";
 
-        // accessToken = GetDecryptedData(accessToken);
-        // accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
         string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
 
         var jsonBody = JsonConvert.SerializeObject(new { text = message });
@@ -117,6 +117,8 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
     {
         var url = "https://api.twitter.com/2/tweets";
         
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
         string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
         
         var jsonBody = JsonConvert.SerializeObject(new
