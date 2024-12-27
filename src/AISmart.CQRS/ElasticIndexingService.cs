@@ -155,15 +155,24 @@ public class ElasticIndexingService : IIndexingService
     }
     
     public async Task<string> QueryEventIndexAsync(string id, string indexName)
-    { 
-        var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
-        var source = response.Source;
-        if (source is not IDictionary<string, object> sourceDict || !sourceDict.TryGetValue("document", out var value))
+    {
+        try
         {
-            return null;
-        }
+            var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
+            var source = response.Source;
+            if (source is not IDictionary<string, object> sourceDict || !sourceDict.TryGetValue("document", out var value))
+            {
+                return null;
+            }
 
-        var documentContent = JsonConvert.SerializeObject(value);
-        return documentContent;
+            var documentContent = JsonConvert.SerializeObject(value);
+            return documentContent;
+        }
+        catch (Exception e)
+        {
+            _logger.LogInformation("{indexName} ,id:{id}QueryEventIndexAsync fail.", indexName,id);
+            throw e;
+        }
+        
     }
 }

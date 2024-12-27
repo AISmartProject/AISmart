@@ -35,7 +35,7 @@ public class AISmartCQRSModule : AbpModule
             context.Services.AddTransient<GetGEventQueryHandler>();
 
             var configuration = context.Services.GetConfiguration();
-            //ConfigureElasticsearch(context, configuration);
+            ConfigureElasticsearch(context, configuration);
 
         }
        private static void ConfigureElasticsearch(
