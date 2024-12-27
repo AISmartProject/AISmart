@@ -23,13 +23,13 @@ namespace AISmart.Service;
 public class PumpFunChatService :  ApplicationService, IPumpFunChatService
 {
     private readonly IClusterClient _clusterClient;
-    private readonly ICQRSProvider _cqrsProvider;
+    private readonly ICqrsService _cqrsService;
     private readonly ILogger<PumpFunChatService> _logger;
 
-    public PumpFunChatService(IClusterClient clusterClient, ICQRSProvider cqrsProvider, ILogger<PumpFunChatService> logger)
+    public PumpFunChatService(IClusterClient clusterClient, ICqrsService cqrsService, ILogger<PumpFunChatService> logger)
     {
         _clusterClient = clusterClient;
-        _cqrsProvider = cqrsProvider;
+        _cqrsService = cqrsService;
         _logger = logger;
     }
     
@@ -86,7 +86,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
     {
         _logger.LogInformation("SearchAnswerAsync, replyId:{replyId}", replyId);
         // get PumpFunGAgentState
-        var eventResult = await _cqrsProvider.QueryGEventAsync<PumpFunSendMessageGEventIndex>("pumpfungagentstateindex", replyId);
+        var eventResult = await _cqrsService.QueryGEventAsync<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>("pumpfungagentstateindex", replyId);
         _logger.LogInformation("SearchAnswerAsync, eventResult:{eventResult}", JsonConvert.SerializeObject(eventResult));
         PumFunResponseDto answer = new PumFunResponseDto
         {
