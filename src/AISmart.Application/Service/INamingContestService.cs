@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agents;
@@ -24,24 +25,22 @@ public interface INamingContestService
     public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
     public Task StartGroupAsync(GroupDto groupDto);
-    
 }
 
-public class NamingContestService : ApplicationService, INamingContestService
+public class NamingContestService : INamingContestService
 {
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<NamingContestService> _logger;
-    private readonly TelegramTestOptions _telegramTestOptions;
-    private readonly TelegramOptions _telegramOptions;
+    private readonly NameContestOptions _nameContestOptions;
 
-    public NamingContestService(IOptions<TelegramTestOptions> telegramTestOptions, IOptions<TelegramOptions> telegramOption,
+    public NamingContestService(
         IClusterClient clusterClient,
-        ILogger<NamingContestService> logger)
+        ILogger<NamingContestService> logger,
+        IOptions<NameContestOptions> nameContestOptions)
     {
         _clusterClient = clusterClient;
-        _telegramTestOptions = telegramTestOptions.Value;
         _logger = logger;
-        _telegramOptions = telegramOption.Value;
+        _nameContestOptions = nameContestOptions.Value;
     }
 
     public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
@@ -58,18 +57,17 @@ public class NamingContestService : ApplicationService, INamingContestService
                 AgentId = creativeAgent.GetGrainId().ToString(),
                 Name = contestant.Name
             };
-    
+
             // Add the new agent to the contestant list
             agentResponse.ContestantAgentList.Add(newAgent);
-            
-            
-            foreach (var goal in contestant.Goals)
+
+            foreach (var item in _nameContestOptions.CreativeGAgent)
             {
                 var temperature = random.NextDouble();
 
                 await creativeAgent.SetAgentWithTemperatureAsync(
-                    goal.Action,
-                    $"{goal.Description} You must provide a definite name for the user's input regarding a naming question, without including any additional information.",
+                    item.Key,
+                    $"{item.Value}",
                     (float)temperature);
             }
         }
@@ -77,23 +75,23 @@ public class NamingContestService : ApplicationService, INamingContestService
         foreach (var judge in contestAgentsDto.JudgeAgentList)
         {
             var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.NewGuid());
-            
+
             var newAgent = new AgentReponse()
             {
                 AgentId = judgeAgent.GetGrainId().ToString(),
                 Name = judge.Name
             };
-    
+
             // Add the new agent to the contestant list
-            agentResponse.ContestantAgentList.Add(newAgent);
-            
-            foreach (var goal in judge.Goals)
+            agentResponse.JudgeAgentList.Add(newAgent);
+
+            foreach (var item in _nameContestOptions.JudgeGAgent)
             {
                 var temperature = random.NextDouble();
 
                 await judgeAgent.SetAgentWithTemperatureAsync(
-                    goal.Action,
-                    $"{goal.Description} You must provide a definite name for the user's input regarding a naming question, without including any additional information.",
+                    item.Key,
+                    $"{item.Value}",
                     (float)temperature);
             }
         }
@@ -104,11 +102,11 @@ public class NamingContestService : ApplicationService, INamingContestService
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
         GroupResponse groupResponse = new GroupResponse();
-        
+
         for (int i = 0; i < networksDto.Networks.Count; i++)
         {
             var network = networksDto.Networks[i];
-            
+
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
             var trafficAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
             var namingContestGAgent = _clusterClient.GetGrain<INamingContestGAgent>(Guid.NewGuid());
@@ -116,47 +114,42 @@ public class NamingContestService : ApplicationService, INamingContestService
 
             await groupAgent.RegisterAsync(trafficAgent);
             await groupAgent.RegisterAsync(namingContestGAgent);
-            
+
             _ = namingContestGAgent.SetCallBackURL(network.CallbackAddress);
-            
-            
+
+
             foreach (var agentId in network.ConstentList)
             {
-                
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
-                
-                _ =  trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
-                
-                await groupAgent.RegisterAsync(creativeAgent);
 
+                _ = trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
+
+                await groupAgent.RegisterAsync(creativeAgent);
             }
-            
+
             foreach (var agentId in network.JudgeList)
             {
-              
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
-                
+
                 _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
-                
+
                 await groupAgent.RegisterAsync(judgeAgent);
             }
-            
+
             foreach (var agentId in network.ScoreList)
             {
-                
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
-                
+
                 await trafficAgent.AddCreativeAgent(judgeAgent.GetPrimaryKey());
-                
+
                 await groupAgent.RegisterAsync(judgeAgent);
             }
-            
+
             foreach (var agentId in network.HostList)
             {
-               
                 Console.WriteLine($"Host agentId: {agentId}");
             }
-            
+
             Console.WriteLine($"Callback Address: {network.CallbackAddress}");
             Console.WriteLine($"Network Name: {network.Name}");
             groupResponse.GroupDetails[i].GroupId = groupAgent.GetGrainId().ToString();
@@ -177,4 +170,4 @@ public class NamingContestService : ApplicationService, INamingContestService
             await publishingAgent.PublishEventAsync(new GroupStartEvent());
         }
     }
-}    
+}

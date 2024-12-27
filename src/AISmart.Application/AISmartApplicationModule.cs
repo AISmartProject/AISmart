@@ -44,5 +44,7 @@ public class AISmartApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<RagOptions>(configuration.GetSection("Rag"));
         Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
+        Configure<NameContestOptions>(configuration.GetSection("NameContest"));
+
     }
 }

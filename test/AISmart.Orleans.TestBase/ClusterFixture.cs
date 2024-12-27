@@ -9,6 +9,7 @@ using AISmart.CQRS.Provider;
 using AISmart.EventSourcing.Core.Hosting;
 using AISmart.GAgent.Core;
 using AISmart.Mock;
+using AISmart.Options;
 using AISmart.Provider;
 using AISmart.Service;
 using AutoMapper;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Nest;
+using NSubstitute.Extensions;
 using Orleans.Hosting;
 using Orleans.Storage;
 using Orleans.TestingHost;
@@ -51,6 +53,10 @@ public class ClusterFixture : IDisposable, ISingletonDependency
     {
         public void Configure(ISiloBuilder hostBuilder)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+            
             hostBuilder.ConfigureServices(services =>
             {
                 services.AddAutoMapper(typeof(AIApplicationGrainsModule).Assembly);
@@ -106,7 +112,8 @@ public class ClusterFixture : IDisposable, ISingletonDependency
             .AddMemoryStreams("AISmart")
             .AddMemoryGrainStorage("PubSubStore")
             .AddMemoryGrainStorageAsDefault()
-            .AddLogStorageBasedLogConsistencyProvider("LogStorage");
+            .AddLogStorageBasedLogConsistencyProvider("LogStorage")
+            .Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"));
         }
     }
 
