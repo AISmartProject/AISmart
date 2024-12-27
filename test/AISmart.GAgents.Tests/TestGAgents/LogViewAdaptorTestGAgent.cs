@@ -25,7 +25,7 @@ public class LogViewAdaptorTestGAgent
         {
             State.Content = new Dictionary<Guid, LogViewAdaptorTestGEvent>();
         }
-        base.RaiseEvent(new LogViewAdaptorTestGEvent
+        RaiseEvent(new LogViewAdaptorTestGEvent
         {
             Greeting = eventData.Greeting
         });

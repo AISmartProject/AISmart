@@ -37,5 +37,7 @@ public class AISmartApplicationTestModule : AbpModule
             return new ElasticClient(settings);
         });
         context.Services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
+        context.Services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
+
     }
 }

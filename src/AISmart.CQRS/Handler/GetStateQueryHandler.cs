@@ -21,6 +21,6 @@ public class GetStateQueryHandler : IRequestHandler<GetStateQuery, BaseStateInde
     
     public async Task<BaseStateIndex> Handle(GetStateQuery request, CancellationToken cancellationToken)
     {
-        return await _indexingService.QueryIndexAsync(request.Id, request.Index);
+        return await _indexingService.QueryStateIndexAsync(request.Id, request.Index);
     }
 }

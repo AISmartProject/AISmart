@@ -24,4 +24,9 @@ public class CqrsService : ApplicationService,ICqrsService
     {
         await _cqrsProvider.SendEventCommandAsync(eventBase);
     }
+
+    public async Task<T> QueryGEventAsync<T>(string index, string id) where T : BaseEventIndex
+    {
+        return await _cqrsProvider.QueryGEventAsync<T>(index, id);
+    }
 }
