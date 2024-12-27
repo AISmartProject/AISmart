@@ -171,8 +171,7 @@ public class NamingContestService : ApplicationService, INamingContestService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.PublishToAsync(groupAgent);
-            publishingAgent.PublishToAsync()
+            await publishingAgent.PublishEventAsync(new GroupStartEvent());
         }
-        throw new System.NotImplementedException();
     }
 }    
