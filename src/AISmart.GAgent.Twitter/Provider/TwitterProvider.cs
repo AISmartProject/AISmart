@@ -12,7 +12,6 @@ using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Provider;

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Orleans;
 
 namespace AISmart.Dto;
 
+[GenerateSerializer]
 public class Tweet
 {
     
