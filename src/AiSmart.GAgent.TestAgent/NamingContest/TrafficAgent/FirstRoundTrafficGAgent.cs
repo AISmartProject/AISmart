@@ -174,7 +174,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
     }
 
-    public Task AddJudgeAgent(Guid creativeGrainId)
+    public Task AddJudgeAgent(Guid judgeGrainId)
     {
         throw new NotImplementedException();
     }
