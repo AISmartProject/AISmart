@@ -1,5 +1,6 @@
-﻿using AutoMapper;
-using AISmart.Authors;
+﻿using AISmart.Agent.GEvents;
+using AutoMapper;
+using AISmart.CQRS.Dto;
 
 namespace AISmart;
 
@@ -12,6 +13,8 @@ public class AISmartApplicationAutoMapperProfile : Profile
          * into multiple profile classes for a better organization. */
         
         //Example related, can be removed
+        CreateMap<CreateTransactionGEventDto, CreateTransactionGEvent>();
+        CreateMap<CreateTransactionGEvent, CreateTransactionGEventDto>();
 
     }
 }
