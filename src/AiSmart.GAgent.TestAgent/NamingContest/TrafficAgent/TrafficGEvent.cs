@@ -12,21 +12,30 @@ public class NamedCompleteGEvent:NamingContext
 }
 
 [GenerateSerializer]
-public class TrafficInformCreativeGEvent:EventBase
+public class NameContentGEvent:NamingContext
+{
+    [Id(0)] public string eventId { get; set; }
+    [Id(1)] public string AgentId { get; set; }
+    [Id(2)] public string AgentName { get; set; }
+}
+
+
+[GenerateSerializer]
+public class TrafficInformCreativeGEvent:NameContentGEvent
 {
     [Id(0)] public string NamingContent { get; set; }
     [Id(1)] public Guid CreativeGrainId { get; set; }
 }
 
 [GenerateSerializer]
-public class TrafficNamingContestOver : EventBase
+public class TrafficNamingContestOver : NameContentGEvent
 {
     [Id(0)] public string NamingQuestion { get; set; }
 }
 
 
 [GenerateSerializer]
-public class TrafficNamingStageOver : EventBase
+public class TrafficNamingStageOver : NameContentGEvent
 {
     [Id(0)] public string NamingQuestion { get; set; }
 }
@@ -34,14 +43,14 @@ public class TrafficNamingStageOver : EventBase
 
 
 [GenerateSerializer]
-public class TrafficInformDebateGEvent:EventBase
+public class TrafficInformDebateGEvent:NameContentGEvent
 {
     [Id(0)] public string NamingContent { get; set; }
     [Id(1)] public Guid CreativeGrainId { get; set; }
 }
 
 [GenerateSerializer]
-public class DebatedCompleteGEvent:DebatingContext
+public class DebatedCompleteGEvent:NameContentGEvent
 {
     [Id(0)] public Guid GrainGuid { get; set; }
     [Id(1)] public string CreativeName { get; set; }
@@ -50,9 +59,10 @@ public class DebatedCompleteGEvent:DebatingContext
 
 
 [GenerateSerializer]
-public class TrafficDebateOver : EventBase
+public class TrafficDebateOver : NameContentGEvent
 {
     [Id(0)] public string NamingQuestion { get; set; }
+    
 }
 
 

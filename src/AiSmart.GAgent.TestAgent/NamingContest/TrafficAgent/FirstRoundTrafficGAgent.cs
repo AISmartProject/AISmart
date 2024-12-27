@@ -83,7 +83,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             await PublishAsync(new TrafficNamingContestOver() { NamingQuestion = State.NamingContent });
 
             // begin the second stage debate
-            await DispatchDebateAgent();
+            _ =  DispatchDebateAgent();
         }
         else
         {
@@ -113,7 +113,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             await PublishAsync(new TrafficDebateOver() { NamingQuestion = State.NamingContent });
             
             // begin the third stage judge
-            await DispatchJudgeAgent();
+            _ =  DispatchJudgeAgent();
         }
         else
         {
@@ -132,6 +132,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchJudgeAgent()
     {
+       
         
     }
 
