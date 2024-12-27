@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agents.Group;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
@@ -109,10 +110,14 @@ public class NamingContestService : ApplicationService, INamingContestService
             var network = networksDto.Networks[i];
             
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
-
             var trafficAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
+            var namingContestGAgent = _clusterClient.GetGrain<INamingContestGAgent>(Guid.NewGuid());
+
 
             await groupAgent.RegisterAsync(trafficAgent);
+            await groupAgent.RegisterAsync(namingContestGAgent);
+            
+            _ = namingContestGAgent.SetCallBackURL(network.CallbackAddress);
             
             
             foreach (var agentId in network.ConstentList)
@@ -120,7 +125,7 @@ public class NamingContestService : ApplicationService, INamingContestService
                 
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
                 
-                await trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
+                _ =  trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
                 
                 await groupAgent.RegisterAsync(creativeAgent);
 
@@ -131,7 +136,7 @@ public class NamingContestService : ApplicationService, INamingContestService
               
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
                 
-                await trafficAgent.AddCreativeAgent(judgeAgent.GetPrimaryKey());
+                _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
                 
                 await groupAgent.RegisterAsync(judgeAgent);
             }
