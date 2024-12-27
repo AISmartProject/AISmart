@@ -34,7 +34,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        base.RaiseEvent(new TrafficDebateCompleteGEvent()
+        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -53,7 +53,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficDebateCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -172,5 +172,10 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     {
         RaiseEvent(new AddCreativeAgent() { CreativeGrainId = creativeGrainId });
         await base.ConfirmEvents();
+    }
+
+    public Task AddJudgeAgent(Guid creativeGrainId)
+    {
+        throw new NotImplementedException();
     }
 }
