@@ -34,6 +34,6 @@ public class PublishingGAgent : GAgentBase<PublishingAgentState, PublishingGEven
         }
 
         Logger.LogInformation($"PublishingAgent publish {@event}");
-        await PublishAsync(@event);
+        await PublishEventDownwardsAsync(@event);
     }
 }

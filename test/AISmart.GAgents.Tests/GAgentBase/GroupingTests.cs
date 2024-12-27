@@ -15,7 +15,7 @@ public class GroupingTests : GAgentTestKitBase
         var groupGAgent = await Silo.CreateGrainAsync<GroupGAgent>(Guid.NewGuid());
 
         // Assert: Subscribers should be empty because no member is registered.
-        var subscribers = new GrainState<List<GrainId>>();
+        var subscribers = new GrainState<Dictionary<GrainId, bool>>();
         await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
             groupGAgent.GetGrainId(),
             subscribers);
@@ -30,12 +30,12 @@ public class GroupingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(naiveTestGAgent);
 
         // Assert: Check group's states from GrainStorage.
-        var subscribers = new GrainState<List<GrainId>>();
+        var subscribers = new GrainState<Dictionary<GrainId, bool>>();
         await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
             groupGAgent.GetGrainId(),
             subscribers);
         subscribers.State.Count.ShouldBe(1);
-        subscribers.State.First().ShouldBe(naiveTestGAgent.GetGrainId());
+        subscribers.State.Keys.First().ShouldBe(naiveTestGAgent.GetGrainId());
     }
 
     [Fact(DisplayName = "Each gAgent's states should be saved correctly after unregister.")]
@@ -49,7 +49,7 @@ public class GroupingTests : GAgentTestKitBase
         await groupGAgent.UnregisterAsync(naiveTestGAgent);
 
         // Assert: Check group's states from GrainStorage.
-        var subscribers = new GrainState<List<GrainId>>();
+        var subscribers = new GrainState<Dictionary<GrainId, bool>>();
         await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
             groupGAgent.GetGrainId(),
             subscribers);
@@ -66,7 +66,7 @@ public class GroupingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(naiveTestGAgent1, naiveTestGAgent2, naiveTestGAgent3);
 
         // Assert: Check group's states from GrainStorage.
-        var subscribers = new GrainState<List<GrainId>>();
+        var subscribers = new GrainState<Dictionary<GrainId, bool>>();
         await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
             groupGAgent.GetGrainId(),
             subscribers);
@@ -85,12 +85,12 @@ public class GroupingTests : GAgentTestKitBase
         // Assert: Check each group's states from GrainStorage.
         foreach (var groupGAgent in new List<GroupGAgent> { groupGAgent1, groupGAgent2, groupGAgent3 })
         {
-            var subscribers = new GrainState<List<GrainId>>();
+            var subscribers = new GrainState<Dictionary<GrainId, bool>>();
             await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
                 groupGAgent.GetGrainId(),
                 subscribers);
             subscribers.State.Count.ShouldBe(1);
-            subscribers.State.First().ShouldBe(naiveTestGAgent.GetGrainId());
+            subscribers.State.Keys.First().ShouldBe(naiveTestGAgent.GetGrainId());
         }
     }
 
@@ -108,7 +108,7 @@ public class GroupingTests : GAgentTestKitBase
 
         // Assert: Check groupGAgent1's states from GrainStorage.
         {
-            var subscribers = new GrainState<List<GrainId>>();
+            var subscribers = new GrainState<Dictionary<GrainId, bool>>();
             await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
                 groupGAgent1.GetGrainId(),
                 subscribers);
@@ -120,7 +120,7 @@ public class GroupingTests : GAgentTestKitBase
 
         // Assert: Check groupGAgent2's states from GrainStorage.
         {
-            var subscribers = new GrainState<List<GrainId>>();
+            var subscribers = new GrainState<Dictionary<GrainId, bool>>();
             await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
                 groupGAgent2.GetGrainId(),
                 subscribers);
@@ -132,7 +132,7 @@ public class GroupingTests : GAgentTestKitBase
 
         // Assert: Check groupGAgent3's states from GrainStorage.
         {
-            var subscribers = new GrainState<List<GrainId>>();
+            var subscribers = new GrainState<Dictionary<GrainId, bool>>();
             await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
                 groupGAgent3.GetGrainId(),
                 subscribers);

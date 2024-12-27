@@ -42,7 +42,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return Task.CompletedTask;
     }
 
-    public async Task RegisterAsync(IGAgent gAgent)
+    public async Task RegisterAsync(IGAgent gAgent, bool isCreateNewDag = false)
     {
         var guid = gAgent.GetPrimaryKey();
         await AddSubscriberAsync(gAgent.GetGrainId());
@@ -75,7 +75,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         await LoadSubscribersAsync();
 
-        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
+        var gAgentList = _subscribers.State.Keys.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
 
         if (gAgentList.IsNullOrEmpty())
         {
@@ -126,12 +126,25 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return Task.FromResult(State);
     }
 
-    protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
+    protected async Task<Guid> PublishEventDownwardsAsync<T>(T @event) where T : EventBase
     {
         var eventId = Guid.NewGuid();
         await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
             @event.GetOriginStreamId()));
         return eventId;
+    }
+
+    protected async Task<Guid> PublishEventFromRootAsync<T>(T @event) where T : EventBase
+    {
+        var eventId = Guid.NewGuid();
+        await SendEventToRootAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
+            @event.GetOriginStreamId()));
+        return eventId;
+    }
+    
+    protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
+    {
+        return await PublishEventFromRootAsync(@event);
     }
 
     private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
@@ -144,10 +157,15 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
         eventWrapper.OriginStreamId ??= StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
 
-        foreach (var stream in _subscribers.State
-                     .Select(subscriber => StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey()))
-                     .Select(streamId => StreamProvider.GetStream<EventWrapperBase>(streamId)))
+        foreach (var (subscriber, isCreateNewDag) in _subscribers.State)
         {
+            if (eventWrapper.OriginStreamId == null || isCreateNewDag)
+            {
+                eventWrapper.OriginStreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+            }
+
+            var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
+            var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
             await stream.OnNextAsync(eventWrapper);
         }
     }
@@ -204,7 +222,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await LoadSubscribersAsync();
         if (_subscribers.State != null)
         {
-            foreach (var subscriber in _subscribers.State)
+            foreach (var subscriber in _subscribers.State.Keys)
             {
                 var gAgent = GrainFactory.GetGrain<IGAgent>(subscriber);
                 var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
