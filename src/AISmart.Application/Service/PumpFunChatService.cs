@@ -10,6 +10,7 @@ using AISmart.CQRS.Provider;
 using AISmart.Dto;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
+using AISmart.GAgent.Dto;
 using AISmart.PumpFun;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
@@ -84,19 +85,15 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
     public async Task<PumFunResponseDto> SearchAnswerAsync(string replyId)
     {
         _logger.LogInformation("SearchAnswerAsync, replyId:{replyId}", replyId);
-        var grainId =  _clusterClient.GetGrain<IPumpFunGAgent>(Guid.Parse(replyId)).GetGrainId();
-        _logger.LogInformation("SearchAnswerAsync, grainId:{grainId}", grainId);
         // get PumpFunGAgentState
-        var stateResult = await _cqrsProvider.QueryAsync("pumpfungagentstateindex", grainId.ToString());
-        _logger.LogInformation("SearchAnswerAsync, stateResult:{stateResult}", JsonConvert.SerializeObject(stateResult));
-        var state = stateResult.State;
-        PumpFunGAgentState? pumpFunGAgentState = JsonConvert.DeserializeObject<PumpFunGAgentState>(state);
+        var eventResult = await _cqrsProvider.QueryGEventAsync<PumpFunSendMessageGEventIndex>("pumpfungagentstateindex", replyId);
+        _logger.LogInformation("SearchAnswerAsync, eventResult:{eventResult}", JsonConvert.SerializeObject(eventResult));
         PumFunResponseDto answer = new PumFunResponseDto
         {
-            ReplyId = pumpFunGAgentState.responseMessage[replyId].ReplyId,
-            ReplyMessage = pumpFunGAgentState.responseMessage[replyId].ReplyMessage
+            ReplyId = eventResult.ReplyId,
+            ReplyMessage = eventResult.ReplyMessage
         };
-        _logger.LogInformation("SearchAnswerAsync3, replyId:{replyId}", replyId);
+        _logger.LogInformation("SearchAnswerAsync3, replyId:{answer}", JsonConvert.SerializeObject(answer));
         return await Task.FromResult(answer);
     }
 }
