@@ -34,8 +34,6 @@ public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGE
     }
 
 
-   
-
     public async Task SetAgent(string agentName, string agentResponsibility)
     {
         RaiseEvent(new AISetAgentMessageGEvent
@@ -47,15 +45,32 @@ public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGE
         await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
     }
 
+    public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
+        int? seed = null,
+        int? maxTokens = null)
+    {
+        RaiseEvent(new AISetAgentMessageGEvent
+        {
+            AgentName = agentName,
+            AgentResponsibility = agentResponsibility
+        });
+        await ConfirmEvents();
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName)
+            .SetAgentWithTemperature(agentResponsibility, temperature, seed, maxTokens);
+    }
+
     public async Task<MicroAIGAgentState> GetAgentState()
     {
         return State;
     }
 }
 
-public interface IMicroAIGAgent: IStateGAgent<MicroAIGAgentState>
+public interface IMicroAIGAgent : IStateGAgent<MicroAIGAgentState>
 {
     Task SetAgent(string agentName, string agentResponsibility);
-    
+
+    Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature, int? seed = null,
+        int? maxTokens = null);
+
     Task<MicroAIGAgentState> GetAgentState();
 }

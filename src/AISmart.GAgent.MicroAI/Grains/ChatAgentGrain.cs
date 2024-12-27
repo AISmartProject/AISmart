@@ -19,7 +19,7 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
     private MiddlewareStreamingAgent<OpenAIChatAgent>? _agent;
     private readonly MicroAIOptions _options;
     private readonly ILogger<ChatAgentGrain> _logger;
-    
+
     public ChatAgentGrain(IOptions<MicroAIOptions> options, ILogger<ChatAgentGrain> logger)
     {
         _options = options.Value;
@@ -32,8 +32,9 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         {
             var history = ConvertMessage(chatHistory);
             var imMessage = await _agent.SendAsync(message, history);
-            return new MicroAIMessage("assistant",imMessage.GetContent()! );
+            return new MicroAIMessage("assistant", imMessage.GetContent()!);
         }
+
         _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
         return null;
     }
@@ -43,10 +44,22 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         var agentName = this.GetPrimaryKeyString();
         var client = new ChatClient(_options.Model, _options.ApiKey);
 
-        _agent = new OpenAIChatAgent(client, agentName, systemMessage).RegisterMessageConnector();
+        _agent = new OpenAIChatAgent(client, agentName, systemMessage)
+            .RegisterMessageConnector();
         return Task.CompletedTask;
     }
-    
+
+    public Task SetAgentWithTemperature(string systemMessage, float temperature, int? seed = null,
+        int? maxTokens = null)
+    {
+        var agentName = this.GetPrimaryKeyString();
+        var client = new ChatClient(_options.Model, _options.ApiKey);
+
+        _agent = new OpenAIChatAgent(client, agentName, systemMessage, temperature, maxTokens, seed)
+            .RegisterMessageConnector();
+        return Task.CompletedTask;
+    }
+
     private List<IMessage> ConvertMessage(List<MicroAIMessage> listAutoGenMessage)
     {
         var result = new List<IMessage>();
@@ -57,7 +70,7 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
         return result;
     }
-    
+
     private Role GetRole(string roleName)
     {
         switch (roleName)

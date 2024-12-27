@@ -34,7 +34,6 @@ public class MockBGAgent : GAgentBase<MockBAgentState, MockBGEvent>, IMockBGAgen
         Logger.LogInformation($"{GetType()} ExecuteAsync: BAgent analyses content: {eventData.Content}");
 
         RaiseEvent(new MockBAddNumberEvent());
-        await base.ConfirmEvents();
 
         if (State.ThreadIds.IsNullOrEmpty())
         {

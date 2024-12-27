@@ -141,29 +141,35 @@ public class TelegramProvider : ITelegramProvider,ISingletonDependency
 
     public async Task DelWebhookAsync(string token)
     {
-        /*String account = GetAccount(token);
-        if (account.IsNullOrEmpty())
-        {
-            return;
-        }
-        string url = $"https://api.telegram.org/bot{account}/delWebhook";
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _logger.LogWarning("Token is null or empty");
+                return;
+            }
 
-        var parameters = new FormUrlEncodedContent(new[]
-       );
+            String account = GetAccount(token);
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                _logger.LogWarning("Account derived from token is null or empty");
+                return;
+            }
 
-        try
-        {
-            HttpResponseMessage response = await new HttpClient().PostAsync(url, parameters);
-                
-            response.EnsureSuccessStatusCode();
-
-            string responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation(responseBody);
+            string url = $"https://api.telegram.org/bot{account}/deleteWebhook";
+            try
+            {
+            using (var httpClient = new HttpClient())
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation(responseBody);
+            }
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request error: {e.Message}");
-        }*/
+            _logger.LogError($"Request error: {e.Message}");
+        }
+       
     }
 
     private string GetAccount(string accountName)
