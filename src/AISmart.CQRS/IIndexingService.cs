@@ -15,8 +15,7 @@ public interface IIndexingService
     
     public Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase;
 
-    public Task<BaseEventIndex> QueryEventIndexAsync<T>(string id, string indexName) where T : BaseEventIndex;
-
+    public Task<string> QueryEventIndexAsync(string id, string indexName);
 
 
 }

@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.CQRS.Dto;
 using MediatR;
+using Newtonsoft.Json;
 using Volo.Abp.DependencyInjection;
 
 namespace AISmart.CQRS.Provider;
@@ -44,7 +45,19 @@ public class CQRSProvider : ICQRSProvider, ISingletonDependency
         };
         await _mediator.Send(command);
     }
-    
+
+    public async Task<T> QueryGEventAsync<T>(string index, string id) where T : BaseEventIndex
+    {
+        var getStateQuery = new GetGEventQuery()
+        {
+            Index = index,
+            Id = id
+        };
+        
+        var documentContent = await _mediator.Send(getStateQuery);
+        return JsonConvert.DeserializeObject<T>(documentContent);
+    }
+
     public async Task PublishGEventAsync(GEventBase eventBase, string id)
     {
         var command = new SaveGEventCommand

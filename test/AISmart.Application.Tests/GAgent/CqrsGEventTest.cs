@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.Events;
 using AISmart.CQRS.Provider;
+using AISmart.GAgent.Dto;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -20,7 +21,8 @@ public class CqrsGEventTests : AISmartApplicationTestBase
     private const string ChainId = "AELF";
     private const string SenderName = "Test";
     private const string Address = "JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE";
-    private const string IndexName = "aelfagentgstateindex";
+    private const string StateIndexName = "aelfagentgstateindex";
+    private const string EventIndexName = "createtransactiongeventindex";
     private const string IndexId = "1";
 
     public CqrsGEventTests(ITestOutputHelper output)
@@ -74,10 +76,16 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         grainResult.PendingTransactions.Count.ShouldBe(1);
         grainResult.PendingTransactions.FirstOrDefault().Value.ChainId.ShouldBe(createTransactionEvent.ChainId);
         
-        //get cqrs event
+        //get cqrs state
         var grainId =  _clusterClient.GetGrain<IAElfAgent>(guid).GetGrainId();
-        var esResult = await _cqrsProvider.QueryAsync(IndexName, grainId.ToString());
+        var esResult = await _cqrsProvider.QueryAsync(StateIndexName, grainId.ToString());
         esResult.State.ShouldContain(Address);
-        esResult.Id.ShouldBe(IndexId);
+        esResult.Id.ShouldContain(guid.ToString().Replace("-",""));
+        
+        //get cqrs event
+        var gEventId = grainResult.PendingTransactions.FirstOrDefault().Key;
+        var eventResult = await _cqrsProvider.QueryGEventAsync<CreateTransactionGEventIndex>(EventIndexName, gEventId.ToString());
+        eventResult.ChainId.ShouldBe(ChainId);
+        eventResult.ContractAddress.ShouldBe(Address);
     }
 }

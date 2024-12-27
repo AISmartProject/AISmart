@@ -153,8 +153,8 @@ public class ElasticIndexingService : IIndexingService
             _logger.LogInformation("{indexName} save Successfully.");
         }
     }
-
-    public async Task<BaseEventIndex> QueryEventIndexAsync<T>(string id, string indexName) where T : BaseEventIndex
+    
+    public async Task<string> QueryEventIndexAsync(string id, string indexName)
     { 
         var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
         var source = response.Source;
@@ -164,6 +164,6 @@ public class ElasticIndexingService : IIndexingService
         }
 
         var documentContent = JsonConvert.SerializeObject(value);
-        return JsonConvert.DeserializeObject<T>(documentContent);
+        return documentContent;
     }
 }

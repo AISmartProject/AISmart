@@ -1,6 +1,6 @@
 using System;
 using AISmart.CQRS.Dto;
-namespace AISmart.CQRS.Handler;
+namespace AISmart.GAgent.Dto;
 
 public class CreateTransactionGEventIndex : BaseEventIndex
 {

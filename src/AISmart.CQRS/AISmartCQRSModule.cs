@@ -23,6 +23,7 @@ public class AISmartCQRSModule : AbpModule
             context.Services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
             context.Services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
             context.Services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
+            context.Services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
 
             context.Services.AddSingleton<IIndexingService, ElasticIndexingService>();
             context.Services.AddSingleton<IEventDispatcher, CQRSProvider>();
@@ -31,6 +32,8 @@ public class AISmartCQRSModule : AbpModule
             context.Services.AddTransient<GetStateQueryHandler>();
             context.Services.AddTransient<SendEventCommandHandler>();
             context.Services.AddTransient<SaveGEventCommandHandler>();
+            context.Services.AddTransient<GetGEventQueryHandler>();
+
             var configuration = context.Services.GetConfiguration();
             //ConfigureElasticsearch(context, configuration);
 

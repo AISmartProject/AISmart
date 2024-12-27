@@ -1,4 +1,3 @@
-using AISmart.Agents;
 using MediatR;
 
 namespace AISmart.CQRS.Dto;

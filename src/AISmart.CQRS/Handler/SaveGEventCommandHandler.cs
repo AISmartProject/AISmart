@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AISmart.CQRS.Dto;
@@ -28,12 +27,5 @@ public class SaveGEventCommandHandler : IRequestHandler<SaveGEventCommand>
     private async Task SaveIndexAsync(SaveGEventCommand request)
     {
         await _indexingService.SaveOrUpdateGEventIndexAsync(request.GEvent);
-        
-        /*var id = "e4746d55-c530-4b09-bffd-ca4da5f13f18";
-        var result = await _indexingService.QueryEventIndexAsync<CreateTransactionGEventIndex>(id, "createtransactiongeventindex");
-        if (result is CreateTransactionGEventIndex specificEvent)
-        {
-            Console.WriteLine($"ChainId: {specificEvent.ChainId}");
-        }*/
     }
 }

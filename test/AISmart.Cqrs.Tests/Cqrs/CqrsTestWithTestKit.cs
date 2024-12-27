@@ -44,6 +44,8 @@ public class CqrsTestWithTestKit : GAgentTestKitBase
         services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
         services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
+        services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
+
         services.AddSingleton<ICQRSProvider, CQRSProvider>();
 
         var serviceProvider = services.BuildServiceProvider();

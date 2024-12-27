@@ -293,15 +293,15 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     
     protected sealed override async void RaiseEvent<TEvent>(TEvent @event)
     {
+        base.RaiseEvent(@event);
         await InternalRaiseEventAsync(@event);
-        /*InternalRaiseEventAsync(@event).ContinueWith(task =>
+        InternalRaiseEventAsync(@event).ContinueWith(task =>
         {
             if (task.Exception != null)
             {
                 Logger.LogError(task.Exception, "InternalRaiseEventAsync operation failed");
             }
-        }, TaskContinuationOptions.OnlyOnFaulted);*/
-
+        }, TaskContinuationOptions.OnlyOnFaulted);
     }
     private async Task InternalRaiseEventAsync(TEvent @event)
     {
