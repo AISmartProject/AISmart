@@ -32,7 +32,7 @@ public class Goal
     public string Description { get; set; }
 }
 
-public class CompetitionAgentsDto
+public class ContestAgentsDto
 {
     public List<ContestantAgent> ContestantAgentList { get; set; }
     public List<JudgeAgent> JudgeAgentList { get; set; }
@@ -86,4 +86,10 @@ public class GroupDetail
 public class GroupResponse
 {
     public List<GroupDetail> GroupDetails { get; set; }
+}
+
+
+public class GroupDto
+{
+    public List<string> GroupIdList { get; set; } = new List<string>();
 }

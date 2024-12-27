@@ -7,10 +7,12 @@ using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Options;
+using AISmart.Sender;
 using AISmart.Telegram;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.Application.Services;
 
@@ -18,9 +20,9 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    public Task<AgentResponse> InitAgentsAsync(CompetitionAgentsDto competitionAgentsDto, StringValues token);
+    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto, StringValues token);
     public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto, StringValues token);
-    public Task StartGroupAsync(TelegramUpdateDto updateMessage, StringValues token);
+    public Task StartGroupAsync(GroupDto groupDto, StringValues token);
     
 }
 
@@ -41,13 +43,13 @@ public class NamingContestService : ApplicationService, INamingContestService
         _telegramOptions = telegramOption.Value;
     }
 
-    public async Task<AgentResponse> InitAgentsAsync(CompetitionAgentsDto competitionAgentsDto, StringValues token)
+    public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto, StringValues token)
     {
         var random = new Random();
 
         AgentResponse agentResponse = new AgentResponse();
 
-        foreach (var contestant in competitionAgentsDto.ContestantAgentList)
+        foreach (var contestant in contestAgentsDto.ContestantAgentList)
         {
             var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.NewGuid());
             var newAgent = new AgentReponse()
@@ -71,7 +73,7 @@ public class NamingContestService : ApplicationService, INamingContestService
             }
         }
 
-        foreach (var judge in competitionAgentsDto.JudgeAgentList)
+        foreach (var judge in contestAgentsDto.JudgeAgentList)
         {
             var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.NewGuid());
             
@@ -161,8 +163,16 @@ public class NamingContestService : ApplicationService, INamingContestService
         return groupResponse;
     }
 
-    public Task StartGroupAsync(TelegramUpdateDto updateMessage, StringValues token)
+    public async Task StartGroupAsync(GroupDto groupDto, StringValues token)
     {
+        foreach (var groupId in groupDto.GroupIdList)
+        {
+            var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
+            var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            // await publishingAgent.ActivateAsync();
+            await publishingAgent.PublishToAsync(groupAgent);
+            publishingAgent.PublishToAsync()
+        }
         throw new System.NotImplementedException();
     }
 }    

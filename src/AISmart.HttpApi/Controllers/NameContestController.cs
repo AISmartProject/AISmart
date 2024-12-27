@@ -12,15 +12,15 @@ namespace AISmart.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("namingcontest")]
-[Route("api/namingcontest/")]
-public class NamingContestController: AISmartController
+[Route("api/namecontest/")]
+public class NameContestController: AISmartController
 {
     
-    private readonly ILogger<NamingContestController> _logger;
+    private readonly ILogger<NameContestController> _logger;
     private readonly INamingContestService _namingContestService;
     private readonly IMicroAIService _microAiService;
     
-    public NamingContestController(ILogger<NamingContestController> logger, 
+    public NameContestController(ILogger<NameContestController> logger, 
         INamingContestService namingContestService,IMicroAIService microAiService)
     {
         _logger = logger;
@@ -28,17 +28,17 @@ public class NamingContestController: AISmartController
         _microAiService = microAiService;
     }
     
-    [HttpPost("initAgents")]
-    public async Task InitAgents([FromBody]CompetitionAgentsDto competitionAgentsDto)
+    [HttpPost("initagents")]
+    public async Task InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
         var token = headers["X-Telegram-Bot-Api-Secret-Token"];
         _logger.LogInformation("Receive update message from telegram.{specificHeader}",token);
         _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(updateMessage));
-        await _namingContestService.InitAgentsAsync(competitionAgentsDto,token);
+        await _namingContestService.InitAgentsAsync(contestAgentsDto,token);
     }
     
-    [HttpPost("initNetwork")]
+    [HttpPost("initnetwork")]
     public async Task<GroupResponse> InitNetworks([FromBody]NetworksDto networksDto)
     {
         var headers = Request.Headers;
@@ -50,12 +50,12 @@ public class NamingContestController: AISmartController
     }
     
     [HttpPost("start")]
-    public async Task StartGroup([FromBody]TelegramUpdateDto updateMessage)
+    public async Task StartGroup([FromBody]GroupDto groupDto)
     {
         var headers = Request.Headers;
         var token = headers["X-Telegram-Bot-Api-Secret-Token"];
         _logger.LogInformation("Receive update message from telegram.{specificHeader}",token);
         _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(updateMessage));
-        await _namingContestService.StartGroupAsync(updateMessage,token);
+        await _namingContestService.StartGroupAsync(groupDto,token);
     }
 }
