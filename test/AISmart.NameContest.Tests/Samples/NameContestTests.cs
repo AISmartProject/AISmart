@@ -90,6 +90,156 @@ namespace AISmart.Samples
             agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
 
         }
+        
+        [Fact]
+        public async Task InitNetworks_Test()
+        {
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            {
+                ContestantAgentList= new List<ContestantAgent>()
+                {
+                    new ContestantAgent()
+                    {
+                        Name = "james",
+                    },
+                    new ContestantAgent()
+                    {
+                        Name = "kob",
+                    },
+                },
+                JudgeAgentList= new List<JudgeAgent>()
+                {
+                    new JudgeAgent()
+                    {
+                        Name = "james",
+                    },
+                    new JudgeAgent()
+                    {
+                        Name = "kob",
+                    },
+                },
+                HostAgentList = new List<HostAgent>()
+                {
+                    
+                }
+
+            };
+            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            
+            agentResponse.ContestantAgentList.Count.ShouldBe(2);
+            agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
+            agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            
+            
+            agentResponse.JudgeAgentList.Count.ShouldBe(2);
+            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
+            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+
+
+            NetworksDto networksDto = new NetworksDto()
+            {
+                Networks = new List<Network>()
+                {
+                    new Network()
+                    {
+                        ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        Name = "FirstRound-1",
+                        CallbackAddress = "https://xxxx.com"
+                    }
+
+
+                }
+            };
+            GroupResponse groupResponse = await _namingContestService.InitNetworksAsync(networksDto);
+            
+            groupResponse.GroupDetails.Count.ShouldBe(1);
+            groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
+            groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
+            
+        }
+        
+        [Fact]
+        public async Task Start_Group_Test()
+        {
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            {
+                ContestantAgentList= new List<ContestantAgent>()
+                {
+                    new ContestantAgent()
+                    {
+                        Name = "james",
+                    },
+                    new ContestantAgent()
+                    {
+                        Name = "kob",
+                    },
+                },
+                JudgeAgentList= new List<JudgeAgent>()
+                {
+                    new JudgeAgent()
+                    {
+                        Name = "james",
+                    },
+                    new JudgeAgent()
+                    {
+                        Name = "kob",
+                    },
+                },
+                HostAgentList = new List<HostAgent>()
+                {
+                    
+                }
+
+            };
+            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            
+            agentResponse.ContestantAgentList.Count.ShouldBe(2);
+            agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
+            agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            
+            
+            agentResponse.JudgeAgentList.Count.ShouldBe(2);
+            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
+            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+
+
+            NetworksDto networksDto = new NetworksDto()
+            {
+                Networks = new List<Network>()
+                {
+                    new Network()
+                    {
+                        ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        Name = "FirstRound-1",
+                        CallbackAddress = "https://xxxx.com"
+                    }
+
+
+                }
+            };
+            GroupResponse groupResponse = await _namingContestService.InitNetworksAsync(networksDto);
+            
+            groupResponse.GroupDetails.Count.ShouldBe(1);
+            groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
+            groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
+
+            GroupDto groupDto = new GroupDto()
+            {
+                GroupIdList = new List<string>()
+                {
+                    groupResponse.GroupDetails.FirstOrDefault()!.GroupId
+                }
+            };
+                
+            await _namingContestService.StartGroupAsync(groupDto);
+            
+        }
 
     }
 }

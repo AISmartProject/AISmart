@@ -5,6 +5,7 @@ using AISmart.Events;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
+using AISmart.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,15 +13,15 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
 public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 {
-    private readonly TelegramTestOptions _telegramTestOptions;
-    
+    private readonly NameContestOptions _nameContestOptions;
+
     public static readonly string ProposeName = "proposeName";
     public static readonly string Debating = "debating";
     public static readonly string AnswerJudgeQuestions = "answerJudgeQuestions";
 
-    public CreativeGAgent(IOptions<TelegramTestOptions> options, ILogger<MicroAIGAgent> logger) : base(logger)
+    public CreativeGAgent(IOptions<NameContestOptions> options, ILogger<MicroAIGAgent> logger) : base(logger)
     {
-        _telegramTestOptions = options.Value;
+        _nameContestOptions = options.Value;
     }
 
     [EventHandler]
@@ -31,8 +32,10 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             return;
         }
 
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(@event.NamingContent, new List<MicroAIMessage>());
+        IChatAgentGrain chatAgentGrain =
+            GrainFactory.GetGrain<IChatAgentGrain>(_nameContestOptions.CreativeGAgent[@event.GetType().Name]);
+            
+        var message = await chatAgentGrain.SendAsync(_nameContestOptions.CreativeGAgent[@event.GetType().Name], new List<MicroAIMessage>());
         if (message != null && !message.Content.IsNullOrEmpty())
         {
             var namingReply = message.Content;
@@ -44,15 +47,9 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
                 NamingReply = namingReply,
                 CreativeName = State.AgentName,
             });
-            
-            await PublishAsync(new SendMessageEvent()
-            {
-                ChatId = _telegramTestOptions.ChatId,
-                Message = $"Creative {State.AgentName} Naming:{namingReply}"
-            });
         }
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(TrafficInformDebateGEvent @event)
     {
@@ -61,7 +58,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             return;
         }
 
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(this.GetPrimaryKey()+Debating)
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(this.GetPrimaryKey() + Debating)
             .SendAsync(@event.NamingContent, new List<MicroAIMessage>());
         if (message != null && !message.Content.IsNullOrEmpty())
         {

@@ -54,6 +54,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
         public void Configure(ISiloBuilder hostBuilder)
         {
             var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
                 .AddJsonFile("appsettings.secrets.json")
                 .Build();
             
@@ -113,7 +114,8 @@ public class ClusterFixture : IDisposable, ISingletonDependency
             .AddMemoryGrainStorage("PubSubStore")
             .AddMemoryGrainStorageAsDefault()
             .AddLogStorageBasedLogConsistencyProvider("LogStorage")
-            .Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"));
+            .Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"))
+            .Configure<NameContestOptions>(configuration.GetSection("NameContest"));
         }
     }
 

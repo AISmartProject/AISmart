@@ -175,8 +175,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
     }
 
-    public Task AddJudgeAgent(Guid judgeGrainId)
+    public async Task AddJudgeAgent(Guid judgeGrainId)
     {
-        throw new NotImplementedException();
+        await base.ConfirmEvents();
     }
 }

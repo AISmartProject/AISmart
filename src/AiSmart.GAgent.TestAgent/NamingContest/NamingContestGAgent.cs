@@ -35,7 +35,7 @@ public class NamingContestGAgent : GAgentBase<NamingContestGAgentState, AutogenE
 
     public Task SetCallBackURL(string callBackUrl)
     {
-        throw new NotImplementedException();
+        return null;
     }
 
     public override Task<string> GetDescriptionAsync()
