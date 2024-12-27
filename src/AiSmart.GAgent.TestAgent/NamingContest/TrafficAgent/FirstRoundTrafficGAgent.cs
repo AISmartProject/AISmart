@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
-public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEventSourcingBase>, ITrafficGAgent
+public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEventSourcingBase>, IFirstTrafficGAgent
 {
     public FirstRoundTrafficGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
@@ -34,20 +34,13 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficDebateCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
 
         await base.ConfirmEvents();
-        await PublishAsync(new JudgeGEvent()
-        {
-            CreativeGrainId = @event.GrainGuid,
-            CreativeName = @event.CreativeName,
-            NamingReply = @event.NamingReply,
-            NamingQuestion = State.NamingContent,
-        });
-
+        
         await DispatchCreativeAgent();
     }
     
@@ -66,13 +59,6 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         });
 
         await base.ConfirmEvents();
-        await PublishAsync(new JudgeGEvent()
-        {
-            CreativeGrainId = @event.GrainGuid,
-            CreativeName = @event.CreativeName,
-            NamingReply = @event.NamingReply,
-            NamingQuestion = State.NamingContent,
-        });
 
         await DispatchDebateAgent();
     }
@@ -95,6 +81,9 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         {
             // end message 
             await PublishAsync(new TrafficNamingContestOver() { NamingQuestion = State.NamingContent });
+
+            // begin the second stage debate
+            await DispatchDebateAgent();
         }
         else
         {
@@ -122,6 +111,9 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         if (count == 0)
         {
             await PublishAsync(new TrafficDebateOver() { NamingQuestion = State.NamingContent });
+            
+            // begin the third stage judge
+            await DispatchJudgeAgent();
         }
         else
         {
@@ -137,6 +129,12 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 { NamingContent = State.NamingContent, CreativeGrainId = selectedId });
         }
     }
+
+    private async Task DispatchJudgeAgent()
+    {
+        
+    }
+
 
     public async Task SetAgent(string agentName, string agentResponsibility)
     {
