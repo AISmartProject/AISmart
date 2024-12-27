@@ -13,6 +13,10 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 {
     private readonly TelegramTestOptions _telegramTestOptions;
+    
+    public static readonly string ProposeName = "proposeName";
+    public static readonly string Debating = "debating";
+    public static readonly string AnswerJudgeQuestions = "answerJudgeQuestions";
 
     public CreativeGAgent(IOptions<TelegramTestOptions> options, ILogger<MicroAIGAgent> logger) : base(logger)
     {
@@ -45,6 +49,30 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             {
                 ChatId = _telegramTestOptions.ChatId,
                 Message = $"Creative {State.AgentName} Naming:{namingReply}"
+            });
+        }
+    }
+    
+    [EventHandler]
+    public async Task HandleEventAsync(TrafficInformDebateGEvent @event)
+    {
+        if (@event.CreativeGrainId != this.GetPrimaryKey())
+        {
+            return;
+        }
+
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(this.GetPrimaryKey()+Debating)
+            .SendAsync(@event.NamingContent, new List<MicroAIMessage>());
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            var namingReply = message.Content;
+
+            await this.PublishAsync(new DebatedCompleteGEvent()
+            {
+                Content = @event.NamingContent,
+                GrainGuid = this.GetPrimaryKey(),
+                NamingReply = namingReply,
+                CreativeName = State.AgentName,
             });
         }
     }
