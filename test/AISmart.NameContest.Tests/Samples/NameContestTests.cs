@@ -83,6 +83,12 @@ namespace AISmart.Samples
             agentResponse.ContestantAgentList.Count.ShouldBe(2);
             agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
             agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            
+            
+            agentResponse.JudgeAgentList.Count.ShouldBe(2);
+            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
+            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+
         }
 
     }
