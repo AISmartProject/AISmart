@@ -6,7 +6,6 @@ using AISmart.CQRS.Dto;
 using Microsoft.Extensions.Logging;
 using Nest;
 using Newtonsoft.Json;
-
 namespace AISmart.CQRS;
 
 public class ElasticIndexingService : IIndexingService

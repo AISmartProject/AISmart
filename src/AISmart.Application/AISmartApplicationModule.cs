@@ -30,9 +30,9 @@ namespace AISmart;
     typeof(AISmartGAgentTwitterModule),
     typeof(AISmartGAgentMicroAIModule),
     typeof(AISmartGAgentTestAgentModule),
-    typeof(AISmartCQRSModule),
-    typeof(AISmartGAgentSocialGAgentModule)
-    
+    typeof(AISmartGAgentSocialGAgentModule),
+    typeof(AISmartCQRSModule)
+
 )]
 public class AISmartApplicationModule : AbpModule
 {

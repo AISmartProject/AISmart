@@ -1,6 +1,6 @@
 using System;
 
-namespace AISmart.CQRS.Dto;
+namespace AISmart.Dto;
 
 public class CreateTransactionGEventDto : BaseEventDto
 {
