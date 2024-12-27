@@ -45,7 +45,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task RegisterAsync(IGAgent gAgent, bool isCreateNewDag = false)
     {
         var guid = gAgent.GetPrimaryKey();
-        await AddSubscriberAsync(gAgent.GetGrainId());
+        await AddSubscriberAsync(gAgent.GetGrainId(), isCreateNewDag);
         await OnRegisterAgentAsync(guid);
     }
 
@@ -130,7 +130,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         var eventId = Guid.NewGuid();
         await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
-            @event.GetOriginStreamId()));
+            @event.GetRootStreamIdList()));
         return eventId;
     }
 
@@ -138,7 +138,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         var eventId = Guid.NewGuid();
         await SendEventToRootAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
-            @event.GetOriginStreamId()));
+            @event.GetRootStreamIdList()));
         return eventId;
     }
     
@@ -155,13 +155,17 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             return;
         }
 
-        eventWrapper.OriginStreamId ??= StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        if (eventWrapper.RootStreamIdList.IsNullOrEmpty())
+        {
+            eventWrapper.RootStreamIdList.Add(streamOfThisGAgent);
+        }
 
         foreach (var (subscriber, isCreateNewDag) in _subscribers.State)
         {
-            if (eventWrapper.OriginStreamId == null || isCreateNewDag)
+            if (isCreateNewDag && !eventWrapper.RootStreamIdList.Contains(streamOfThisGAgent))
             {
-                eventWrapper.OriginStreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+                eventWrapper.RootStreamIdList.Add(streamOfThisGAgent);
             }
 
             var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
@@ -172,12 +176,9 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task SendEventToRootAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        if (eventWrapper.OriginStreamId == null)
-        {
-            return;
-        }
-
-        var stream = StreamProvider.GetStream<EventWrapperBase>(eventWrapper.OriginStreamId.Value);
+        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        eventWrapper.RootStreamIdList.Remove(streamOfThisGAgent);
+        var stream = StreamProvider.GetStream<EventWrapperBase>(eventWrapper.RootStreamIdList.Last());
         await stream.OnNextAsync(eventWrapper);
     }
 

@@ -7,18 +7,18 @@ namespace AISmart.Agents;
 [GenerateSerializer]
 public abstract class EventBase
 {
-    [Id(999)]  private Dictionary<string, object?> _context = new();
-    
-    private StreamId? _originStreamId;
-    
-    public void SetOriginStreamId(StreamId? originStreamId)
+    [Id(999)] private Dictionary<string, object?> _context = new();
+
+    private List<StreamId> _rootStreamIdList = [];
+
+    public void SetRootStreamIdList(List<StreamId> originStreamId)
     {
-        _originStreamId = originStreamId;
+        _rootStreamIdList = originStreamId;
     }
-    
-    public StreamId? GetOriginStreamId()
+
+    public List<StreamId> GetRootStreamIdList()
     {
-        return _originStreamId;
+        return _rootStreamIdList;
     }
 
     public void AddContext(string key, object value)
@@ -50,7 +50,7 @@ public abstract class EventBase
 
         return this;
     }
-    
+
     public EventBase WithContext(string key, object? value)
     {
         _context[key] = value;

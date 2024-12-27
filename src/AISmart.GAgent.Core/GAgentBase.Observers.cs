@@ -40,13 +40,13 @@ public abstract partial class GAgentBase<TState, TEvent>
                 }
                 
                 var originStreamIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<EventBase>.OriginStreamId))?
+                    .GetProperty(nameof(EventWrapper<EventBase>.RootStreamIdList))?
                     .GetValue(item);
-                StreamId? originStreamId = null;
+                var originStreamId = new List<StreamId>();
                 if (originStreamIdValue != null)
                 {
-                    originStreamId = (StreamId)originStreamIdValue;
-                    (eventType! as EventBase)!.SetOriginStreamId(originStreamId);
+                    originStreamId = (List<StreamId>)originStreamIdValue;
+                    (eventType! as EventBase)!.SetRootStreamIdList(originStreamId);
                 }
 
                 if (parameter.ParameterType == eventType!.GetType())
@@ -104,7 +104,7 @@ public abstract partial class GAgentBase<TState, TEvent>
     }
 
     private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType,
-        Guid eventId, StreamId? originStreamId)
+        Guid eventId, List<StreamId> originStreamId)
     {
         if (IsEventWithResponse(parameter))
         {
@@ -133,7 +133,7 @@ public abstract partial class GAgentBase<TState, TEvent>
     }
 
     private async Task HandleEventWithResponseAsync(MethodInfo method, object eventType, Guid eventId,
-        StreamId? originStreamId)
+        List<StreamId> originStreamId)
     {
         if (method.ReturnType.IsGenericType &&
             method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))

@@ -22,7 +22,7 @@ public abstract partial class GAgentBase<TState, TEvent>
     {
         await LoadSubscribersAsync();
         _subscribers.State ??= [];
-        _subscribers.State.Add(grainId, false);
+        _subscribers.State.Add(grainId, isCreateNewDag);
         await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
             _subscribers);
     }
