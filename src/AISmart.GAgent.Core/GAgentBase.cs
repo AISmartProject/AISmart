@@ -290,4 +290,27 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         //TODO:  need optimize use kafka,ensure Es written successfully
         await EventDispatcher.PublishAsync(State, this.GetGrainId().ToString());
     }
+    
+    protected sealed override async void RaiseEvent<TEvent>(TEvent @event)
+    {
+        base.RaiseEvent(@event);
+        await InternalRaiseEventAsync(@event);
+        InternalRaiseEventAsync(@event).ContinueWith(task =>
+        {
+            if (task.Exception != null)
+            {
+                Logger.LogError(task.Exception, "InternalRaiseEventAsync operation failed");
+            }
+        }, TaskContinuationOptions.OnlyOnFaulted);
+    }
+    private async Task InternalRaiseEventAsync(TEvent @event)
+    {
+        await HandleRaiseEventAsync();
+        //TODO:  need optimize use kafka,ensure Es written successfully
+        await EventDispatcher.PublishGEventAsync(@event, @event.Id.ToString());
+    }
+    protected virtual async Task HandleRaiseEventAsync()
+    {
+        
+    }
 }

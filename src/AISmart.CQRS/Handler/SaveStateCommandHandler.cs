@@ -20,7 +20,7 @@ public class SaveStateCommandHandler : IRequestHandler<SaveStateCommand>
 
     public async Task<Unit> Handle(SaveStateCommand request, CancellationToken cancellationToken)
     {
-        _indexingService.CheckExistOrCreateIndex(request.State.GetType().Name);
+        _indexingService.CheckExistOrCreateStateIndex(request.State.GetType().Name);
         await SaveIndexAsync(request);
         return Unit.Value;
     }
@@ -33,6 +33,6 @@ public class SaveStateCommandHandler : IRequestHandler<SaveStateCommand>
             Ctime = DateTime.Now,
             State = JsonConvert.SerializeObject(request.State)
         };
-        await _indexingService.SaveOrUpdateIndexAsync(request.State.GetType().Name, index);
+        await _indexingService.SaveOrUpdateStateIndexAsync(request.State.GetType().Name, index);
     }
 }
