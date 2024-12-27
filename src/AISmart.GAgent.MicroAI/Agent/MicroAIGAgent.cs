@@ -18,11 +18,11 @@ namespace AISmart.Agent;
 [Description("micro AI")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public abstract class MicroAIGAgent<GEvent,GEventResponse> : GAgentBase<MicroAIGAgentState, AIMessageGEvent>, IMicroAIGAgent
+public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGEvent>, IMicroAIGAgent
 {
-    protected readonly ILogger<MicroAIGAgent<GEvent,GEventResponse>> _logger;
+    protected readonly ILogger<MicroAIGAgent> _logger;
 
-    public MicroAIGAgent(ILogger<MicroAIGAgent<GEvent,GEventResponse>> logger) : base(logger)
+    public MicroAIGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
         _logger = logger;
     }
@@ -33,9 +33,6 @@ public abstract class MicroAIGAgent<GEvent,GEventResponse> : GAgentBase<MicroAIG
             "Represents an agent responsible for informing other agents when a micro AI thread is published.");
     }
 
-
-    [EventHandler]
-    public abstract Task<GEventResponse> HandleEventAsync(GEvent @event);
 
     public async Task SetAgent(string agentName, string agentResponsibility)
     {
@@ -48,15 +45,32 @@ public abstract class MicroAIGAgent<GEvent,GEventResponse> : GAgentBase<MicroAIG
         await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
     }
 
+    public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
+        int? seed = null,
+        int? maxTokens = null)
+    {
+        RaiseEvent(new AISetAgentMessageGEvent
+        {
+            AgentName = agentName,
+            AgentResponsibility = agentResponsibility
+        });
+        await ConfirmEvents();
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName)
+            .SetAgentWithTemperature(agentResponsibility, temperature, seed, maxTokens);
+    }
+
     public async Task<MicroAIGAgentState> GetAgentState()
     {
         return State;
     }
 }
 
-public interface IMicroAIGAgent: IStateGAgent<MicroAIGAgentState>
+public interface IMicroAIGAgent : IStateGAgent<MicroAIGAgentState>
 {
     Task SetAgent(string agentName, string agentResponsibility);
-    
+
+    Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature, int? seed = null,
+        int? maxTokens = null);
+
     Task<MicroAIGAgentState> GetAgentState();
 }

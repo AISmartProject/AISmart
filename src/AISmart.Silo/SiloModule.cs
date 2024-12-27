@@ -3,6 +3,7 @@ using AISmart.Domain.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using AISmart.Application.Grains;
 using AISmart.GAgent.Autogen;
+using AiSmart.GAgent.SocialAgent;
 using AiSmart.GAgent.TestAgent;
 using Serilog;
 using Volo.Abp.AspNetCore.Serilog;
@@ -16,11 +17,13 @@ namespace AISmart.Silo;
     typeof(AbpAutofacModule),
     typeof(OpenTelemetryModule),
     typeof(AISmartGAgentAElfModule),
+    typeof(AISmartGAgentPumpfunModule),
     typeof(AISmartGAgentTelegramModule),
     typeof(AISmartGAgentTwitterModule),
     typeof(AISmartGAgentAutogenModule),
     typeof(AISmartGAgentMicroAIModule),
-    typeof(AISmartGAgentTestAgentModule)
+    typeof(AISmartGAgentTestAgentModule),
+    typeof(AISmartGAgentSocialGAgentModule)
 )]
 public class SiloModule : AIApplicationGrainsModule, IDomainGrainsModule
 {

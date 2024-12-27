@@ -80,7 +80,11 @@ public static class OrleansHostExtension
                         options.CounterUpdateIntervalMs =
                             configSection.GetValue<int>("DashboardCounterUpdateIntervalMs");
                     })
-
+                    .Configure<SiloMessagingOptions>(options =>
+                    {
+                        options.ResponseTimeout = TimeSpan.FromMinutes(60);
+                        options.SystemResponseTimeout = TimeSpan.FromMinutes(60);
+                    })
                     .AddMongoDBGrainStorage("PubSubStore", options =>
                     {
                         // Config PubSubStore Storage for Persistent Stream 

@@ -27,8 +27,7 @@ public class PumpFunGAgentTests : GAgentTestKitBase
         {
             MessageId = "11",
             ChatId = "12",
-            Message = "Test",
-            BotName = "Test"
+            Message = "Test"
         });
     }
 

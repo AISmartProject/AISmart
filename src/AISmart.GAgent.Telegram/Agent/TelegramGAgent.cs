@@ -8,6 +8,7 @@ using AISmart.Application.Grains;
 using AISmart.Events;
 using AISmart.GEvents.NLP;
 using AISmart.GAgent.Core;
+using AISmart.GEvents.Social;
 using AISmart.Grains;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -33,14 +34,22 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
             "Represents an agent responsible for informing other agents when a Telegram thread is published.");
     }
 
-    public async Task SetTelegramConfig(string chatId, string botName)
+    public async Task RegisterTelegramAsync(string botName, string token)
     {
         RaiseEvent(new SetTelegramConfigEvent()
         {
-            ChatId = chatId,
-            BotName = botName
+            BotName = botName,
+            Token = token
         });
         await ConfirmEvents();
+        await GrainFactory.GetGrain<ITelegramGrain>(botName).RegisterTelegramAsync(
+            State.BotName, State.Token);
+    }
+
+    public async Task UnRegisterTelegramAsync(string botName)
+    {
+        await GrainFactory.GetGrain<ITelegramGrain>(botName).UnRegisterTelegramAsync(
+            State.BotName);
     }
 
 
@@ -57,23 +66,17 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
         RaiseEvent(new ReceiveMessageGEvent
         {
             MessageId = @event.MessageId,
-            ChatId = State.ChatId,
+            ChatId = @event.ChatId,
             Message = @event.Message,
             NeedReplyBotName = State.BotName
         });
         await ConfirmEvents();
-//         await PublishAsync(new AutoGenCreatedEvent
-//         {
-//             EventId = Guid.NewGuid(),
-//             Content =
-//                 $"""
-//                  Received a JSON-formatted message:{JsonConvert.SerializeObject(@event)}, The fields in the will be used in the final response except "Message".
-//                  Please follow the process below.
-//                  1. parse the message content,the fields in the JSON may be used in the final response..
-//                  2. Please understand the content of the "Message" in the JSON format, process the response accordingly.
-//                  """
-//         });
-        await PublishAsync(new NLPGEvent() { Content = @event.Message });
+        await PublishAsync(new SocialEvent()
+        {
+            Content = @event.Message,
+            MessageId = @event.MessageId,
+            ChatId = @event.ChatId
+        });
         _logger.LogDebug("Publish AutoGenCreatedEvent for Telegram Message ID: " + @event.MessageId);
     }
 
@@ -81,23 +84,38 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     public async Task HandleEventAsync(SendMessageEvent @event)
     {
         _logger.LogDebug("Publish SendMessageEvent for Telegram Message: " + @event.Message);
-        if (@event.ReplyMessageId != null)
+        await SendMessageAsync(@event.Message,@event.ChatId,@event.ReplyMessageId);
+    }
+    
+    [EventHandler]
+    public async Task HandleEventAsync(SocialResponseEvent @event)
+    {
+        _logger.LogDebug("SocialResponse for Telegram Message: " + @event.ResponseContent);
+        await SendMessageAsync(@event.ResponseContent,@event.ChatId,@event.ReplyMessageId);
+    }
+
+    private async Task SendMessageAsync(string message,string chatId,string? replyMessageId)
+    {
+        if (replyMessageId != null)
         {
             RaiseEvent(new SendMessageGEvent()
             {
-                ReplyMessageId = @event.ReplyMessageId,
-                ChatId = State.ChatId,
-                Message = @event.Message.IsNullOrEmpty() ? @event.Photo : @event.Message
+                ReplyMessageId = replyMessageId,
+                ChatId = chatId,
+                Message = message 
             });
             await ConfirmEvents();
         }
 
-        await GrainFactory.GetGrain<ITelegramGrain>(Guid.NewGuid()).SendMessageAsync(
-            State.BotName, State.ChatId, @event.Message, @event.ReplyMessageId);
+        await GrainFactory.GetGrain<ITelegramGrain>(State.BotName).SendMessageAsync(
+            State.Token, chatId, message, replyMessageId);
     }
 }
 
 public interface ITelegramGAgent : IStateGAgent<TelegramGAgentState>
 {
-    Task SetTelegramConfig(string chatId, string botName);
+    Task RegisterTelegramAsync( string botName,string token);
+    
+    Task UnRegisterTelegramAsync( string botName);
+    
 }
