@@ -1,4 +1,5 @@
 ﻿using AISmart;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AISmart.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
@@ -20,5 +21,6 @@ public class AISmartGAgentTestAgentModule : AbpModule
         });
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"));
+        context.Services.Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
     }
 }

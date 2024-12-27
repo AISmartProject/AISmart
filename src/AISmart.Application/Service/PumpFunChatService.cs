@@ -39,9 +39,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         {
             _logger.LogInformation("ReceiveMessagesAsync2 agentId:" + inputDto.AgentId);
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(inputDto.AgentId));
-            groupAgent.ActivateAsync();
-
-
+            await groupAgent.ActivateAsync();
             _logger.LogInformation("ReceiveMessagesAsync3 agentId:" + inputDto.AgentId);
             
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
@@ -67,7 +65,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         Guid groupAgentId = GuidUtil.StringToGuid(chatId);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
         var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(Guid.NewGuid());
-        _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}", chatId);
+        _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}", chatId, pumpFunGAgent.GetGrainId());
         await pumpFunGAgent.SetPumpFunConfig(chatId);
         var autogenAgent=  _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());
 

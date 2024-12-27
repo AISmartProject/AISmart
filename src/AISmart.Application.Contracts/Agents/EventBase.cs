@@ -6,7 +6,7 @@ namespace AISmart.Agents;
 [GenerateSerializer]
 public abstract class EventBase
 {
-    [Id(999)]  private Dictionary<string, object?> _context = new();
+    private Dictionary<string, object?> _context = new();
 
     public void AddContext(string key, object value)
     {
