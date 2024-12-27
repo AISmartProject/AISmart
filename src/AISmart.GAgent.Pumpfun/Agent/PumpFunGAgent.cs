@@ -38,6 +38,7 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
         _logger.LogInformation("PumpFunReceiveMessageEvent:" + JsonConvert.SerializeObject(@event));
        RaiseEvent(new PumpFunReceiveMessageGEvent
        {
+           Id = Guid.Parse(@event.ReplyId),
            ChatId = @event.ChatId,
            ReplyId = @event.ReplyId,
            RequestMessage = @event.RequestMessage
@@ -66,6 +67,7 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
         {
             RaiseEvent(new PumpFunSendMessageGEvent()
             {
+                Id = Guid.Parse(@event.ReplyId),
                 ReplyId = @event.ReplyId,
                 ReplyMessage = @event.ReplyMessage
             });
