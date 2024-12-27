@@ -1,6 +1,6 @@
 ﻿using AISmart.Agent.GEvents;
 using AutoMapper;
-using AISmart.CQRS.Dto;
+using AISmart.Dto;
 
 namespace AISmart;
 

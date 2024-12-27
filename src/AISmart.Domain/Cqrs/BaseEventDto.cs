@@ -1,7 +1,7 @@
 
 using System;
 
-namespace AISmart.CQRS.Dto;
+namespace AISmart.Dto;
 
 public abstract class BaseEventDto
 {
