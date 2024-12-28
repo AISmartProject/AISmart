@@ -30,6 +30,7 @@ public class AISmartApplicationTestModule : AbpModule
         Configure<ChatConfigOptions>(configuration.GetSection("Chat"));   
         Configure<AgentNetworkConfigOptions>(configuration.GetSection("NetWork")); 
         Configure<RagOptions>(configuration.GetSection("Rag"));   
+        Configure<TwitterOptions>(configuration.GetSection("Twitter"));
         context.Services.AddSingleton<IElasticClient>(provider =>
         {
             var settings =new ConnectionSettings(new Uri("http://127.0.0.1:9200"))
