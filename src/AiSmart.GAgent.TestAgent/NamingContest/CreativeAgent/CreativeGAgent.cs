@@ -41,6 +41,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 
         var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
             .SendAsync(NamingConstants.NamingPrompt, State.RecentMessages.ToList());
+        
 
         if (response != null && !response.Content.IsNullOrEmpty())
         {
