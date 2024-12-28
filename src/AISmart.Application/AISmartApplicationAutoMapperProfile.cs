@@ -1,6 +1,7 @@
 ﻿using AISmart.Agent.GEvents;
 using AutoMapper;
 using AISmart.Dto;
+using AISmart.GAgent.Dto;
 
 namespace AISmart;
 
@@ -17,5 +18,7 @@ public class AISmartApplicationAutoMapperProfile : Profile
         CreateMap<CreateTransactionGEvent, CreateTransactionGEventDto>();
         CreateMap<BindTwitterAccountGEvent, BindTwitterAccountGEventDto>();
         CreateMap<BindTwitterAccountGEventDto, BindTwitterAccountGEvent>();
+        CreateMap<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>();
+        CreateMap<PumpFunSendMessageGEventDto, PumpFunSendMessageGEvent>();
     }
 }

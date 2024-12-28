@@ -2,7 +2,7 @@ using System;
 using AISmart.CQRS.Dto;
 namespace AISmart.GAgent.Dto;
 
-public class PumpFunSendMessageGEventDto : BaseEventIndex
+public class PumpFunSendMessageGEventDto : BaseEventDto
 {
     public string? Id { get; set; }
     public string? ChatId { get; set; }
