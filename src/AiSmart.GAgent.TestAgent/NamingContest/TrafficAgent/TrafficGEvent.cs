@@ -17,7 +17,7 @@ public class NameContentGEvent:NamingContext
     [Id(0)] public string EventId { get; set; }
     [Id(1)] public string AgentId { get; set; }
     [Id(2)] public string AgentName { get; set; }
-    [Id(3)] public string Scheme { get; set; }
+    [Id(3)] public string EventType { get; set; }
 
 }
 

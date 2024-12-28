@@ -13,6 +13,7 @@ using AISmart.Agents.X.Events;
 using AISmart.Sender;
 using AISmart.Service;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Orleans;
 using Orleans.TestingHost.Utils;
 using Shouldly;
@@ -55,6 +56,10 @@ namespace AISmart.Samples
                     new ContestantAgent()
                     {
                         Name = "james",
+                        Bio =  JsonConvert.SerializeObject(new
+                        {
+                            Description = "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
                     },
                     new ContestantAgent()
                     {
@@ -101,6 +106,10 @@ namespace AISmart.Samples
                     new ContestantAgent()
                     {
                         Name = "james",
+                        Bio =  JsonConvert.SerializeObject(new
+                        {
+                            Description = "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
                     },
                     new ContestantAgent()
                     {
@@ -171,6 +180,10 @@ namespace AISmart.Samples
                     new ContestantAgent()
                     {
                         Name = "james",
+                        Bio =  JsonConvert.SerializeObject(new
+                        {
+                            Description = "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
                     },
                     new ContestantAgent()
                     {
