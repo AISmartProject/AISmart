@@ -6,6 +6,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AISmart.Options;
+using AISmart.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -72,5 +73,10 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
                 CreativeName = State.AgentName,
             });
         }
+    }
+
+    public Task InitAgentsAsync(ContestantAgent contestantAgent)
+    {
+        return Task.CompletedTask;
     }
 }

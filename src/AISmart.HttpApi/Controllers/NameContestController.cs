@@ -32,7 +32,6 @@ public class NameContestController: AISmartController
     public async Task InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
-        var token = headers["X-Telegram-Bot-Api-Secret-Token"];
         _logger.LogInformation("Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
         await _namingContestService.InitAgentsAsync(contestAgentsDto);
     }
@@ -41,9 +40,7 @@ public class NameContestController: AISmartController
     public async Task<GroupResponse> InitNetworks([FromBody]NetworksDto networksDto)
     {
         var headers = Request.Headers;
-        var token = headers["X-Telegram-Bot-Api-Secret-Token"];
-        _logger.LogInformation("Receive update message from telegram.{specificHeader}",token);
-        _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(networksDto));
+        _logger.LogInformation("Receive update message from pumpfun.{message}",JsonConvert.SerializeObject(networksDto));
         var groupResponse = await _namingContestService.InitNetworksAsync(networksDto);
         return groupResponse;
     }
@@ -52,8 +49,6 @@ public class NameContestController: AISmartController
     public async Task StartGroup([FromBody]GroupDto groupDto)
     {
         var headers = Request.Headers;
-        var token = headers["X-Telegram-Bot-Api-Secret-Token"];
-        _logger.LogInformation("Receive update message from telegram.{specificHeader}",token);
         _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(groupDto));
         await _namingContestService.StartGroupAsync(groupDto);
     }

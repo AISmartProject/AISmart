@@ -53,6 +53,8 @@ public class NamingContestService : INamingContestService
         {
             var agentId = Guid.NewGuid();
             var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
+            await creativeAgent.InitAgentsAsync(contestant);
+            
             var newAgent = new AgentReponse()
             {
                 AgentId = agentId.ToString(),
