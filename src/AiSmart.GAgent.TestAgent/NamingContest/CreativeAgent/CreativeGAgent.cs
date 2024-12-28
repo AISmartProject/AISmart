@@ -11,10 +11,6 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
 public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 {
-    public static readonly string ProposeName = "proposeName";
-    public static readonly string Debating = "debating";
-    public static readonly string AnswerJudgeQuestions = "answerJudgeQuestions";
-
     public CreativeGAgent(ILogger<CreativeGAgent> logger) : base(logger)
     {
     }
@@ -30,7 +26,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 
         await base.ConfirmEvents();
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(TrafficInformCreativeGEvent @event)
     {
@@ -39,13 +35,24 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             return;
         }
 
-        var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(NamingConstants.NamingPrompt, State.RecentMessages.ToList());
-
-        if (response != null && !response.Content.IsNullOrEmpty())
+        var namingReply = string.Empty;
+        try
         {
-            var namingReply = response.Content;
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.NamingPrompt, State.RecentMessages.ToList());
 
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                namingReply = response.Content;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Creative] TrafficInformCreativeGEvent error");
+            namingReply = NamingConstants.DefaultCreativeNaming;
+        }
+        finally
+        {
             await this.PublishAsync(new NamedCompleteGEvent()
             {
                 Content = @event.NamingContent,
@@ -75,7 +82,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             Message = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleNamingContent(@event.CreativeName, @event.NamingReply))
         });
-        
+
         await base.ConfirmEvents();
     }
 
@@ -99,11 +106,23 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             return;
         }
 
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(NamingConstants.DebatePrompt, State.RecentMessages.ToList());
-        if (message != null && !message.Content.IsNullOrEmpty())
+        var debateReply = string.Empty;
+        try
         {
-            var debateReply = message.Content;
+            var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.DebatePrompt, State.RecentMessages.ToList());
+            if (message != null && !message.Content.IsNullOrEmpty())
+            {
+                debateReply = message.Content;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Creative] TrafficInformDebateGEvent error");
+            debateReply = NamingConstants.DefaultDebateContent;
+        }
+        finally
+        {
             await this.PublishAsync(new DebatedCompleteGEvent()
             {
                 Content = @event.NamingContent,
@@ -114,7 +133,8 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 
             RaiseEvent(new AIReceiveMessageGEvent()
             {
-                Message = new MicroAIMessage(Role.User.ToString(), AssembleMessageUtil.AssembleDebateContent(State.AgentName, debateReply))
+                Message = new MicroAIMessage(Role.User.ToString(),
+                    AssembleMessageUtil.AssembleDebateContent(State.AgentName, debateReply))
             });
 
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Debate, this.GetPrimaryKey(),

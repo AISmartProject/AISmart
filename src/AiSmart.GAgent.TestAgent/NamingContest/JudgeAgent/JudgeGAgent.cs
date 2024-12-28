@@ -80,7 +80,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 .SendAsync(NamingConstants.JudgeVotePrompt, @event.History);
             if (response != null && !response.Content.IsNullOrEmpty())
             {
-                var voteResult = JsonSerializer.Deserialize<VoteResult>(response.Content);
+                var voteResult = JsonSerializer.Deserialize<JudgeVoteChatResponse>(response.Content);
                 if (voteResult == null)
                 {
                     _logger.LogError("");
@@ -88,21 +88,20 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 }
 
                 await PublishAsync(new JudgeVoteResultGEvent()
-                    { AgentName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey() });
-                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, this.GetPrimaryKey(),
-                    NamingRoleType.Judge, State.AgentName, response.Content));
+                {
+                    VoteName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey(),
+                    JudgeName = State.AgentName
+                });
             }
         }
-        catch
+        catch(Exception ex)
         {
-            // todo:return  JudgeVoteResultGEvent
+            _logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
+            await PublishAsync(new JudgeVoteResultGEvent()
+            {
+                VoteName = "", Reason = "", JudgeGrainId = this.GetPrimaryKey(),
+                JudgeName = State.AgentName
+            });
         }
     }
-}
-
-public class VoteResult
-{
-    [JsonPropertyName(@"name")] public string Name { get; set; }
-
-    [JsonPropertyName(@"reason")] public string Reason { get; set; }
 }

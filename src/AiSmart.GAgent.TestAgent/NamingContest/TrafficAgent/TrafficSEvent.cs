@@ -11,7 +11,7 @@ public class TrafficEventSourcingBase : GEventBase
 }
 
 [GenerateSerializer]
-public class TrafficCallSelectGrainidSEvent : TrafficEventSourcingBase
+public class TrafficCallSelectGrainIdSEvent : TrafficEventSourcingBase
 {
     public Guid GrainId { get; set; }
 }
@@ -51,6 +51,7 @@ public class TrafficSetAgentSEvent:TrafficEventSourcingBase
 public class AddCreativeAgent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CreativeGrainId { get; set; }
+    [Id(1)] public String CreativeName { get; set; }
 }
 
 [GenerateSerializer]
@@ -87,4 +88,11 @@ public class AddJudgeSEvent : TrafficEventSourcingBase
 public class ClearCalledGrainsSEvent : TrafficEventSourcingBase
 {
     
+}
+
+[GenerateSerializer]
+public class CreativeNamingSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+    [Id(1)] public string Naming { get; set; }
 }

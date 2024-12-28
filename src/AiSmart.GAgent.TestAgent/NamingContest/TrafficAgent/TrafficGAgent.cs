@@ -81,7 +81,7 @@ public class TrafficGAgent : GAgentBase<TrafficState, TrafficEventSourcingBase>,
         var random = new Random();
         var index = random.Next(0, creativeList.Count);
         var selectedId = creativeList[index];
-        RaiseEvent(new TrafficCallSelectGrainidSEvent() { GrainId = selectedId });
+        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
         await PublishAsync(new TrafficInformCreativeGEvent()

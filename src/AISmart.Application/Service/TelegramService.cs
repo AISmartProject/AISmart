@@ -263,7 +263,7 @@ public class TelegramService : ApplicationService, ITelegramService
             var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.NewGuid());
             await creativeAgent.SetAgentWithTemperatureAsync(creativeInfo.Item1,creativeInfo.Item2,
                 (float)temperature);
-            await trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
+            await trafficAgent.AddCreativeAgent(creativeInfo.Item1,creativeAgent.GetPrimaryKey());
 
             await groupAgent.RegisterAsync(creativeAgent);
         }

@@ -8,7 +8,7 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 public class FirstTrafficState : StateBase
 {
     [Id(0)] public List<Guid> CalledGrainIdList { get; set; } = new List<Guid>();
-    [Id(1)] public List<Guid> CreativeList { get; set; } = new List<Guid>();
+    [Id(1)] public List<CreativeInfo> CreativeList { get; set; } = new List<CreativeInfo>();
     [Id(2)] public Guid CurrentGrainId { get; set; }
     [Id(3)] public string NamingContent { get; set; }
     [Id(4)] public string AgentName { get; set; }
@@ -20,7 +20,7 @@ public class FirstTrafficState : StateBase
     [Id(8)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
     [Id(9)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
 
-    public void Apply(TrafficCallSelectGrainidSEvent sEvent)
+    public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
         CurrentGrainId = sEvent.GrainId;
     }
@@ -44,12 +44,13 @@ public class FirstTrafficState : StateBase
 
     public void Apply(AddCreativeAgent @event)
     {
-        if (CreativeList.Contains(@event.CreativeGrainId))
+        if (CreativeList.Exists(e => e.CreativeGrainId == @event.CreativeGrainId))
         {
             return;
         }
 
-        CreativeList.Add(@event.CreativeGrainId);
+        CreativeList.Add(new CreativeInfo()
+            { CreativeName = @event.CreativeName, CreativeGrainId = @event.CreativeGrainId });
     }
 
     public void Apply(ChangeNamingStepSEvent @event)
@@ -81,4 +82,22 @@ public class FirstTrafficState : StateBase
     {
         this.CalledGrainIdList.Clear();
     }
+
+    public void Apply(CreativeNamingSEvent @event)
+    {
+        var creativeInfo = this.CreativeList.FirstOrDefault(f => f.CreativeGrainId == @event.CreativeId);
+        if (creativeInfo != null)
+        {
+            creativeInfo.Naming = @event.Naming;
+        }
+    }
+}
+
+[GenerateSerializer]
+public class CreativeInfo
+{
+    [Id(0)] public string CreativeName { get; set; }
+    [Id(1)] public Guid CreativeGrainId { get; set; }
+    [Id(2)] public string Naming { get; set; }
+
 }
