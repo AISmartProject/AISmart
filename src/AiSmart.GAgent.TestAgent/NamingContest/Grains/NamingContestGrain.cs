@@ -20,12 +20,12 @@ public class NamingContestGrain : Grain<NamingContestState>, INamingContestGrain
         _nameContestProvider = nameContestProvider;
     }
 
-    public async Task SendMessageAsync(NameContentGEvent nameContentGEvent)
+    public async Task SendMessageAsync(NameContentGEvent nameContentGEvent,string callBackUrl)
     {
         
         if (nameContentGEvent != null)
         {
-            await _nameContestProvider.SendMessageAsync(nameContentGEvent,State.callBackUrl);
+            await _nameContestProvider.SendMessageAsync(nameContentGEvent,callBackUrl);
         }
     }
 }

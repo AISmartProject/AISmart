@@ -85,7 +85,7 @@ public class GroupDetail
 
 public class GroupResponse
 {
-    public List<GroupDetail> GroupDetails { get; set; }
+    public List<GroupDetail> GroupDetails { get; set; } = new List<GroupDetail>();
 }
 
 

@@ -6,6 +6,6 @@ namespace AISmart.Grains;
 
 public interface INamingContestGrain : IGrainWithStringKey
 {
-    public Task SendMessageAsync(NameContentGEvent nameContentGEvent);
+    public Task SendMessageAsync(NameContentGEvent nameContentGEvent,string callBackUrl);
    
 }

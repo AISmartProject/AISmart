@@ -35,7 +35,8 @@ public class NamingContestGAgent : GAgentBase<NamingContestGAgentState, AutogenE
 
     public Task SetCallBackURL(string callBackUrl)
     {
-        throw new NotImplementedException();
+        State.callBackUrl = callBackUrl;
+        return Task.CompletedTask;
     }
 
     public override Task<string> GetDescriptionAsync()
@@ -56,7 +57,7 @@ public class NamingContestGAgent : GAgentBase<NamingContestGAgentState, AutogenE
     {
         _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" + JsonConvert.SerializeObject(@event));
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync((@event.Event as NameContentGEvent)!);
+            .SendMessageAsync((@event.Event as NameContentGEvent)!,State.callBackUrl);
     }
 }
 

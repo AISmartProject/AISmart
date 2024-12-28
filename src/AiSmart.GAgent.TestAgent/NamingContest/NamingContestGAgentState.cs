@@ -10,6 +10,8 @@ public class NamingContestGAgentState : StateBase
 {
     
     [Id(0)] public Dictionary<string, EventBase> ReceiveMessage { get; set; } = new Dictionary<string, EventBase>();
+    
+    [Id(1)] public string callBackUrl { get; set; }
 
 
     public void Apply(EventBase eventBase)
