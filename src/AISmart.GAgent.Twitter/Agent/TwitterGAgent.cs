@@ -44,7 +44,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         await PublishAsync(new SocialEvent()
         {
             Content = @event.Text,
-            TweetId = @event.TweetId
+            MessageId = @event.TweetId
         });
     }
     
@@ -99,7 +99,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
                 await PublishAsync(new SocialEvent()
                 {
                     Content = tweet.Text,
-                    TweetId = tweet.Id
+                    MessageId = tweet.Id
                 });
             }
         }
