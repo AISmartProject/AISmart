@@ -130,6 +130,8 @@ public class ElasticIndexingService : IIndexingService
     public async Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase
     {
         var indexName = gEvent.GetType().Name.ToLower() + IndexSuffix;
+        _logger.LogInformation("{indexName} save start.info:{info}", indexName, JsonConvert.SerializeObject(gEvent));
+
         var properties = gEvent.GetType().GetProperties();
         var document = new Dictionary<string, object>();
 
@@ -151,7 +153,7 @@ public class ElasticIndexingService : IIndexingService
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.");
+            _logger.LogInformation("{indexName} save Successfully.id:{id}", indexName, gEvent.Id);
         }
     }
     
