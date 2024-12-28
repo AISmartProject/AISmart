@@ -138,7 +138,7 @@ public class ElasticIndexingService : IIndexingService
         }
         document.Add(CTime, DateTime.Now);
 
-        var response = await _elasticClient.IndexAsync(new { Document = document }, i => i
+        var response = await _elasticClient.IndexAsync(document , i => i
             .Index(indexName)
             .Id(gEvent.Id)
         );
@@ -159,12 +159,7 @@ public class ElasticIndexingService : IIndexingService
         {
             var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
             var source = response.Source;
-            if (source is not IDictionary<string, object> sourceDict || !sourceDict.TryGetValue("document", out var value))
-            {
-                return null;
-            }
-
-            var documentContent = JsonConvert.SerializeObject(value);
+            var documentContent = JsonConvert.SerializeObject(source);
             return documentContent;
         }
         catch (Exception e)
