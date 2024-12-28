@@ -61,7 +61,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
     {
         _logger.LogDebug("SocialResponse for tweet Message: " + @event.ResponseContent);
 
-        if (@event.TweetId.IsNullOrEmpty())
+        if (@event.ReplyMessageId.IsNullOrEmpty())
         {
             await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).CreateTweetAsync(
                 @event.ResponseContent, State.Token, State.TokenSecret);
@@ -70,13 +70,13 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         {
             RaiseEvent(new ReplyTweetGEvent
             {
-                TweetId = @event.TweetId,
+                TweetId = @event.ReplyMessageId,
                 Text = @event.ResponseContent
             });
             await ConfirmEvents();
             
             await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).ReplyTweetAsync(
-                @event.ResponseContent, @event.TweetId, State.Token, State.TokenSecret);
+                @event.ResponseContent, @event.ReplyMessageId, State.Token, State.TokenSecret);
         }
     }
     
