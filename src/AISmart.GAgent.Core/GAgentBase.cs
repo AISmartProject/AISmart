@@ -113,12 +113,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     public async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
-        var groupSubscribedEventList = await GetGroupSubscribedEventListEvent();
-        if (groupSubscribedEventList.Value.Values.Any(typeList =>
-                typeList.Contains(((EventWrapper<EventBase>)eventWrapper).Event.GetType())))
-        {
-            await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
-        }
+        await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
     protected virtual async Task OnRegisterAgentAsync(Guid agentGuid)
@@ -178,10 +173,10 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             foreach (var subscriber in _subscribers.State)
             {
                 var gAgent = GrainFactory.GetGrain<IGAgent>(subscriber);
-                var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
-                var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-                await gAgent.SubscribeAsync(stream);
-                //await gAgent.SubscribeAsync(streamOfThisGAgent);
+                // var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
+                // var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
+                // await gAgent.SubscribeAsync(stream);
+                await gAgent.SubscribeAsync(streamOfThisGAgent);
             }
         }
     }

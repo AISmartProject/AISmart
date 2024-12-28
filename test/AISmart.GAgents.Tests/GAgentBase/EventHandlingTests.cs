@@ -48,6 +48,8 @@ public class EventHandlingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
+        AddProbesByGrainId(eventHandlerTestGAgent, groupGAgent, publishingGAgent);
+
         // Act of registering.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
         {
@@ -83,6 +85,8 @@ public class EventHandlingTests : GAgentTestKitBase
             await Silo.CreateGrainAsync<EventHandlerWithResponseTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent, eventHandlerWithResponseTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
+
+        AddProbesByGrainId(eventHandlerTestGAgent, eventHandlerWithResponseTestGAgent, groupGAgent, publishingGAgent);
 
         // Act.
         await publishingGAgent.PublishEventAsync(new ResponseTestEvent

@@ -32,8 +32,8 @@ public abstract partial class GAgentBase<TState, TEvent>
         if (_streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue))
         {
             @event.StreamId = streamIdValue;
+            await SendEventUpwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
         }
-        await SendEventUpwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
     }
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
@@ -52,6 +52,10 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
+        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        await streamOfThisGAgent.OnNextAsync(eventWrapper);
+
         await LoadSubscribersAsync();
         if (_subscribers.State.IsNullOrEmpty())
         {
