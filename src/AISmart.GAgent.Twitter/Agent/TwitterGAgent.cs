@@ -111,7 +111,8 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
     
     public async Task BindTwitterAccount(string userName, string userId, string token, string tokenSecret)
     {
-        _logger.LogDebug("HandleEventAsync BindTwitterAccount，userId: {userId}", userId);
+        _logger.LogDebug("HandleEventAsync BindTwitterAccount，userId: {userId}, userName: {userName}", 
+            userId, userName);
         RaiseEvent(new BindTwitterAccountGEvent()
         {
             UserId = userId,
