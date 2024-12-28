@@ -30,7 +30,9 @@ public class JudgeVoteGEVent : EventBase
 public class JudgeVoteResultGEvent : EventBase
 {
     [Id(0)]
-    public string AgentName { get; set; }
+    public Guid JudgeGrainId { get; set; }
     [Id(1)]
+    public string AgentName { get; set; }
+    [Id(2)]
     public string Reason { get; set; }
 }

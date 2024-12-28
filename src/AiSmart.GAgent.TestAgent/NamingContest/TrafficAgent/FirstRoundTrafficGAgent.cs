@@ -23,7 +23,6 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent() { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message)});
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
-        await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
 
         await DispatchCreativeAgent();
 
@@ -35,13 +34,13 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(NamedCompleteGEvent @event)
     {
-        if (State.CurrentCreativeId != @event.GrainGuid)
+        if (State.CurrentGrainId != @event.GrainGuid)
         {
-            Logger.LogError("Traffic TrafficInformCreativeEvent");
+            Logger.LogError($"Traffic NamedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
             return;
         }
 
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -60,9 +59,9 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
-        if (State.CurrentCreativeId != @event.GrainGuid)
+        if (State.CurrentGrainId != @event.GrainGuid)
         {
-            Logger.LogError("Traffic TrafficInformCreativeEvent");
+            Logger.LogError($"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
             return;
         }
 
@@ -72,7 +71,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 AssembleMessageUtil.AssembleDebateContent(@event.CreativeName, @event.DebateReply))
         });
         
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -85,7 +84,19 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(JudgeVoteResultGEvent @event)
     {
-        //todo: note Judge result;
+        if (State.CurrentGrainId != @event.JudgeGrainId)
+        {
+            Logger.LogError($"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGrainId.ToString()}");
+            return;
+        }
+
+        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        {
+            CompleteGrainId = @event.JudgeGrainId,
+        });
+
+        await base.ConfirmEvents();
+
         await DispatchJudgeAgent();
     }
     

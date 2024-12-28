@@ -9,7 +9,7 @@ public class FirstTrafficState : StateBase
 {
     [Id(0)] public List<Guid> CalledGrainIdList { get; set; } = new List<Guid>();
     [Id(1)] public List<Guid> CreativeList { get; set; } = new List<Guid>();
-    [Id(2)] public Guid CurrentCreativeId { get; set; }
+    [Id(2)] public Guid CurrentGrainId { get; set; }
     [Id(3)] public string NamingContent { get; set; }
     [Id(4)] public string AgentName { get; set; }
     [Id(5)] public string Description { get; set; }
@@ -22,7 +22,7 @@ public class FirstTrafficState : StateBase
 
     public void Apply(TrafficCallSelectGrainidSEvent sEvent)
     {
-        CurrentCreativeId = sEvent.GrainId;
+        CurrentGrainId = sEvent.GrainId;
     }
 
     public void Apply(TrafficNameStartSEvent @event)
@@ -30,10 +30,10 @@ public class FirstTrafficState : StateBase
         NamingContent = @event.Content;
     }
 
-    public void Apply(TrafficCreativeCompleteGEvent gEvent)
+    public void Apply(TrafficGrainCompleteGEvent gEvent)
     {
         CalledGrainIdList.Add(gEvent.CompleteGrainId);
-        CurrentCreativeId = Guid.Empty;
+        CurrentGrainId = Guid.Empty;
     }
 
     public void Apply(TrafficSetAgentSEvent @event)

@@ -42,7 +42,7 @@ public class TrafficGAgent : GAgentBase<TrafficState, TrafficEventSourcingBase>,
             return;
         }
 
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });

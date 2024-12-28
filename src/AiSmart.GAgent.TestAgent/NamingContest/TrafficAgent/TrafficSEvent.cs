@@ -23,7 +23,7 @@ public class TrafficCreativeFinishSEvent : TrafficEventSourcingBase
 }
 
 [GenerateSerializer]
-public class TrafficCreativeCompleteGEvent : TrafficEventSourcingBase
+public class TrafficGrainCompleteGEvent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CompleteGrainId { get; set; }
 }

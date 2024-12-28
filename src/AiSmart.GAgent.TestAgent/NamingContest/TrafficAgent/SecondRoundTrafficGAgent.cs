@@ -34,7 +34,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<TrafficState, TrafficEventSou
             return;
         }
 
-        base.RaiseEvent(new TrafficCreativeCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteGEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
