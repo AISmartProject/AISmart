@@ -1,0 +1,37 @@
+using System;
+using System.Collections.Generic;
+using AISmart.Agent.GEvents;
+using AISmart.Agents;
+using Orleans;
+
+namespace AISmart.Agent;
+
+public class TwitterGAgentState : StateBase
+{
+    [Id(0)] public Guid Id { get; set; } = Guid.NewGuid();
+    [Id(1)] public string UserId { get; set; }
+    [Id(2)] public string Token { get; set; }
+    [Id(3)] public string TokenSecret { get; set; }
+    [Id(4)] public Dictionary<string, string> RepliedTweets { get; set; }
+    
+    public void Apply(BindTwitterAccountGEvent bindTwitterAccountGEvent)
+    {
+        UserId = bindTwitterAccountGEvent.UserId;
+        Token = bindTwitterAccountGEvent.Token;
+        TokenSecret = bindTwitterAccountGEvent.TokenSecret;
+    }
+    
+    public void Apply(UnbindTwitterAccountEvent unbindTwitterAccountEvent)
+    {
+        Token = "";
+        TokenSecret = "";
+    }
+    
+    public void Apply(ReplyTweetGEvent replyTweetGEvent)
+    {
+        if (!replyTweetGEvent.TweetId.IsNullOrEmpty())
+        {
+            RepliedTweets[replyTweetGEvent.TweetId] = replyTweetGEvent.Text;
+        }
+    }
+}
