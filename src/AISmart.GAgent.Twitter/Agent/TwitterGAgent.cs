@@ -34,13 +34,6 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
     public async Task HandleEventAsync(ReceiveReplyEvent @event)
     {
         _logger.LogInformation("Tweet ReceiveReplyEvent " + @event.TweetId);
-        
-        RaiseEvent(new ReceiveTweetReplyGEvent
-        {
-            TweetId = @event.TweetId,
-            Text = @event.Text
-        });
-        await ConfirmEvents();
         await PublishAsync(new SocialEvent()
         {
             Content = @event.Text,
