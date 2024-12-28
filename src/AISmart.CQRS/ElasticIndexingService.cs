@@ -68,7 +68,7 @@ public class ElasticIndexingService : IIndexingService
 
         var createIndexResponse = _elasticClient.Indices.Create(indexName, c => c
             .Map<T>(m => m
-                //.AutoMap()
+                .AutoMap()
                 .Properties(props =>
                 {
                     var type = gEvent.GetType();
