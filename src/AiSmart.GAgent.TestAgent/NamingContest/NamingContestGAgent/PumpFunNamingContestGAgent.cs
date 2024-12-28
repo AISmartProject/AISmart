@@ -11,6 +11,7 @@ using AISmart.GAgent.Autogen.EventSourcingEvent;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
+using AISmart.Service;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Orleans.Providers;
@@ -20,22 +21,23 @@ namespace AISmart.Agent;
 [Description("Handle NamingContest")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class NamingContestGAgent : GAgentBase<NamingContestGAgentState, AutogenEventBase>, INamingContestGAgent
+public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestGEvent>, IPumpFunNamingContestGAgent
 {
-    private readonly ILogger<NamingContestGAgent> _logger;
-    public NamingContestGAgent(ILogger<NamingContestGAgent> logger) : base(logger)
+    private readonly ILogger<PumpFunPumpFunNamingContestGAgent> _logger;
+    public PumpFunPumpFunNamingContestGAgent(ILogger<PumpFunPumpFunNamingContestGAgent> logger) : base(logger)
     {
         _logger = logger;
     }
 
-    public Task<NamingContestGAgent> GetStateAsync()
+    public Task<PumpFunPumpFunNamingContestGAgent> GetStateAsync()
     {
         throw new NotImplementedException();
     }
 
-    public Task SetCallBackURL(string callBackUrl)
+    public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent)
     {
-        State.callBackUrl = callBackUrl;
+        RaiseEvent(iniNetWorkMessageGEvent);
+        base.ConfirmEvents();
         return Task.CompletedTask;
     }
 
@@ -57,12 +59,12 @@ public class NamingContestGAgent : GAgentBase<NamingContestGAgentState, AutogenE
     {
         _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" + JsonConvert.SerializeObject(@event));
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync((@event.Event as NameContentGEvent)!,State.callBackUrl);
+            .SendMessageAsync((@event.Event as NameContentGEvent)!,State.CallBackUrl);
     }
 }
 
-public interface INamingContestGAgent : IStateGAgent<NamingContestGAgentState>
+public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
 { 
-    Task SetCallBackURL(string callBackUrl);
+    Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent);
 
 }

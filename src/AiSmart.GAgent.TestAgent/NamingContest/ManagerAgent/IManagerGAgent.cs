@@ -1,10 +1,13 @@
 using AISmart.Agent;
 using AISmart.Service;
 
-namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
+namespace AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 
-public interface IManagerGAgent
+public interface IManagerGAgent:IGrainWithGuidKey
 {
-    Task InitAgentsAsync(List<string> agentIdList);
+    Task InitAgentsAsync(InitAgentMessageGEvent initAgentMessageGEvent);
+    
+    Task InitGroupInfoAsync(IniNetWorkMessageGEvent iniNetWorkMessageGEvent,string groupAgentId );
+
     
 }

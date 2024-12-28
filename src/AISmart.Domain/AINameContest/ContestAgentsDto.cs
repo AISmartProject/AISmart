@@ -1,3 +1,5 @@
+using Orleans;
+
 namespace AISmart.Service;
 
 using System.Collections.Generic;
@@ -48,6 +50,9 @@ public class Network
     public List<string> HostList { get; set; }
     public string CallbackAddress { get; set; }
     public string Name { get; set; }
+    
+    public string Round { get; set; }
+    
 }
 
 public class NetworksDto
@@ -55,25 +60,20 @@ public class NetworksDto
     public List<Network> Networks { get; set; }
 }
 
-
+[GenerateSerializer]
 public class AgentReponse
 {
-    public string Name { get; set; }
-    public string AgentId { get; set; }
+    [Id(0)] public string Name { get; set; }
+    [Id(1)] public string AgentId { get; set; }
 }
 
+[GenerateSerializer]
 public class AgentResponse
 {
-    public List<AgentReponse> ContestantAgentList { get; set; }
-    public List<AgentReponse> JudgeAgentList { get; set; }
-    public List<AgentReponse> HostAgentList { get; set; }
-
-    public AgentResponse()
-    {
-        ContestantAgentList = new List<AgentReponse>();
-        JudgeAgentList = new List<AgentReponse>();
-        HostAgentList = new List<AgentReponse>();
-    }
+    [Id(0)] public List<AgentReponse> ContestantAgentList { get; set; } =  new List<AgentReponse>();
+    [Id(1)] public List<AgentReponse> JudgeAgentList { get; set; } = new List<AgentReponse>();
+    [Id(2)] public List<AgentReponse> HostAgentList { get; set; } = new List<AgentReponse>();
+    
 }
 
 
