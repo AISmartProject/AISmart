@@ -68,7 +68,7 @@ public class ElasticIndexingService : IIndexingService
 
         var createIndexResponse = _elasticClient.Indices.Create(indexName, c => c
             .Map<T>(m => m
-                .AutoMap()
+                //.AutoMap()
                 .Properties(props =>
                 {
                     var type = gEvent.GetType();
@@ -111,6 +111,8 @@ public class ElasticIndexingService : IIndexingService
                     props.Date(d => d
                         .Name(CTime)
                     );
+                    _logger.LogError("creating gevent index props{props}", JsonConvert.SerializeObject(props));
+
                     return props;
                 })
             )
