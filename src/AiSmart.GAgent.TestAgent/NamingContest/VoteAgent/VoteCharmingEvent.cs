@@ -12,8 +12,15 @@ public class VoteCharmingEvent:EventBase
 [GenerateSerializer]
 public class InitVoteCharmingEvent:EventBase
 {
-    [Id(0)] public List<Guid> GrainGuidList { get; set; }
+    [Id(0)] public List<Guid> GrainGuidList { get; set; } = new();
     [Id(1)] public int TotalBatches { get; set; }
     [Id(2)] public int Round { get; set; }
-   
+}
+
+[GenerateSerializer]
+public class VoteCharmingCompleteEvent:EventBase
+{
+    [Id(0)] public Guid Winner { get; set; }
+    [Id(1)] public Guid VoterId { get; set; }
+    [Id(2)] public int Round { get; set; }
 }

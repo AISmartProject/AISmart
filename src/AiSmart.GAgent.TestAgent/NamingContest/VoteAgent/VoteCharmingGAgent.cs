@@ -1,6 +1,7 @@
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent.Grains;
 using Microsoft.Extensions.Logging;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
@@ -38,6 +39,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         foreach (var voteId in selectedVoteIds)
         {
             //todo how to get ai
+           _= GrainFactory.GetGrain<IVoteAgentGrain>(voteId).VoteAgentAsync(@event);
         }
         base.RaiseEvent(new VoteCharmingGEvent
         {
