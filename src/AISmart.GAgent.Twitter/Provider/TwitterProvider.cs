@@ -76,7 +76,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         }
         catch (Exception e)
         {
-            _logger.LogError(e,$"Decrypt error: {data}");
+            _logger.LogError("GetDecryptedData, error: {err}, data: {data}", e.Message, data);
         }
         return "";
     }
