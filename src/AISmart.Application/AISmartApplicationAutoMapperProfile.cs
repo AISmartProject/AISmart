@@ -15,6 +15,7 @@ public class AISmartApplicationAutoMapperProfile : Profile
         //Example related, can be removed
         CreateMap<CreateTransactionGEventDto, CreateTransactionGEvent>();
         CreateMap<CreateTransactionGEvent, CreateTransactionGEventDto>();
-
+        CreateMap<BindTwitterAccountGEvent, BindTwitterAccountGEventDto>();
+        CreateMap<BindTwitterAccountGEventDto, BindTwitterAccountGEvent>();
     }
 }
