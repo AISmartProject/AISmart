@@ -19,7 +19,7 @@ namespace AISmart.Agent;
 [Description("Handle PumpFun")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent>, IPumpFunGAgent
+public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, Agents.GEventBase>, IPumpFunGAgent
 {
     private readonly ILogger<PumpFunGAgent> _logger;
     public PumpFunGAgent(ILogger<PumpFunGAgent> logger) : base(logger)

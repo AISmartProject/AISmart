@@ -1,5 +1,7 @@
 using System;
 using AISmart.CQRS.Dto;
+using AISmart.Dto;
+
 namespace AISmart.GAgent.Dto;
 
 public class PumpFunSendMessageGEventDto : BaseEventDto
