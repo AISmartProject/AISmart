@@ -29,7 +29,6 @@ public class MockAGAgent : GAgentBase<MockAAgentState, MockAGEvent>, IMockAGAgen
         Logger.LogInformation($"{GetType()} ExecuteAsync: AAgent analyses content: {eventData.Content}");
 
         RaiseEvent(new MockAAddNumberEvent());
-        await base.ConfirmEvents();
 
         if (State.ThreadIds == null)
         {
