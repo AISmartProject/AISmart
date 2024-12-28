@@ -18,13 +18,10 @@ public class DevelopingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, Naive
     
     public async Task HandleEventAsync(NewDemandTestEvent eventData)
     {
-        var newEvent = new DevelopTaskTestEvent
+        await PublishAsync(new DevelopTaskTestEvent
         {
             Description = $"This is the demand for the task: {eventData.Description}"
-        };
-        // TODO: This should be done by CorrelationId.
-        newEvent.SetRootStreamIdList(eventData.GetRootStreamIdList());
-        await PublishEventDownwardsAsync(newEvent);
+        });
     }
 
     public async Task HandleEventAsync(NewFeatureCompletedTestEvent eventData)
@@ -38,12 +35,10 @@ public class DevelopingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, Naive
 
         if (State.Content.Count == 3)
         {
-            var newEvent = new NewFeatureCompletedTestEvent
+            await PublishAsync(new NewFeatureCompletedTestEvent
             {
                 PullRequestUrl = string.Join("\n", State.Content)
-            };
-            newEvent.SetRootStreamIdList(eventData.GetRootStreamIdList());
-            await PublishAsync(newEvent);
+            });
         }
     }
 }

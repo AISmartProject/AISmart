@@ -1,13 +1,8 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using AISmart.Agents;
-using Orleans.Streams;
-
 namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    private readonly IGrainState<Dictionary<GrainId, bool>> _subscribers = new GrainState<Dictionary<GrainId, bool>>();
+    private readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
 
     private async Task LoadSubscribersAsync()
     {
@@ -18,11 +13,11 @@ public abstract partial class GAgentBase<TState, TEvent>
         }
     }
 
-    private async Task AddSubscriberAsync(GrainId grainId, bool isCreateNewDag = false)
+    private async Task AddSubscriberAsync(GrainId grainId)
     {
         await LoadSubscribersAsync();
         _subscribers.State ??= [];
-        _subscribers.State.Add(grainId, isCreateNewDag);
+        _subscribers.State.Add(grainId);
         await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
             _subscribers);
     }

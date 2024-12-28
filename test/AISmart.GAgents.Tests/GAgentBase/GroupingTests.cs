@@ -151,9 +151,9 @@ public class GroupingTests : GAgentTestKitBase
         var developer1 = await Silo.CreateGrainAsync<DeveloperTestGAgent>(Guid.NewGuid());
         var developer2 = await Silo.CreateGrainAsync<DeveloperTestGAgent>(Guid.NewGuid());
         var developer3 = await Silo.CreateGrainAsync<DeveloperTestGAgent>(Guid.NewGuid());
-        await developingLeader.RegisterAsync(developer1, true);
-        await developingLeader.RegisterAsync(developer2, true);
-        await developingLeader.RegisterAsync(developer3, true);
+        await developingLeader.RegisterAsync(developer1);
+        await developingLeader.RegisterAsync(developer2);
+        await developingLeader.RegisterAsync(developer3);
 
         var investor1 = await Silo.CreateGrainAsync<InvestorTestGAgent>(Guid.NewGuid());
         var investor2 = await Silo.CreateGrainAsync<InvestorTestGAgent>(Guid.NewGuid());
@@ -163,14 +163,16 @@ public class GroupingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(marketingLeader, developingLeader);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
+        AddProbesByGrainId(marketingLeader, developingLeader, developer1, developer2, developer3, investor1, investor2);
+
         await publishingGAgent.PublishEventAsync(new NewDemandTestEvent
         {
             Description = "New demand from customer."
         });
         
         var investorState = await investor1.GetStateAsync();
-        investorState.Content.Count.ShouldBe(1);
-        var newLineCount = investorState.Content.First().Count(c => c == '\n');
+        investorState.Content.Count.ShouldBe(2);
+        var newLineCount = investorState.Content.Last().Count(c => c == '\n');
         newLineCount.ShouldBe(2);
     }
 }

@@ -42,10 +42,10 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return Task.CompletedTask;
     }
 
-    public async Task RegisterAsync(IGAgent gAgent, bool isCreateNewDag = false)
+    public async Task RegisterAsync(IGAgent gAgent)
     {
         var guid = gAgent.GetPrimaryKey();
-        await AddSubscriberAsync(gAgent.GetGrainId(), isCreateNewDag);
+        await AddSubscriberAsync(gAgent.GetGrainId());
         await OnRegisterAgentAsync(guid);
     }
 
@@ -73,9 +73,14 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task<SubscribedEventListEvent> HandleRequestAllSubscriptionsEventAsync(
         RequestAllSubscriptionsEvent request)
     {
+        return await GetGroupSubscribedEventListEvent();
+    }
+
+    private async Task<SubscribedEventListEvent> GetGroupSubscribedEventListEvent()
+    {
         await LoadSubscribersAsync();
 
-        var gAgentList = _subscribers.State.Keys.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
+        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
 
         if (gAgentList.IsNullOrEmpty())
         {
@@ -108,7 +113,12 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     public async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
-        await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
+        var groupSubscribedEventList = await GetGroupSubscribedEventListEvent();
+        if (groupSubscribedEventList.Value.Values.Any(typeList =>
+                typeList.Contains(((EventWrapper<EventBase>)eventWrapper).Event.GetType())))
+        {
+            await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
+        }
     }
 
     protected virtual async Task OnRegisterAgentAsync(Guid agentGuid)
@@ -124,62 +134,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public Task<TState> GetStateAsync()
     {
         return Task.FromResult(State);
-    }
-
-    protected async Task<Guid> PublishEventDownwardsAsync<T>(T @event) where T : EventBase
-    {
-        var eventId = Guid.NewGuid();
-        await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
-            @event.GetRootStreamIdList()));
-        return eventId;
-    }
-
-    protected async Task<Guid> PublishEventFromRootAsync<T>(T @event) where T : EventBase
-    {
-        var eventId = Guid.NewGuid();
-        await SendEventToRootAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId(),
-            @event.GetRootStreamIdList()));
-        return eventId;
-    }
-    
-    protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
-    {
-        return await PublishEventFromRootAsync(@event);
-    }
-
-    private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
-    {
-        await LoadSubscribersAsync();
-        if (_subscribers.State.IsNullOrEmpty())
-        {
-            return;
-        }
-
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        if (eventWrapper.RootStreamIdList.IsNullOrEmpty())
-        {
-            eventWrapper.RootStreamIdList.Add(streamOfThisGAgent);
-        }
-
-        foreach (var (subscriber, isCreateNewDag) in _subscribers.State)
-        {
-            if (isCreateNewDag && !eventWrapper.RootStreamIdList.Contains(streamOfThisGAgent))
-            {
-                eventWrapper.RootStreamIdList.Add(streamOfThisGAgent);
-            }
-
-            var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
-            var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-            await stream.OnNextAsync(eventWrapper);
-        }
-    }
-
-    private async Task SendEventToRootAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
-    {
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        eventWrapper.RootStreamIdList.Remove(streamOfThisGAgent);
-        var stream = StreamProvider.GetStream<EventWrapperBase>(eventWrapper.RootStreamIdList.Last());
-        await stream.OnNextAsync(eventWrapper);
     }
 
     public async Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream)
@@ -210,25 +164,24 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await UpdateObserverList();
 
         // Register to itself.
+        var agentGuid = this.GetPrimaryKey();
+        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        foreach (var observer in Observers.Keys)
         {
-            var agentGuid = this.GetPrimaryKey();
-            var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-            var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
-            foreach (var observer in Observers.Keys)
-            {
-                await stream.SubscribeAsync(observer);
-            }
+            await streamOfThisGAgent.SubscribeAsync(observer);
         }
 
         await LoadSubscribersAsync();
         if (_subscribers.State != null)
         {
-            foreach (var subscriber in _subscribers.State.Keys)
+            foreach (var subscriber in _subscribers.State)
             {
                 var gAgent = GrainFactory.GetGrain<IGAgent>(subscriber);
                 var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey());
                 var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
                 await gAgent.SubscribeAsync(stream);
+                //await gAgent.SubscribeAsync(streamOfThisGAgent);
             }
         }
     }
@@ -247,6 +200,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             }
         }, TaskContinuationOptions.OnlyOnFaulted);
     }
+
     private async Task InternalOnStateChangedAsync()
     {
         await HandleStateChangedAsync();

@@ -1,3 +1,4 @@
+using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
 using Microsoft.Extensions.Logging;
@@ -20,17 +21,25 @@ public class MarketingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveT
     {
         await PublishAsync(new WorkingOnTestEvent
         {
-            Description = eventData.Description
+            Description = $"Working on `{eventData.Description}`",
         });
     }
 
     public async Task HandleEventAsync(NewFeatureCompletedTestEvent eventData)
     {
-        var newEvent = new WorkingOnTestEvent
+        await PublishAsync(new WorkingOnTestEvent
         {
-            Description = eventData.PullRequestUrl
-        };
-        newEvent.SetRootStreamIdList(eventData.GetRootStreamIdList());
-        await PublishAsync(newEvent);
+            Description = $"Working completed: {eventData.PullRequestUrl}"
+        });
+    }
+    
+    public async Task HandleEventAsync(InvestorFeedbackTestEvent eventData)
+    {
+        if (State.Content.IsNullOrEmpty())
+        {
+            State.Content = [];
+        }
+
+        State.Content.Add($"Feedback from investor: {eventData.Content}");
     }
 }

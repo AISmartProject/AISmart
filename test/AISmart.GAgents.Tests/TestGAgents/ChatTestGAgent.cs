@@ -35,17 +35,17 @@ public class ChatTestGAgent : GAgentBase<ChatTestGAgentState, MessageGEvent>
             NeedReplyBotName = eventData.BotName
         });
         await ConfirmEvents();
-        await PublishAsync(new SocialTestEvent
-            {
-                MessageId = eventData.MessageId,
-                Message = eventData.Message
-            }
-            .WithContext("ChatId", eventData.ChatId)
-            .WithContext("GroupId", "Can't tell you.")
-            .WithContext(new Dictionary<string, object?>
-            {
-                ["BotName"] = eventData.BotName
-            }));
+        // await PublishAsync(new SocialTestEvent
+        //     {
+        //         MessageId = eventData.MessageId,
+        //         Message = eventData.Message
+        //     }
+        //     .WithContext("ChatId", eventData.ChatId)
+        //     .WithContext("GroupId", "Can't tell you.")
+        //     .WithContext(new Dictionary<string, object?>
+        //     {
+        //         ["BotName"] = eventData.BotName
+        //     }));
     }
 
     public async Task HandleEventAsync(SendMessageTestEvent eventData)

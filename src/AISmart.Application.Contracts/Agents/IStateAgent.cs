@@ -19,7 +19,7 @@ public interface IGAgent : IGrainWithGuidKey
 
     //Function to get agent description
     Task<string> GetDescriptionAsync();
-    Task RegisterAsync(IGAgent gAgent, bool createNewDag = false);
+    Task RegisterAsync(IGAgent gAgent);
     Task UnregisterAsync(IGAgent gAgent);
     Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream);
     Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
