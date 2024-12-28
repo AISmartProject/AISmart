@@ -33,7 +33,7 @@ public class TwitterService : ApplicationService, ITwitterService
         var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(groupId);
         await socialAgent.SetAgent(bindTwitterAccountDto.UserId, "You need to answer all the questions you know.");
         var twitterAgent = _clusterClient.GetGrain<ITwitterGAgent>(groupId);
-        await twitterAgent.BindTwitterAccount(bindTwitterAccountDto.UserId, bindTwitterAccountDto.Token, bindTwitterAccountDto.TokenSecret);
+        await twitterAgent.BindTwitterAccount(bindTwitterAccountDto.UserName, bindTwitterAccountDto.UserId, bindTwitterAccountDto.Token, bindTwitterAccountDto.TokenSecret);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
         await groupAgent.RegisterAsync(twitterAgent);
         await groupAgent.RegisterAsync(socialAgent);

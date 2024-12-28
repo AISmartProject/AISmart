@@ -53,7 +53,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("responseBody: " + responseBody);
+            _logger.LogInformation("GetMentionsAsync Response: {resp}", responseBody);
             var responseData = JsonConvert.DeserializeObject<TwitterResponseDto>(responseBody);
             if (responseData?.Data != null)
             {
@@ -62,7 +62,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
+            _logger.LogError("GetMentionsAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
         }
         
         return new List<Tweet>();
@@ -76,7 +76,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         }
         catch (Exception e)
         {
-            _logger.LogError("GetDecryptedData, error: {err}, data: {data}", e.Message, data);
+            _logger.LogError("GetDecryptedData Error: {err}, data: {data}", e.Message, data);
         }
         return "";
     }
@@ -104,12 +104,45 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
             HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
             response.EnsureSuccessStatusCode();
             var responseData = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation(responseData);
+            _logger.LogInformation("PostTwitterAsync Response: {resp}", responseData);
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
+            _logger.LogError("PostTwitterAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
         }
+    }
+    
+    public async Task<string> GetUserName(string accessToken, string accessTokenSecret)
+    {
+        var url = "https://api.x.com/2/users/me";
+
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("GET", url, accessToken, accessTokenSecret);
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("GetUserName Response: {res[}", responseBody);
+            var responseData = JsonConvert.DeserializeObject<UserInfoDto>(responseBody);
+            if (responseData?.UserName != null)
+            {
+                return responseData.UserName;
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("Request GetUserName Error, err: {err}", e.Message);
+        }
+
+        return "";
     }
     
     public async Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret)
@@ -146,7 +179,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
+            _logger.LogError("ReplyAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
         }
     }
     
