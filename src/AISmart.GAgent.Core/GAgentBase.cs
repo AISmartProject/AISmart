@@ -3,6 +3,7 @@ using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Orleans.EventSourcing;
 using Orleans.Providers;
 using Orleans.Storage;
@@ -293,6 +294,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     
     protected sealed override async void RaiseEvent<TEvent>(TEvent @event)
     {
+        Logger.LogInformation("base raiseEvent info:{info}", JsonConvert.SerializeObject(@event));
         base.RaiseEvent(@event);
         await InternalRaiseEventAsync(@event);
         InternalRaiseEventAsync(@event).ContinueWith(task =>
