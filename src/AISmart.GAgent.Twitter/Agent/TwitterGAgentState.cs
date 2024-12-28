@@ -13,18 +13,22 @@ public class TwitterGAgentState : StateBase
     [Id(2)] public string Token { get; set; }
     [Id(3)] public string TokenSecret { get; set; }
     [Id(4)] public Dictionary<string, string> RepliedTweets { get; set; }
+    [Id(5)] public string UserName { get; set; }
     
     public void Apply(BindTwitterAccountGEvent bindTwitterAccountGEvent)
     {
         UserId = bindTwitterAccountGEvent.UserId;
         Token = bindTwitterAccountGEvent.Token;
         TokenSecret = bindTwitterAccountGEvent.TokenSecret;
+        UserName = bindTwitterAccountGEvent.UserName;
     }
     
     public void Apply(UnbindTwitterAccountEvent unbindTwitterAccountEvent)
     {
         Token = "";
         TokenSecret = "";
+        UserId = "";
+        UserName = "";
     }
     
     public void Apply(ReplyTweetGEvent replyTweetGEvent)
