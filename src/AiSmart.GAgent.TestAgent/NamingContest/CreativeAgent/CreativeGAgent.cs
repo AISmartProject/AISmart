@@ -75,8 +75,8 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
         }
     }
 
-    public Task InitAgentsAsync(ContestantAgent contestantAgent)
-    {
-        return Task.CompletedTask;
-    }
+    // public async Task InitAgentsAsync(ContestantAgent contestantAgent)
+    // {
+    //     
+    // }
 }
