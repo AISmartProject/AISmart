@@ -37,9 +37,10 @@ public enum NamingContestStepEnum
     Discussion = 5,
     JudgeVoteStart = 6,
     JudgeVote = 7,
-    JudgeAsking = 8,
-    JudgeRating = 9,
-    Complete = 10,
+    JudgeScore = 8,
+    JudgeAsking = 9,
+    JudgeRating = 10,
+    Complete = 11,
 }
 
 [GenerateSerializer]

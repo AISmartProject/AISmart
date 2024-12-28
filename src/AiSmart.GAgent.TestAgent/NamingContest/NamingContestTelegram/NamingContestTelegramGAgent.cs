@@ -88,6 +88,11 @@ public class NamingContestTelegramGAgent : MicroAIGAgent, INamingContestTelegram
             case NamingContestStepEnum.JudgeRating:
                 break;
             case NamingContestStepEnum.Complete:
+                await PublishAsync(new SendMessageEvent()
+                {
+                    ChatId = _telegramTestOptions.ChatId,
+                    Message = $"----the naming contest finished------"
+                });
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

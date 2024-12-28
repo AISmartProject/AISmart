@@ -22,7 +22,7 @@ public class TrafficState : StateBase
         NamingContent = @event.Content;
     }
     
-    public void Apply(TrafficCreativeCompleteGEvent gEvent)
+    public void Apply(TrafficGrainCompleteGEvent gEvent)
     {
         CalledCreativeList.Add(gEvent.CompleteGrainId);
         CurrentCreativeId = Guid.Empty;

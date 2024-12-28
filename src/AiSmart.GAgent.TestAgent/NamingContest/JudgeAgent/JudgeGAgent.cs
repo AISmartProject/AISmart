@@ -18,7 +18,6 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 {
-
     public JudgeGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
@@ -74,7 +73,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         {
             return;
         }
-        
+
         try
         {
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -89,10 +88,9 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 }
 
                 await PublishAsync(new JudgeVoteResultGEvent()
-                    { AgentName = voteResult.Name, Reason = voteResult.Reason });
+                    { AgentName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey() });
                 await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, this.GetPrimaryKey(),
-                    NamingRoleType.Judge, State.AgentName,
-                    $"I think {voteResult.Name} is better. The reasons are as follows:{voteResult.Reason}"));
+                    NamingRoleType.Judge, State.AgentName, response.Content));
             }
         }
         catch
@@ -104,9 +102,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 
 public class VoteResult
 {
-    [JsonPropertyName(@"name")]
-    public string Name { get; set; }
+    [JsonPropertyName(@"name")] public string Name { get; set; }
 
-    [JsonPropertyName(@"reason")]
-    public string Reason { get; set; }
+    [JsonPropertyName(@"reason")] public string Reason { get; set; }
 }
