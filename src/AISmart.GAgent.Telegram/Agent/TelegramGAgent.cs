@@ -49,7 +49,7 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     public async Task UnRegisterTelegramAsync(string botName)
     {
         await GrainFactory.GetGrain<ITelegramGrain>(botName).UnRegisterTelegramAsync(
-            State.BotName);
+            State.Token);
     }
 
 

@@ -12,9 +12,9 @@ public class TrafficState : StateBase
     [Id(4)] public string AgentName { get; set; }
     [Id(5)] public string Description { get; set; }
 
-    public void Apply(TrafficCallSelectCreativeSEvent sEvent)
+    public void Apply(TrafficCallSelectGrainidSEvent sEvent)
     {
-        CurrentCreativeId = sEvent.CreativeGrainId;
+        CurrentCreativeId = sEvent.GrainId;
     }
 
     public void Apply(TrafficNameStartSEvent @event)
@@ -40,7 +40,7 @@ public class TrafficState : StateBase
         {
             return;
         }
-        
+
         CreativeList.Add(@event.CreativeGrainId);
     }
 }

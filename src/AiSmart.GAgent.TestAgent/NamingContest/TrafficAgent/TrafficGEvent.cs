@@ -56,7 +56,7 @@ public class DebatedCompleteGEvent:NameContentGEvent
 {
     [Id(0)] public Guid GrainGuid { get; set; }
     [Id(1)] public string CreativeName { get; set; }
-    [Id(2)] public string NamingReply { get; set; }
+    [Id(2)] public string DebateReply { get; set; }
 }
 
 
@@ -64,7 +64,6 @@ public class DebatedCompleteGEvent:NameContentGEvent
 public class TrafficDebateOver : NameContentGEvent
 {
     [Id(0)] public string NamingQuestion { get; set; }
-    
 }
 
 

@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
@@ -9,17 +11,16 @@ using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel.Agents;
 using Nest;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 {
-    private readonly TelegramTestOptions _telegramTestOptions;
 
-    public JudgeGAgent(IOptions<TelegramTestOptions> options, ILogger<MicroAIGAgent> logger) : base(logger)
+    public JudgeGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
-        _telegramTestOptions = options.Value;
     }
 
     [EventHandler]
@@ -30,16 +31,16 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             new MicroAIMessage(Role.User.ToString(),
                 $"The theme of this naming contest is: \"{@event.NamingQuestion}\""),
         };
-        
+
         history.AddRange(State.RecentMessages);
         history.Add(new MicroAIMessage(Role.User.ToString(), @event.NamingReply));
-        
+
         List<AIMessageGEvent> sEvent = new List<AIMessageGEvent>();
         sEvent.Add(new AIReceiveMessageGEvent()
             { Message = new MicroAIMessage(Role.User.ToString(), @event.NamingReply) });
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
             .SendAsync(@event.NamingReply, history);
-        
+
         if (message != null && !message.Content.IsNullOrEmpty())
         {
             var namingReply = message.Content;
@@ -51,13 +52,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             {
                 CreativeGrainId = @event.CreativeGrainId, CreativeName = @event.CreativeName, Score = score,
                 Question = @event.NamingQuestion, Reply = @event.NamingReply
-            });
-
-
-            await PublishAsync(new SendMessageEvent()
-            {
-                ChatId = _telegramTestOptions.ChatId,
-                Message = $"Judge {@event.CreativeName} Naming:{@event.NamingReply} Score:{score}"
             });
         }
 
@@ -72,4 +66,47 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         RaiseEvent(new AIClearMessageGEvent());
         await ConfirmEvents();
     }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeVoteGEVent @event)
+    {
+        if (@event.JudgeGrainId != this.GetPrimaryKey())
+        {
+            return;
+        }
+        
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.JudgeVotePrompt, @event.History);
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                var voteResult = JsonSerializer.Deserialize<VoteResult>(response.Content);
+                if (voteResult == null)
+                {
+                    _logger.LogError("");
+                    return;
+                }
+
+                await PublishAsync(new JudgeVoteResultGEvent()
+                    { AgentName = voteResult.Name, Reason = voteResult.Reason });
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName,
+                    $"I think {voteResult.Name} is better. The reasons are as follows:{voteResult.Reason}"));
+            }
+        }
+        catch
+        {
+            // todo:return  JudgeVoteResultGEvent
+        }
+    }
+}
+
+public class VoteResult
+{
+    [JsonPropertyName(@"name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName(@"reason")]
+    public string Reason { get; set; }
 }

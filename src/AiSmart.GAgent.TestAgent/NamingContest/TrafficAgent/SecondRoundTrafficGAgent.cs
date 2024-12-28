@@ -73,7 +73,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<TrafficState, TrafficEventSou
         var random = new Random();
         var index = random.Next(0, creativeList.Count);
         var selectedId = creativeList[index];
-        RaiseEvent(new TrafficCallSelectCreativeSEvent() { CreativeGrainId = selectedId });
+        RaiseEvent(new TrafficCallSelectGrainidSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
         await PublishAsync(new TrafficInformCreativeGEvent()
