@@ -149,7 +149,7 @@ public class ElasticIndexingService : IIndexingService
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.");
+            _logger.LogInformation("{indexName} save Successfully.",indexName);
         }
     }
     

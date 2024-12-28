@@ -1,11 +1,12 @@
+using System;
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Provider;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Volo.Abp.Application.Services;
 using Volo.Abp.ObjectMapping;
+using Microsoft.Extensions.Logging;
 
 namespace AISmart.Service;
 
@@ -13,11 +14,13 @@ public class CqrsService : ApplicationService,ICqrsService
 {
     private readonly ICQRSProvider _cqrsProvider;
     private readonly IObjectMapper _objectMapper;
+    private readonly ILogger<CqrsService> _logger;
 
-    public CqrsService(ICQRSProvider cqrsProvider,IObjectMapper objectMapper)
+    public CqrsService(ICQRSProvider cqrsProvider,IObjectMapper objectMapper,ILogger<CqrsService> logger)
     {
         _cqrsProvider = cqrsProvider;
         _objectMapper = objectMapper;
+        _logger = logger;
 
     }
     
@@ -33,8 +36,16 @@ public class CqrsService : ApplicationService,ICqrsService
 
     public async Task<K> QueryGEventAsync<T, K>(string index, string id) where T : GEventBase
     {
-        var documentContent =  await _cqrsProvider.QueryGEventAsync(index, id);
-        var gEvent =  JsonConvert.DeserializeObject<T>(documentContent);
-        return _objectMapper.Map<T , K>(gEvent);
+        try
+        {
+            var documentContent =  await _cqrsProvider.QueryGEventAsync(index, id);
+            var gEvent =  JsonConvert.DeserializeObject<T>(documentContent);
+            return _objectMapper.Map<T , K>(gEvent);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "QueryGEventAsync error index:{index} id:{id}",index,id);
+            throw e;
+        }
     }
 }
