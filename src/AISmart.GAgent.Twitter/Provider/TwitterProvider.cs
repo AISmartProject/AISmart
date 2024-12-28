@@ -18,9 +18,9 @@ namespace AISmart.Provider;
 
 public interface ITwitterProvider
 {
-    public Task<string> PostTwitterAsync(string message, string accessToken, string accessTokenSecret);
-    public Task<string> ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret);
-    public Task<List<Tweet>> GetMentionsAsync();
+    public Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret);
+    public Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret);
+    public Task<List<Tweet>> GetMentionsAsync(string userName);
 }
 
 
@@ -40,32 +40,32 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         _aesCipher = new AESCipher(password);
     }
     
-    public async Task<List<Tweet>> GetMentionsAsync()
+    public async Task<List<Tweet>> GetMentionsAsync(string userName)
     {
         var bearerToken = _twitterOptions.CurrentValue.BearerToken;
-        string username = "elonmusk";
-        string query = $"@{username}";
+        string query = $"@{userName}";
         string encodedQuery = Uri.EscapeDataString(query);
         string url = $"https://api.twitter.com/2/tweets/search/recent?query={encodedQuery}&tweet.fields=author_id,conversation_id&max_results=100";
-
-        using (var client = new HttpClient())
+        
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+        try
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-            
-            var response = await client.GetAsync(url);
-
-            if (response.IsSuccessStatusCode)
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("responseBody: " + responseBody);
+            var responseData = JsonConvert.DeserializeObject<TwitterResponseDto>(responseBody);
+            if (responseData?.Data != null)
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation("responseBody: " + responseBody);
-                var responseData = JsonConvert.DeserializeObject<TwitterResponseDto>(responseBody);
                 return responseData.Data;
             }
-          
-            string errorResponse = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning($"response failed，code: {response.StatusCode}, body: {errorResponse}");
-            return new List<Tweet>();
         }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
+        }
+        
+        return new List<Tweet>();
     }
     
     private string GetDecryptedData(string data)
@@ -81,7 +81,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         return "";
     }
     
-    public async Task<string> PostTwitterAsync(string message, string accessToken, string accessTokenSecret)
+    public async Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret)
     {
         var url = "https://api.twitter.com/2/tweets";
 
@@ -98,21 +98,21 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
 
         requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
         requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
-        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
-        if (response.IsSuccessStatusCode)
+
+        try
         {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
             var responseData = await response.Content.ReadAsStringAsync();
-            return responseData;
+            _logger.LogInformation(responseData);
         }
-        else
+        catch (HttpRequestException e)
         {
-            var errorData = await response.Content.ReadAsStringAsync();
-            return $"Error: {errorData}";
+            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
         }
     }
     
-    public async Task<string> ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret)
+    public async Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret)
     {
         var url = "https://api.twitter.com/2/tweets";
         
@@ -136,22 +136,21 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         
         requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
         requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
-        HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
-        if (response.IsSuccessStatusCode)
+
+        try
         {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
             var responseData = await response.Content.ReadAsStringAsync();
-            return responseData;
+            _logger.LogInformation(responseData);
         }
-        else
+        catch (HttpRequestException e)
         {
-            var errorData = await response.Content.ReadAsStringAsync();
-            return $"Error: {errorData}";
+            _logger.LogError($"request error: {e.Message}, code: {e.StatusCode}");
         }
-        
     }
     
-    private string GenerateOAuthHeader(string httpMethod, string url, string accessToken, string accessTokenSecret, Dictionary<string, string> additionalParams = null)
+    private string GenerateOAuthHeader(string httpMethod, string url, string accessToken, string accessTokenSecret, Dictionary<string, string>? additionalParams = null)
     {
         var consumerKey = _twitterOptions.CurrentValue.ConsumerKey;
         var consumerSecret = _twitterOptions.CurrentValue.ConsumerSecret;

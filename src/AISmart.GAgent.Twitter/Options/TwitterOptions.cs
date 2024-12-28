@@ -8,4 +8,5 @@ public class TwitterOptions
     public string ConsumerSecret { get; set; }
     public string EncryptionPassword { get; set; }
     public string BearerToken { get; set; }
+    public int ReplyLimit { get; set; }
 }

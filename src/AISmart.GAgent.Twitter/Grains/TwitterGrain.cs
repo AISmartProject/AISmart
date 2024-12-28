@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Dto;
 using AISmart.Options;
@@ -36,8 +37,9 @@ public class TwitterGrain : Grain<TwitterState>, ITwitterGrain
         await _twitterProvider.ReplyAsync(text, tweetId, token, tokenSecret);
     }
 
-    public async Task<List<Tweet>> GetRecentMentionAsync()
+    public async Task<List<Tweet>> GetRecentMentionAsync(string userName)
     {
-        return await _twitterProvider.GetMentionsAsync();
+        var mentionList = await _twitterProvider.GetMentionsAsync(userName);
+        return mentionList.Take(_twitterOptions.CurrentValue.ReplyLimit).ToList();
     }
 }

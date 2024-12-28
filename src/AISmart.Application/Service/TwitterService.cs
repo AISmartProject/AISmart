@@ -53,14 +53,18 @@ public class TwitterService : ApplicationService, ITwitterService
 
     public async Task PostTweetAsync(PostTweetDto postTweetDto)
     {
-        // await SetGroupsAsync();
-        // To filter only messages that mention the bot, check if message.Entities.type == "mention".
-        // Group message auto-reply, just add the bot as a group admin.
-        // _logger.LogInformation("IPublishingGAgent {token}", token);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId));
         await publishingAgent.PublishEventAsync(new CreateTweetEvent
         {
             Text = postTweetDto.Text
+        });
+    }
+    
+    public async Task ReplyMentionAsync(ReplyMentionDto replyMentionDto)
+    {
+        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId));
+        await publishingAgent.PublishEventAsync(new ReplyMentionEvent
+        {
         });
     }
 }

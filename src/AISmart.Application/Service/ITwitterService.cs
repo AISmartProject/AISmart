@@ -8,4 +8,5 @@ public interface ITwitterService
     Task BindTwitterAccountAsync(BindTwitterAccountDto bindTwitterAccountDto);
     Task UnbindTwitterAccountAsync(UnbindTwitterAccountDto bindTwitterAccountDto);
     Task PostTweetAsync(PostTweetDto postTweetDto);
+    Task ReplyMentionAsync(ReplyMentionDto postTweetDto);
 }

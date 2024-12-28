@@ -91,7 +91,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
     public async Task HandleEventAsync(ReplyMentionEvent @event)
     {
         _logger.LogDebug("Handle ReplyMentionEvent");
-        var mentionTweets = await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).GetRecentMentionAsync();
+        var mentionTweets = await GrainFactory.GetGrain<ITwitterGrain>(State.UserId).GetRecentMentionAsync(State.UserId);
         foreach (var tweet in mentionTweets)
         {
             if (!State.RepliedTweets.Keys.Contains(tweet.Id))

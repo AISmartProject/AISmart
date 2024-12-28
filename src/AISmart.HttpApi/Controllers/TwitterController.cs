@@ -38,4 +38,10 @@ public class TwitterController
     {
         await _twitterService.PostTweetAsync(postTweetDto);
     }
+    
+    [HttpPost("replyMention")]
+    public async Task ReplyMentionAsync([FromBody] ReplyMentionDto replyMentionDto)
+    {
+        await _twitterService.ReplyMentionAsync(replyMentionDto);
+    }
 }
