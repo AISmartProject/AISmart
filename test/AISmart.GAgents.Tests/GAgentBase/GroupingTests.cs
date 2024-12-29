@@ -171,7 +171,7 @@ public class GroupingTests : GAgentTestKitBase
         });
         
         var investorState = await investor1.GetStateAsync();
-        investorState.Content.Count.ShouldBe(4);
+        investorState.Content.Count.ShouldBe(2);
         var newLineCount = investorState.Content.Last().Count(c => c == '\n');
         newLineCount.ShouldBe(2);
     }

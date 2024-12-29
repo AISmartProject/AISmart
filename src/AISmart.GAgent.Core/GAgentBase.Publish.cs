@@ -17,23 +17,28 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     protected async Task<Guid> PublishAsync<T>(T @event, StreamId? streamId = null) where T : EventBase
     {
+        var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
         streamId ??= StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
         @event.StreamId = streamId;
         var eventId = Guid.NewGuid();
-        await PublishEventDownwardsAsync(@event, eventId);
-        await PublishEventUpwardsAsync(@event, eventId);
+        if (isTop)
+        {
+            await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+        }
+        else
+        if (!isTop && _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue))
+        {
+            @event.StreamId = streamIdValue;
+            await PublishEventUpwardsAsync(@event, eventId);
+        }
         return eventId;
     }
 
     private async Task PublishEventUpwardsAsync<T>(T @event, Guid eventId) where T : EventBase
     {
-        if (_streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue))
-        {
-            @event.StreamId = streamIdValue;
-            await SendEventUpwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-        }
+        await SendEventUpwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
     }
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
@@ -49,13 +54,16 @@ public abstract partial class GAgentBase<TState, TEvent>
         @event.StreamId ??= streamOfThisGAgent;
         await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
     }
-
-    private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
+    
+    private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
         var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
         var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
         await streamOfThisGAgent.OnNextAsync(eventWrapper);
+    }
 
+    private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
+    {
         await LoadSubscribersAsync();
         if (_subscribers.State.IsNullOrEmpty())
         {

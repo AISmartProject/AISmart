@@ -16,7 +16,7 @@ public abstract partial class GAgentBase<TState, TEvent>
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
                 var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
-                if (grainId == this.GetGrainId())
+                if (grainId == this.GetGrainId() && eventHandlerMethod.Name != nameof(ForwardEventAsync))
                 {
                     // Skip the event if it is sent by itself.
                     return;
