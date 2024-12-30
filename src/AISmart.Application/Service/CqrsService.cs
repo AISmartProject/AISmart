@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Volo.Abp.Application.Services;
 using Volo.Abp.ObjectMapping;
 using Microsoft.Extensions.Logging;
+using JsonException = System.Text.Json.JsonException;
 
 namespace AISmart.Service;
 
@@ -38,13 +39,18 @@ public class CqrsService : ApplicationService,ICqrsService
     {
         try
         {
-            var documentContent =  await _cqrsProvider.QueryGEventAsync(index, id);
-            var gEvent =  JsonConvert.DeserializeObject<T>(documentContent);
-            return _objectMapper.Map<T , K>(gEvent);
+            var documentContent = await _cqrsProvider.QueryGEventAsync(index, id);
+            var gEvent = JsonConvert.DeserializeObject<T>(documentContent);
+            return _objectMapper.Map<T, K>(gEvent);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "QueryGEventAsync error JsonException index:{index} id:{id}", index, id);
+            return default(K);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "QueryGEventAsync error index:{index} id:{id}",index,id);
+            _logger.LogError(e, "QueryGEventAsync error index:{index} id:{id}", index, id);
             throw;
         }
     }
