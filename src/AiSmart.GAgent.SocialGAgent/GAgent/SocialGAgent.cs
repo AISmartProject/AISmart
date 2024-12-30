@@ -22,28 +22,36 @@ public class SocialGAgent : MicroAIGAgent, ISocialGAgent
     [EventHandler]
     public  async Task<SocialResponseEvent> HandleEventAsync(SocialEvent @event)
     {
+        _logger.LogInformation("handle SocialEvent, content: {content}", @event.Content);
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();
         list.Add(new AIReceiveMessageGEvent
         {
             Message = new MicroAIMessage("user", @event.Content)
         });
-
+        
         SocialResponseEvent aiResponseEvent = new SocialResponseEvent();
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(@event.Content, State.RecentMessages.ToList());
-        if (message != null && !message.Content.IsNullOrEmpty())
+        try
         {
-            _logger.LogInformation(" AI replyMessage:" + message.Content);
-            list.Add(new AIReplyMessageGEvent()
+            var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(@event.Content, State.RecentMessages.ToList());
+            if (message != null && !message.Content.IsNullOrEmpty())
             {
-                Message = message
-            });
+                _logger.LogInformation("handle SocialEvent, AI replyMessage: {msg}", message.Content);
+                list.Add(new AIReplyMessageGEvent()
+                {
+                    Message = message
+                });
 
-            aiResponseEvent.ResponseContent = message.Content;
-            aiResponseEvent.ChatId = @event.ChatId;
-            aiResponseEvent.ReplyMessageId = @event.MessageId;
+                aiResponseEvent.ResponseContent = message.Content;
+                aiResponseEvent.ChatId = @event.ChatId;
+                aiResponseEvent.ReplyMessageId = @event.MessageId;
+            }
         }
-
+        catch (Exception e)
+        {
+            _logger.LogError(e, "handle SocialEvent, Get AIReplyMessage Error: {err}", e.Message);
+        }
+        
         base.RaiseEvents(list);
         return aiResponseEvent;
     }
