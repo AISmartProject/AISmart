@@ -111,7 +111,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     }
 
     [AllEventHandler]
-    public async Task ForwardEventAsync(EventWrapperBase eventWrapper)
+    internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
