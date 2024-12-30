@@ -45,7 +45,7 @@ public class CqrsService : ApplicationService,ICqrsService
         catch (Exception e)
         {
             _logger.LogError(e, "QueryGEventAsync error index:{index} id:{id}",index,id);
-            throw e;
+            throw;
         }
     }
 }
