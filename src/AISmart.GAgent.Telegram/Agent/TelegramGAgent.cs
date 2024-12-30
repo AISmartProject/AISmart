@@ -57,12 +57,14 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     public async Task HandleEventAsync(ReceiveMessageEvent @event)
     {
         _logger.LogInformation("Telegram ReceiveMessageEvent " + @event.MessageId);
-        if (State.PendingMessages.TryGetValue(@event.MessageId, out _))
+        if (!@event.MessageId.IsNullOrEmpty())
         {
-            _logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
-            return;
+            if (State.PendingMessages.TryGetValue(@event.MessageId, out _))
+            {
+                _logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
+                return;
+            }
         }
-
         RaiseEvent(new ReceiveMessageGEvent
         {
             MessageId = @event.MessageId,
