@@ -30,7 +30,7 @@ namespace AISmart.Samples
         private readonly IClusterClient _clusterClient;
 
         private INamingContestService _namingContestService;
-        private readonly INamingContestGAgent _namingContestGAgent;
+        private readonly IPumpFunNamingContestGAgent _pumpFunNamingContestGAgent;
         private readonly INamingContestGrain _namingContestGrain;
 
 
@@ -38,7 +38,7 @@ namespace AISmart.Samples
         {
             _namingContestService = GetRequiredService<INamingContestService>();
             _clusterClient = GetRequiredService<IClusterClient>();
-            _namingContestGAgent = _clusterClient.GetGrain<INamingContestGAgent>(Guid.NewGuid());
+            _pumpFunNamingContestGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
             _namingContestGrain = _clusterClient.GetGrain<INamingContestGrain>("NamingContestGrain");
         }
 
