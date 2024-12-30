@@ -169,6 +169,16 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
                 await streamOfThisGAgent.SubscribeAsync(observer);
             }
         }
+
+        _stateSaveTimer =
+            this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+    }
+
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        _stateSaveTimer.Dispose();
+        await SaveSubscriberAsync(cancellationToken);
+        await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
     protected virtual async Task HandleStateChangedAsync()

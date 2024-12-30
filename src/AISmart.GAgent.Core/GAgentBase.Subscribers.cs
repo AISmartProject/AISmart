@@ -3,6 +3,7 @@ namespace AISmart.GAgent.Core;
 public abstract partial class GAgentBase<TState, TEvent>
 {
     private readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
+    private IDisposable _stateSaveTimer;
 
     private async Task LoadSubscribersAsync()
     {
@@ -18,8 +19,6 @@ public abstract partial class GAgentBase<TState, TEvent>
         await LoadSubscribersAsync();
         _subscribers.State ??= [];
         _subscribers.State.Add(grainId);
-        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
-            _subscribers);
     }
 
     private async Task RemoveSubscriberAsync(GrainId grainId)
@@ -31,6 +30,10 @@ public abstract partial class GAgentBase<TState, TEvent>
         }
 
         _subscribers.State.Remove(grainId);
+    }
+
+    private async Task SaveSubscriberAsync(CancellationToken cancellationToken)
+    {
         await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
             _subscribers);
     }

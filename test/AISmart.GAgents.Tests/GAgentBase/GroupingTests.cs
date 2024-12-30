@@ -24,7 +24,7 @@ public class GroupingTests : GAgentTestKitBase
         subscribers.State.Count.ShouldBe(0);
     }
 
-    [Fact(DisplayName = "Each gAgent's states should be saved correctly after register.")]
+    [Fact(DisplayName = "GroupGAgent's states should be saved correctly after register.")]
     public async Task RegisterTest()
     {
         // Arrange & Act.
@@ -40,7 +40,7 @@ public class GroupingTests : GAgentTestKitBase
         subscribers.State.First().ShouldBe(naiveTestGAgent.GetGrainId());
     }
 
-    [Fact(DisplayName = "Each gAgent's states should be saved correctly after unregister.")]
+    [Fact(DisplayName = "GroupGAgent's states should be saved correctly after unregister.")]
     public async Task UnregisterTest()
     {
         // Arrange.
@@ -142,9 +142,36 @@ public class GroupingTests : GAgentTestKitBase
         }
     }
 
-    [Fact]
-    public async Task DAGTest()
+    /// <summary>
+    /// Structure:
+    /// PublishingGAgent -> GroupGAgent -> MarketingLeaderTestGAgent -> InvestorTestGAgent
+    /// PublishingGAgent -> GroupGAgent -> DevelopingLeaderTestGAgent -> DeveloperTestGAgent
+    ///
+    /// 1.
+    /// PublishingGAgent: Publish NewDemand
+    ///
+    /// 2.1
+    /// MarketingLeaderTestGAgent: Receive NewDemand, Publish WorkingOnTestEvent
+    /// InvestorTestGAgent: Receive WorkingOnTestEvent, Publish InvestorFeedbackTestEvent
+    /// MarketingLeaderTestGAgent: Receive InvestorFeedbackTestEvent, add to context
+    ///
+    /// 2.2
+    /// DevelopingLeaderTestGAgent: Receive NewDemand, Publish DevelopTaskTestEvent
+    /// DeveloperTestGAgent: Receive DevelopTaskTestEvent, Publish NewFeatureCompletedTestEvent
+    ///     (These NewFeatureCompletedTestEvents from DeveloperTestGAgent will only be handled by DevelopingLeaderTestGAgent)
+    /// DevelopingLeaderTestGAgent: Receive 3 * NewFeatureCompletedTestEvent, Publish NewFeatureCompletedTestEvent
+    ///
+    /// 3
+    /// MarketingLeaderTestGAgent: Receive NewFeatureCompletedTestEvent, Publish WorkingOnTestEvent
+    /// InvestorTestGAgent: Receive WorkingOnTestEvent, Publish InvestorFeedbackTestEvent
+    ///
+    /// Thus:
+    /// Response of DeveloperTestGAgent can be finally handled by MarketingLeaderTestGAgent and InvestorTestGAgent.
+    /// </summary>
+    [Fact(DisplayName = "Event can be handled by level 4 and responses can be forwarded to level 2.")]
+    public async Task SubscriptionTest()
     {
+        // Arrange.
         var marketingLeader = await Silo.CreateGrainAsync<MarketingLeaderTestGAgent>(Guid.NewGuid());
         var developingLeader = await Silo.CreateGrainAsync<DevelopingLeaderTestGAgent>(Guid.NewGuid());
 
@@ -165,11 +192,18 @@ public class GroupingTests : GAgentTestKitBase
 
         AddProbesByGrainId(marketingLeader, developingLeader, developer1, developer2, developer3, investor1, investor2);
 
+        // Act.
         await publishingGAgent.PublishEventAsync(new NewDemandTestEvent
         {
             Description = "New demand from customer."
         });
-        
+
+        // Assert: Check state of market leading.
+        var marketLeadingState = await marketingLeader.GetStateAsync();
+        // 2 from market leader -> investors, 2 from developer -> develop leader -> market leader -> investors
+        marketLeadingState.Content.Count.ShouldBe(4);
+
+        // Assert: Check state of investor.
         var investorState = await investor1.GetStateAsync();
         investorState.Content.Count.ShouldBe(2);
         var newLineCount = investorState.Content.Last().Count(c => c == '\n');
