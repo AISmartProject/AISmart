@@ -18,6 +18,7 @@
     <PackageReference Include="AutoGen.Core" />
     <PackageReference Include="Microsoft.Orleans.EventSourcing" />
     <PackageReference Include="Volo.Abp.AutoMapper" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" />
   </ItemGroup>
 
 </Project>

@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.Application.Grains;
+using AISmart.Dapr;
 using AISmart.Events;
 using AISmart.GAgent.Core;
 using AISmart.GEvents.MicroAI;
 using AISmart.Grains;
 using Microsoft.Extensions.Logging;
+using Orleans;
 using Orleans.Providers;
+using Orleans.Runtime;
+using Orleans.Streams;
 
 namespace AISmart.Agent;
 
@@ -42,9 +46,24 @@ public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGE
             AgentResponsibility = agentResponsibility
         });
         await ConfirmEvents();
+        
 
-        await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
+
+        IChatAgentGrain chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(agentName);
+        await chatAgentGrain.SetAgentAsync(agentResponsibility);
+
+        
+        var agentGuid = this.GetPrimaryKey();
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var stream = StreamProvider.GetStream<MicroAIMessage>(streamId);
+        await stream.SubscribeAsync(HandlerMicroAIMessage);
     }
+
+    protected async Task HandlerMicroAIMessage(MicroAIMessage items, StreamSequenceToken token)
+    {
+           
+    }
+
 
     public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
         int? seed = null,

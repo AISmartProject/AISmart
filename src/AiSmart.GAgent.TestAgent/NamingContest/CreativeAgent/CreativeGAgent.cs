@@ -6,6 +6,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
+using Orleans.Streams;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
@@ -126,6 +127,55 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             await this.PublishAsync(new DebatedCompleteGEvent()
             {
                 Content = @event.NamingContent,
+                GrainGuid = this.GetPrimaryKey(),
+                DebateReply = debateReply,
+                CreativeName = State.AgentName,
+            });
+
+            RaiseEvent(new AIReceiveMessageGEvent()
+            {
+                Message = new MicroAIMessage(Role.User.ToString(),
+                    AssembleMessageUtil.AssembleDebateContent(State.AgentName, debateReply))
+            });
+
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Debate, this.GetPrimaryKey(),
+                NamingRoleType.Contestant, State.AgentName, debateReply));
+
+            await base.ConfirmEvents();
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventCallAIAsync(TrafficInformCreativeGEvent @event)
+    {
+        if (@event.CreativeGrainId != this.GetPrimaryKey())
+        {
+            return;
+        }
+
+        try
+        {
+            _ =  GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .Send(NamingConstants.NamingPrompt, State.RecentMessages.ToList());
+            
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Creative] TrafficInformCreativeGEvent error");
+        }
+    }
+
+
+    protected  async Task HandlerMicroAIMessage(MicroAIMessage message, StreamSequenceToken token)
+    {
+        var debateReply = string.Empty;
+
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            debateReply = message.Content;
+            
+            await this.PublishAsync(new DebatedCompleteGEvent()
+            {
                 GrainGuid = this.GetPrimaryKey(),
                 DebateReply = debateReply,
                 CreativeName = State.AgentName,

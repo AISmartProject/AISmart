@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.Agent.GEvents;
+using AISmart.Dapr;
 using AISmart.Options;
 using AutoGen.Core;
 using AutoGen.OpenAI;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Options;
 using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
+using Orleans.Runtime;
 
 namespace AISmart.Grains;
 
@@ -37,6 +39,22 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
         _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
         return null;
+    }
+
+    public async Task Send(string message, List<MicroAIMessage>? chatHistory)
+    {
+        if (_agent != null)
+        {
+            var history = ConvertMessage(chatHistory);
+            var imMessage = await _agent.SendAsync(message, history);
+            var agentGuid = this.GetPrimaryKey();
+            var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+            var stream = this.GetStreamProvider(CommonConstants.StreamProvider).GetStream<MicroAIMessage>(streamId);
+            await stream.OnNextAsync(new MicroAIMessage("assistant", imMessage.GetContent()!));
+        }
+
+        _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
+        
     }
 
     public Task SetAgentAsync(string systemMessage)
