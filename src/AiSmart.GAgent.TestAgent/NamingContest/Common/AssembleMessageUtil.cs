@@ -11,4 +11,15 @@ public static class AssembleMessageUtil
     {
         return $"{agentName} debate is: \"{debateContent}\".";
     }
+
+    public static string AssembleSummaryBeforeStep(string summary, string describe)
+    {
+        return
+            $"""
+             Based on the summarized experience from the last round, here are the insights:
+             {summary}
+              
+             The next naming theme is:{describe}
+             """;
+    }
 }

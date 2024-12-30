@@ -223,7 +223,7 @@ public class TelegramService : ApplicationService, ITelegramService
         await publishingAgent.UnpublishFromAsync(groupAgent);
     }
 
-    public async Task SetNamingGroupAsync()
+    public async Task SetNamingGroupAsync(string groupName)
     {
         var creativeCount = 2;
         var judgeCount = 1;
@@ -290,11 +290,9 @@ public class TelegramService : ApplicationService, ITelegramService
         var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
         await groupAgent.RegisterAsync(rankingAgent);
 
-        // var publishId = GuidUtil.StringToGuid(_telegramTestOptions.BotName);
-        var publishId = Guid.NewGuid();
+        var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
         await publishingAgent.PublishToAsync(groupAgent);
 
-        await publishingAgent.PublishEventAsync(new ReceiveMessageEvent() {Message= "如果你要为一款新推出的智能家居助手取一个名字，你会选择什么名字？" });
     }
 }

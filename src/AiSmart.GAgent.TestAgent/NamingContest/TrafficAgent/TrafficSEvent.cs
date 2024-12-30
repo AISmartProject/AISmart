@@ -35,13 +35,13 @@ public class TrafficDebateCompleteGEvent : TrafficEventSourcingBase
 }
 
 [GenerateSerializer]
-public class TrafficNameStartSEvent:TrafficEventSourcingBase
+public class TrafficNameStartSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public string Content { get; set; }
 }
 
 [GenerateSerializer]
-public class TrafficSetAgentSEvent:TrafficEventSourcingBase
+public class TrafficSetAgentSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public string AgentName { get; set; }
     [Id(1)] public string Description { get; set; }
@@ -69,13 +69,12 @@ public class SetDebateCountSEvent : TrafficEventSourcingBase
 [GenerateSerializer]
 public class ReduceDebateRoundSEvent : TrafficEventSourcingBase
 {
-    
 }
 
 [GenerateSerializer]
 public class AddChatHistorySEvent : TrafficEventSourcingBase
 {
-     [Id(0)] public MicroAIMessage ChatMessage { get; set; }
+    [Id(0)] public MicroAIMessage ChatMessage { get; set; }
 }
 
 [GenerateSerializer]
@@ -87,7 +86,6 @@ public class AddJudgeSEvent : TrafficEventSourcingBase
 [GenerateSerializer]
 public class ClearCalledGrainsSEvent : TrafficEventSourcingBase
 {
-    
 }
 
 [GenerateSerializer]
@@ -95,4 +93,16 @@ public class CreativeNamingSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CreativeId { get; set; }
     [Id(1)] public string Naming { get; set; }
+}
+
+[GenerateSerializer]
+public class SetAskingJudgeSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public int AskingJudgeCount { get; set; }
+}
+
+[GenerateSerializer]
+public class AddAskingJudgeSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public Guid AskingJudgeGrainId { get; set; }
 }
