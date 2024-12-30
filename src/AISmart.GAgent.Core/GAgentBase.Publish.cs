@@ -15,24 +15,25 @@ public abstract partial class GAgentBase<TState, TEvent>
         await SendEventDownwardsAsync(eventWrapper);
     }
 
-    protected async Task<Guid> PublishAsync<T>(T @event, StreamId? streamId = null) where T : EventBase
+    protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        streamId ??= StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        @event.StreamId = streamId;
+        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
         var eventId = Guid.NewGuid();
-        if (isTop)
+        switch (isTop)
         {
-            await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+            case true:
+                // This event is the first time appeared to silo.
+                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+                break;
+            case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
+                @event.StreamId = streamIdValue;
+                await PublishEventUpwardsAsync(@event, eventId);
+                break;
         }
-        else
-        if (!isTop && _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue))
-        {
-            @event.StreamId = streamIdValue;
-            await PublishEventUpwardsAsync(@event, eventId);
-        }
+
         return eventId;
     }
 
