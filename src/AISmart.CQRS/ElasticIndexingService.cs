@@ -159,6 +159,10 @@ public class ElasticIndexingService : IIndexingService
         {
             var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
             var source = response.Source;
+            if (source == null)
+            {
+                return "";
+            }
             var documentContent = JsonConvert.SerializeObject(source);
             return documentContent;
         }

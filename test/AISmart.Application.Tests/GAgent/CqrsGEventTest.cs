@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.Events;
+using AISmart.Agent.GEvents;
 using AISmart.CQRS.Provider;
+using Newtonsoft.Json;
 using Orleans;
 using Shouldly;
 using Xunit;
@@ -57,7 +59,8 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         
         //get cqrs event
         var gEventId = grainResult.PendingTransactions.FirstOrDefault().Key;
-        var eventResult = await _cqrsProvider.QueryGEventAsync(EventIndexName, gEventId.ToString());
+        var eventResult = await _cqrsProvider.QueryGEventAsync(EventIndexName, gEventId.ToString()+1);
+        var gEvent =  JsonConvert.DeserializeObject<CreateTransactionGEvent>(eventResult);
         eventResult.ShouldContain(ChainId);
         eventResult.ShouldContain(Address);
     }
