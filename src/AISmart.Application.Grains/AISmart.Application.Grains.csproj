@@ -20,7 +20,7 @@
         <ProjectReference Include="..\AISmart.Domain.Grains\AISmart.Domain.Grains.csproj" />
         <ProjectReference Include="..\AISmart.Domain\AISmart.Domain.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Core\AISmart.GAgent.Core.csproj" />
-        <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
+<!--        <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />-->
         <ProjectReference Include="..\AISmart.CQRS\AISmart.CQRS.csproj" />
     </ItemGroup>
 
