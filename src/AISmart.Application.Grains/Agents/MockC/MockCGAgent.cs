@@ -35,7 +35,6 @@ public class MockCGAgent : GAgentBase<MockCAgentState, MockCGEvent>, IMockCGAgen
         await TryExecuteAsync(eventData);
 
         RaiseEvent(new MockCAddNumberEvent());
-        await base.ConfirmEvents();
     }
 
     public Task<int> GetMockCGAgentCount()

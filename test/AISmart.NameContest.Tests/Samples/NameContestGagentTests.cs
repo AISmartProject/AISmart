@@ -25,7 +25,7 @@ using Xunit.Abstractions;
 
 namespace AISmart.Samples
 {
-    public class NameContestGagentTests : AISmartNameContestTestBase
+    public sealed class NameContestGagentTests : AISmartNameContestTestBase
     {
         private readonly IClusterClient _clusterClient;
 
