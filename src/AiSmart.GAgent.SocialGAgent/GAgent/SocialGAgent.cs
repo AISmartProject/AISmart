@@ -30,26 +30,19 @@ public class SocialGAgent : MicroAIGAgent, ISocialGAgent
         });
         
         SocialResponseEvent aiResponseEvent = new SocialResponseEvent();
-        try
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+            .SendAsync(@event.Content, State.RecentMessages.ToList());
+        if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(@event.Content, State.RecentMessages.ToList());
-            if (message != null && !message.Content.IsNullOrEmpty())
+            _logger.LogInformation("handle SocialEvent, AI replyMessage: {msg}", message.Content);
+            list.Add(new AIReplyMessageGEvent()
             {
-                _logger.LogInformation("handle SocialEvent, AI replyMessage: {msg}", message.Content);
-                list.Add(new AIReplyMessageGEvent()
-                {
-                    Message = message
-                });
+                Message = message
+            });
 
-                aiResponseEvent.ResponseContent = message.Content;
-                aiResponseEvent.ChatId = @event.ChatId;
-                aiResponseEvent.ReplyMessageId = @event.MessageId;
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "handle SocialEvent, Get AIReplyMessage Error: {err}", e.Message);
+            aiResponseEvent.ResponseContent = message.Content;
+            aiResponseEvent.ChatId = @event.ChatId;
+            aiResponseEvent.ReplyMessageId = @event.MessageId;
         }
         
         base.RaiseEvents(list);
