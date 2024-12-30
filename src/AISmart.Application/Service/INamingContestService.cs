@@ -152,7 +152,9 @@ public class NamingContestService : INamingContestService
             {
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
 
-                _ = trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
+                MicroAIGAgentState microAigAgentState = await creativeAgent.GetAgentState();
+                
+                _ = trafficAgent.AddCreativeAgent(microAigAgentState.AgentName,creativeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(creativeAgent);
             }
