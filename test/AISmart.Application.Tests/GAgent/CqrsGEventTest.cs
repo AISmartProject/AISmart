@@ -59,7 +59,7 @@ public class CqrsGEventTests : AISmartApplicationTestBase
         
         //get cqrs event
         var gEventId = grainResult.PendingTransactions.FirstOrDefault().Key;
-        var eventResult = await _cqrsProvider.QueryGEventAsync(EventIndexName, gEventId.ToString()+1);
+        var eventResult = await _cqrsProvider.QueryGEventAsync(EventIndexName, gEventId.ToString());
         var gEvent =  JsonConvert.DeserializeObject<CreateTransactionGEvent>(eventResult);
         eventResult.ShouldContain(ChainId);
         eventResult.ShouldContain(Address);
