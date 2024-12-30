@@ -66,4 +66,14 @@ public class CQRSProvider : ICQRSProvider, ISingletonDependency
         };
         await _mediator.Send(command);
     }
+    
+    public async Task SendLogCommandAsync(SaveLogCommand command)
+    {
+        await _mediator.Send(command);
+    }
+
+    public async Task<ChatLogPageResultDto> QueryChatLogListAsync(GetLogQuery command)
+    {
+        return await _mediator.Send(command);
+    }
 }

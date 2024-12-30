@@ -54,4 +54,9 @@ public class CqrsService : ApplicationService,ICqrsService
             throw;
         }
     }
+
+    public Task<ChatLogPageResultDto> QueryChatLogListAsync(GetLogQuery command)
+    {
+        return _cqrsProvider.QueryChatLogListAsync(command);
+    }
 }
