@@ -19,4 +19,6 @@ public static class NamingConstants
 
     public static string CreativeSummary =
         "Congratulations on winning the last naming contest. Please state the name you chose and provide a brief summary of your winning experience and the lessons learned from your opponent's failure.";
+
+    public static string CreativeDiscussionPrompt = "";
 }
