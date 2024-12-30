@@ -1,5 +1,6 @@
 ﻿using AISmart.Application.Grains;
 using AiSmart.GAgent.SocialAgent;
+using AISmart.CQRS;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AISmart.Options;
@@ -29,8 +30,9 @@ namespace AISmart;
     typeof(AISmartGAgentTwitterModule),
     typeof(AISmartGAgentMicroAIModule),
     typeof(AISmartGAgentTestAgentModule),
-    typeof(AISmartGAgentSocialGAgentModule)
-    
+    typeof(AISmartGAgentSocialGAgentModule),
+    typeof(AISmartCQRSModule)
+
 )]
 public class AISmartApplicationModule : AbpModule
 {
