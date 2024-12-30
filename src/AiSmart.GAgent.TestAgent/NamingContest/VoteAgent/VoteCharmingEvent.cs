@@ -7,6 +7,14 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 public class VoteCharmingEvent:EventBase
 {
     [Id(0)] public Dictionary<Guid, List<MicroAIMessage>> VoteMessage { get; set; } = new();
+    [Id(1)] public int Round { get; set; }
+}
+
+[GenerateSerializer]
+public class SingleVoteCharmingEvent:EventBase
+{
+    [Id(0)] public Dictionary<Guid, List<MicroAIMessage>> VoteMessage { get; set; } = new();
+    [Id(1)] public int Round { get; set; }
 }
 
 [GenerateSerializer]

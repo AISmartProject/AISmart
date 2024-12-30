@@ -14,6 +14,25 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
     }
     
     [EventHandler]
+    public async Task HandleEventAsync(InitVoteCharmingEvent @event)
+    {
+        Random random = new Random();
+        var list = @event.GrainGuidList;
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+
+        base.RaiseEvent(new InitVoteCharmingGEvent
+        {
+            GrainGuidList = list,
+            TotalBatches =  @event.TotalBatches
+        });
+        await ConfirmEvents();
+    }
+    
+    [EventHandler]
     public async Task HandleEventAsync(VoteCharmingEvent @event)
     {
         if (State.TotalBatches == State.CurrentBatch)
@@ -38,9 +57,14 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         var selectedVoteIds = State.VoterIds.GetRange(0, actualBatchSize);
         foreach (var voteId in selectedVoteIds)
         {
-            //todo how to get ai
-           _= GrainFactory.GetGrain<IVoteAgentGrain>(voteId).VoteAgentAsync(@event);
+           await  RegisterAsync(GrainFactory.GetGrain<IMicroAIGAgent>(voteId));
         }
+
+        await PublishAsync(new SingleVoteCharmingEvent
+        {
+            VoteMessage = @event.VoteMessage,
+            Round = @event.Round
+        });
         base.RaiseEvent(new VoteCharmingGEvent
         {
             GrainGuidList = selectedVoteIds
@@ -49,23 +73,12 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         await ConfirmEvents();
     }
     
+    
+    
     [EventHandler]
-    public async Task HandleEventAsync(InitVoteCharmingEvent @event)
+    public async Task HandleEventAsync(VoteCharmingCompleteEvent @event)
     {
-        Random random = new Random();
-        var list = @event.GrainGuidList;
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = random.Next(0, i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-
-        base.RaiseEvent(new InitVoteCharmingGEvent
-        {
-            GrainGuidList = list,
-            TotalBatches =  @event.TotalBatches
-        });
-        await ConfirmEvents();
+        await  UnregisterAsync(GrainFactory.GetGrain<IMicroAIGAgent>(@event.VoterId));
     }
 
     public override Task<string> GetDescriptionAsync()
