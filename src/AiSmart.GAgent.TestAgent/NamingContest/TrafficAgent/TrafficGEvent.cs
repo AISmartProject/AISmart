@@ -66,4 +66,10 @@ public class TrafficDebateOver : NameContentGEvent
     [Id(0)] public string NamingQuestion { get; set; }
 }
 
+[GenerateSerializer]
+public class GroupChatStartGEvent : EventBase
+{
+    [Id(0)] public bool IfFirstStep { get; set; }
+    [Id(1)] public string ThemeDescribe { get; set; }
+}
 

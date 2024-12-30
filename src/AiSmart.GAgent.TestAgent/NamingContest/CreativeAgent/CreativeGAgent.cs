@@ -17,12 +17,32 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 
 
     [EventHandler]
-    public async Task HandleEventAsync(GroupStartEvent @event)
+    public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
-        RaiseEvent(new AIReceiveMessageGEvent()
+        if (@event.IfFirstStep == true)
         {
-            Message = new MicroAIMessage(Role.User.ToString(), @event.Message)
-        });
+            RaiseEvent(new AIReceiveMessageGEvent()
+            {
+                Message = new MicroAIMessage(Role.User.ToString(), @event.ThemeDescribe)
+            });
+        }
+        else
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.CreativeSummary, State.RecentMessages.ToList());
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                // clear history message
+                RaiseEvent(new AIClearMessageGEvent());
+
+                // todo:read naming
+                RaiseEvent(new AIReceiveMessageGEvent()
+                {
+                    Message = new MicroAIMessage(Role.Assistant.ToString(),
+                        AssembleMessageUtil.AssembleSummaryBeforeStep(response.Content, @event.ThemeDescribe))
+                });
+            }
+        }
 
         await base.ConfirmEvents();
     }
