@@ -286,9 +286,9 @@ public class TelegramService : ApplicationService, ITelegramService
         var namingTelegram = _clusterClient.GetGrain<INamingContestTelegramGAgent>(Guid.NewGuid());
         await namingTelegram.SetAgent("namingTelegram","You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
         await groupAgent.RegisterAsync(namingTelegram);
-
-        var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
-        await groupAgent.RegisterAsync(rankingAgent);
+        //
+        // var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
+        // await groupAgent.RegisterAsync(rankingAgent);
 
         var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
