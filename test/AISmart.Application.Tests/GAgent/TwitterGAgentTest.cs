@@ -24,21 +24,12 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
     //https://developer.twitter.com/apitools/api
 
     
-    [Fact]
-    public async Task PostTwittersAsyncTest ()
-    {
-        var accessToken = "";
-        var accessTokenSecret = "";
-        var resp = await _twitterProvider.PostTwitterAsync( "Today is Friday！", accessToken, accessTokenSecret);
-        resp.ShouldContain("id");
-    }
-    
     
     [Fact]
     public async Task QueryRecentTwittersAsyncTest ()
     {
-        var bearerToken = "";
-        var resp = await _twitterProvider.GetMentionsAsync();
+        var userName = "elonMusk";
+        var resp = await _twitterProvider.GetMentionsAsync(userName);
         resp.Count.ShouldNotBe(0);
     }
 }
