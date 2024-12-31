@@ -1,4 +1,5 @@
 using System.Reflection;
+using AElf.OpenTelemetry.ExecutionTime;
 using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
+    [AggregateExecutionTime]
     private Task UpdateObserverList()
     {
         var eventHandlerMethods = GetEventHandlerMethods();
