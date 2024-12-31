@@ -44,4 +44,26 @@ public class CQRSProvider : ICQRSProvider, ISingletonDependency
         };
         await _mediator.Send(command);
     }
+
+    public async Task<string> QueryGEventAsync(string index, string id)
+    {
+        var getStateQuery = new GetGEventQuery()
+        {
+            Index = index,
+            Id = id
+        };
+        
+        var documentContent = await _mediator.Send(getStateQuery);
+        return documentContent;
+    }
+
+    public async Task PublishAsync(GEventBase eventBase, string id)
+    {
+        var command = new SaveGEventCommand
+        {
+            Id = id,
+            GEvent = eventBase
+        };
+        await _mediator.Send(command);
+    }
 }

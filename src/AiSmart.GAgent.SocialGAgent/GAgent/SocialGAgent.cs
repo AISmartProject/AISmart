@@ -22,18 +22,19 @@ public class SocialGAgent : MicroAIGAgent, ISocialGAgent
     [EventHandler]
     public  async Task<SocialResponseEvent> HandleEventAsync(SocialEvent @event)
     {
+        _logger.LogInformation("handle SocialEvent, content: {content}", @event.Content);
         List<AIMessageGEvent> list = new List<AIMessageGEvent>();
         list.Add(new AIReceiveMessageGEvent
         {
             Message = new MicroAIMessage("user", @event.Content)
         });
-
+        
         SocialResponseEvent aiResponseEvent = new SocialResponseEvent();
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
             .SendAsync(@event.Content, State.RecentMessages.ToList());
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            _logger.LogInformation(" AI replyMessage:" + message.Content);
+            _logger.LogInformation("handle SocialEvent, AI replyMessage: {msg}", message.Content);
             list.Add(new AIReplyMessageGEvent()
             {
                 Message = message
@@ -43,7 +44,7 @@ public class SocialGAgent : MicroAIGAgent, ISocialGAgent
             aiResponseEvent.ChatId = @event.ChatId;
             aiResponseEvent.ReplyMessageId = @event.MessageId;
         }
-
+        
         base.RaiseEvents(list);
         return aiResponseEvent;
     }
