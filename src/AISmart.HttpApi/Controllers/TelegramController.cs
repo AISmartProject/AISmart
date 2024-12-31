@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using AISmart.Authors;
 using AISmart.Dapr;
 using AISmart.Dto;
+using AISmart.GAgent.Telegram.Dtos;
 using AISmart.Provider;
 using AISmart.Service;
-using AISmart.Telegram;
 using Asp.Versioning;
 using Dapr;
 using Microsoft.AspNetCore.Mvc;
@@ -53,9 +53,9 @@ public class TelegramController: AISmartController
     }
     
     [HttpGet("messagesTest")]
-    public async Task TestMessages(string message)
+    public async Task TestMessages(string message,string groupName)
     {
-        await _microAiService.ReceiveMessagesAsync(message);
+        await _microAiService.ReceiveMessagesAsync(message,groupName);
     }
     
     [HttpPost("registerBot")]
@@ -65,9 +65,9 @@ public class TelegramController: AISmartController
     }
     
     [HttpPost("setnaminggroup")]
-    public async Task SetNamingGroup()
+    public async Task SetNamingGroup(string groupName)
     {
-        await _telegramService.SetNamingGroupAsync();
+        await _telegramService.SetNamingGroupAsync(groupName);
     }
     
     [HttpPost("unregisterBot")]

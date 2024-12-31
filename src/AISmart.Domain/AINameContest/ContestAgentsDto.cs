@@ -36,7 +36,7 @@ public class Goal
 
 public class ContestAgentsDto
 {
-    public List<ContestantAgent> ContestantAgentList { get; set; }
+    public List<ContestantAgent>? ContestantAgentList { get; set; }
     public List<JudgeAgent> JudgeAgentList { get; set; }
     public List<HostAgent> HostAgentList { get; set; }
 }

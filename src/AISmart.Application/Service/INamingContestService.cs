@@ -14,7 +14,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Options;
 using AISmart.Sender;
-using AISmart.Telegram;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -69,22 +68,14 @@ public class NamingContestService : INamingContestService
 
             // Add the new agent to the contestant list
             agentResponse.ContestantAgentList.Add(newAgent);
-
-            foreach (var item in _nameContestOptions.CreativeGAgent)
-            {
-                var temperature = random.NextDouble();
-
-                await creativeAgent.SetAgentWithTemperatureAsync(
-                    item.Key,
-                    $"{item.Value}",
-                    (float)temperature);
-            }
         }
 
         foreach (var judge in contestAgentsDto.JudgeAgentList)
         {
             var agentId = Guid.NewGuid();
             var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+        
+            await judgeAgent.SetAgent(judge.Name, judge.Bio);
 
             var newAgent = new AgentReponse()
             {
@@ -94,16 +85,7 @@ public class NamingContestService : INamingContestService
 
             // Add the new agent to the contestant list
             agentResponse.JudgeAgentList.Add(newAgent);
-
-            foreach (var item in _nameContestOptions.JudgeGAgent)
-            {
-                var temperature = random.NextDouble();
-
-                await judgeAgent.SetAgentWithTemperatureAsync(
-                    item.Key,
-                    $"{item.Value}",
-                    (float)temperature);
-            }
+            
         }
 
         await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
@@ -152,7 +134,9 @@ public class NamingContestService : INamingContestService
             {
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
 
-                _ = trafficAgent.AddCreativeAgent(creativeAgent.GetPrimaryKey());
+                MicroAIGAgentState microAigAgentState = await creativeAgent.GetAgentState();
+                
+                _ = trafficAgent.AddCreativeAgent(microAigAgentState.AgentName,creativeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(creativeAgent);
             }
@@ -217,7 +201,7 @@ public class NamingContestService : INamingContestService
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
-            await publishingAgent.PublishToAsync(groupAgent);
+            await publishingAgent.RegisterAsync(groupAgent);
             await publishingAgent.PublishEventAsync(new GroupStartEvent());
         }
     }

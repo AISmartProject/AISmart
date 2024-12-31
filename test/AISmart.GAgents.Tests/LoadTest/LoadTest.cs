@@ -37,7 +37,7 @@ public class LoadTest : GAgentTestKitBase
             await groupGAgent.RegisterAsync(cGAgent);
         }
 
-        await publishingAgent.PublishToAsync(groupGAgent);
+        await publishingAgent.RegisterAsync(groupGAgent);
 
         await publishingAgent.PublishEventAsync(new MockAThreadCreatedEvent
         {

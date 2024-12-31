@@ -25,7 +25,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new AddChatHistorySEvent()
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
-
+        await PublishAsync(new GroupChatStartGEvent() { IfFirstStep = true, ThemeDescribe = @event.Message });
         await DispatchCreativeAgent();
 
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.Naming });

@@ -5,6 +5,7 @@ using AISmart.EventSourcing.Core.LogConsistency;
 using AISmart.EventSourcing.Core.Storage;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Autogen.Common;
+using AISmart.GAgent.Core;
 using AISmart.Mock;
 using AISmart.Provider;
 using AutoGen.OpenAI;
