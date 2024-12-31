@@ -7,6 +7,7 @@ using AISmart.Agents.AutoGen;
 using AISmart.Agents.Group;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
+using AISmart.GAgent.Telegram.Agent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
 using AiSmart.GAgent.TestAgent.Voter;
 using AISmart.GEvents.MicroAI;
@@ -77,7 +78,7 @@ public class MicroAIService : ApplicationService, IMicroAIService
         await groupAgent.RegisterAsync(conclusionAgent);
 
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(PublishId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }

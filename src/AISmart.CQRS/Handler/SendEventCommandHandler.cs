@@ -25,7 +25,7 @@ public class SendEventCommandHandler : IRequestHandler<SendEventCommand>
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
 
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
         await publishingAgent.PublishEventAsync(request.Event);
         return Unit.Value; 
     }

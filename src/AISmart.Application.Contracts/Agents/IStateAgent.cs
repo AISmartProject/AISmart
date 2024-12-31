@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Orleans;
+using Orleans.Streams;
 
 namespace AISmart.Agents;
 
@@ -18,12 +19,9 @@ public interface IGAgent : IGrainWithGuidKey
 
     //Function to get agent description
     Task<string> GetDescriptionAsync();
-    Task<bool> SubscribeToAsync(IGAgent gAgent);
-    Task<bool> UnsubscribeFromAsync(IGAgent gAgent);
-    Task<bool> PublishToAsync(IGAgent gAgent);
-    Task<bool> UnpublishFromAsync(IGAgent gAgent);
     Task RegisterAsync(IGAgent gAgent);
     Task UnregisterAsync(IGAgent gAgent);
+    Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream);
     Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
 }
 

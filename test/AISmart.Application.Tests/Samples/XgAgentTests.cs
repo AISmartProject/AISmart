@@ -51,7 +51,7 @@ namespace AISmart.Samples
             await _groupStateGAgent.RegisterAsync(_investmentStateGAgent);
 
             _publishingGAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-            await _publishingGAgent.PublishToAsync(_groupStateGAgent);
+            await _publishingGAgent.RegisterAsync(_groupStateGAgent);
         }
 
         public Task DisposeAsync()
