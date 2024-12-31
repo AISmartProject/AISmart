@@ -21,7 +21,7 @@ public interface IGAgent : IGrainWithGuidKey
     Task<string> GetDescriptionAsync();
     Task RegisterAsync(IGAgent gAgent);
     Task UnregisterAsync(IGAgent gAgent);
-    Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream);
+    Task<IAsyncStream<EventWrapperBase>> GetStreamAsync();
     Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
 }
 

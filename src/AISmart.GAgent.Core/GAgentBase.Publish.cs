@@ -48,18 +48,9 @@ public abstract partial class GAgentBase<TState, TEvent>
         await stream.OnNextAsync(eventWrapper);
     }
 
-    private async Task PublishEventDownwardsAsync<T>(T @event, Guid eventId) where T : EventBase
-    {
-        @event.CorrelationId ??= Guid.NewGuid();
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        @event.StreamId ??= streamOfThisGAgent;
-        await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-    }
-    
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
         await streamOfThisGAgent.OnNextAsync(eventWrapper);
     }
 
@@ -71,10 +62,12 @@ public abstract partial class GAgentBase<TState, TEvent>
             return;
         }
 
-        foreach (var stream in _subscribers.State
-                     .Select(subscriber => StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey()))
-                     .Select(streamId => StreamProvider.GetStream<EventWrapperBase>(streamId)))
+        foreach (var grainId in _subscribers.State)
         {
+            var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+            var stream = await gAgent.GetStreamAsync();
+            var handles = await stream.GetAllSubscriptionHandles();
+            var count = handles.Count;
             await stream.OnNextAsync(eventWrapper);
         }
     }

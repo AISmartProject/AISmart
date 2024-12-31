@@ -36,10 +36,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         EventDispatcher = ServiceProvider.GetRequiredService<IEventDispatcher>();
     }
 
-    public Task ActivateAsync()
+    public async Task ActivateAsync()
     {
-        //do nothing
-        return Task.CompletedTask;
     }
 
     public async Task RegisterAsync(IGAgent gAgent)
@@ -53,6 +51,26 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         await RemoveSubscriberAsync(gAgent.GetGrainId());
         await OnUnregisterAgentAsync(gAgent.GetPrimaryKey());
+    }
+
+    public async Task<IAsyncStream<EventWrapperBase>> GetStreamAsync()
+    {
+        var stream = GetStream(this.GetPrimaryKey());
+        var handles = await stream.GetAllSubscriptionHandles();
+        if (handles.Any())
+        {
+            foreach (var handle in handles)
+            {
+                await handle.UnsubscribeAsync();
+            }
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await stream.SubscribeAsync(observer);
+        }
+
+        return stream;
     }
 
     public async Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false)
@@ -158,25 +176,28 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         // This must be called first to initialize Observers field.
         await UpdateObserverList();
 
-        // Register to itself.
-        var agentGuid = this.GetPrimaryKey();
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
-        if ((await streamOfThisGAgent.GetAllSubscriptionHandles()).Count == 0)
+        await InitializeStreamOfThisGAgentAsync();
+
+        //_stateSaveTimer =
+        // this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    private async Task InitializeStreamOfThisGAgentAsync()
+    {
+        var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        if (handles.Count == 0)
         {
             foreach (var observer in Observers.Keys)
             {
                 await streamOfThisGAgent.SubscribeAsync(observer);
             }
         }
-
-        //_stateSaveTimer =
-        //    this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        _stateSaveTimer.Dispose();
+        _stateSaveTimer?.Dispose();
         await SaveSubscriberAsync(cancellationToken);
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
@@ -223,5 +244,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected virtual async Task HandleRaiseEventAsync()
     {
         
+    }
+
+    private IAsyncStream<EventWrapperBase> GetStream(Guid guid)
+    {
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, guid);
+        return StreamProvider.GetStream<EventWrapperBase>(streamId);
     }
 }
