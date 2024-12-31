@@ -1,3 +1,5 @@
+using Org.BouncyCastle.Crypto.Agreement.JPake;
+
 namespace AiSmart.GAgent.TestAgent.NamingContest.Common;
 
 public static class NamingConstants
@@ -21,4 +23,6 @@ public static class NamingConstants
         "Congratulations on winning the last naming contest. Please state the name you chose and provide a brief summary of your winning experience and the lessons learned from your opponent's failure.";
 
     public static string CreativeDiscussionPrompt = "";
+
+    public static string TrafficSelectCreativePrompt = "Please select one of the more capable players from the above discussion to summarize the discussion. Only output the selected player's name without any additional information."; 
 }

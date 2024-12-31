@@ -10,12 +10,14 @@ using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Nest;
 using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
 public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEventSourcingBase>, ISecondTrafficGAgent
 {
+    
     public SecondRoundTrafficGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
@@ -48,57 +50,31 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     }
 
     [EventHandler]
-    public async Task HandleEventAsync(NamedCompleteGEvent @event)
+    public async Task HandleEventAsync(DiscussionCompleteGEvent @event)
     {
-        if (State.CurrentGrainId != @event.GrainGuid)
+        if (State.CurrentGrainId != @event.CreativeId)
         {
             Logger.LogError(
-                $"Traffic NamedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
+                $"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.CreativeId.ToString()}");
             return;
         }
-
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
-        {
-            CompleteGrainId = @event.GrainGuid,
-        });
 
         base.RaiseEvent(new AddChatHistorySEvent()
         {
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
-                AssembleMessageUtil.AssembleNamingContent(@event.CreativeName, @event.NamingReply))
+                AssembleMessageUtil.AssembleDiscussionContent(@event.CreativeName, @event.DiscussionReply))
         });
 
-        base.RaiseEvent(new CreativeNamingSEvent() { CreativeId = @event.GrainGuid, Naming = @event.NamingReply });
-
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
+        {
+            CompleteGrainId = @event.CreativeId,
+        });
+        
+        base.RaiseEvent(new DiscussionCountReduce());
+        
         await base.ConfirmEvents();
 
         await DispatchCreativeDiscussion();
-    }
-
-    [EventHandler]
-    public async Task HandleEventAsync(DebatedCompleteGEvent @event)
-    {
-        if (State.CurrentGrainId != @event.GrainGuid)
-        {
-            Logger.LogError(
-                $"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
-            return;
-        }
-
-        base.RaiseEvent(new AddChatHistorySEvent()
-        {
-            ChatMessage = new MicroAIMessage(Role.User.ToString(),
-                AssembleMessageUtil.AssembleDebateContent(@event.CreativeName, @event.DebateReply))
-        });
-
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
-        {
-            CompleteGrainId = @event.GrainGuid,
-        });
-
-        await base.ConfirmEvents();
-
-        await DispatchDebateAgent();
     }
 
     [EventHandler]
@@ -124,7 +100,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
                 NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
         }
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.JudgeGrainId,
         });
@@ -166,11 +142,47 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         var randomId = random.Next(0, creativeList.Count());
         var selectCreative = creativeList[randomId];
         await PublishAsync(new DiscussionGEvent() { CreativeId = selectCreative.CreativeGrainId });
+
+        await base.ConfirmEvents();
     }
 
     private async Task DispatchDebateAgent()
     {
        
+    }
+
+    private async Task<Guid> SelectCreativeToSummary()
+    {
+        var result = Guid.Empty;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.TrafficSelectCreativePrompt, State.ChatHistory.ToList());
+            if (response != null && response.Content.IsNullOrEmpty())
+            {
+                var creativeInfo = State.CreativeList.FirstOrDefault(f => f.CreativeName == response.Content);
+                if (creativeInfo != null)
+                {
+                    result = creativeInfo.CreativeGrainId;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[SecondRoundTraffic] SelectCreativeToSummary error");
+        }
+        finally
+        {
+            if (result == Guid.Empty)
+            {
+                Random random = new Random();
+                var index = random.Next(0, State.CreativeList.Count);
+
+                result = State.CreativeList[index].CreativeGrainId;
+            }
+        }
+
+        return result;
     }
 
     private async Task DispatchJudgeAgent()

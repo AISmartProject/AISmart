@@ -30,9 +30,9 @@ public class FirstTrafficState : StateBase
         NamingContent = @event.Content;
     }
 
-    public void Apply(TrafficGrainCompleteGEvent gEvent)
+    public void Apply(TrafficGrainCompleteSEvent sEvent)
     {
-        CalledGrainIdList.Add(gEvent.CompleteGrainId);
+        CalledGrainIdList.Add(sEvent.CompleteGrainId);
         CurrentGrainId = Guid.Empty;
     }
 
