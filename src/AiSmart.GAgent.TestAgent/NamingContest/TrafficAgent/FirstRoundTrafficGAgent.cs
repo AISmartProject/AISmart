@@ -43,7 +43,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -77,7 +77,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 AssembleMessageUtil.AssembleDebateContent(@event.CreativeName, @event.DebateReply))
         });
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -110,7 +110,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
         }
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.JudgeGrainId,
         });

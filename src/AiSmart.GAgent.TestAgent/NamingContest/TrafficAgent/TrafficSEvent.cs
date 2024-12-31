@@ -23,7 +23,7 @@ public class TrafficCreativeFinishSEvent : TrafficEventSourcingBase
 }
 
 [GenerateSerializer]
-public class TrafficGrainCompleteGEvent : TrafficEventSourcingBase
+public class TrafficGrainCompleteSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CompleteGrainId { get; set; }
 }
@@ -112,4 +112,9 @@ public class AddAskingJudgeSEvent : TrafficEventSourcingBase
 public class SetDiscussionSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public int DiscussionCount { get; set; }
+}
+
+public class DiscussionCountReduce : TrafficEventSourcingBase
+{
+    
 }

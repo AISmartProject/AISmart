@@ -17,8 +17,22 @@ public static class NamingConstants
     public static string DefaultDebateContent = "I believe the name I chose is the best.";
     public static string DefaultCreativeNaming = "Nick";
 
-    public static string CreativeSummary =
+    public static string CreativeSummaryHistoryPrompt =
         "Congratulations on winning the last naming contest. Please state the name you chose and provide a brief summary of your winning experience and the lessons learned from your opponent's failure.";
 
     public static string CreativeDiscussionPrompt = "";
+
+    public static string TrafficSelectCreativePrompt = "Please select one of the more capable players from the above discussion to summarize the discussion. Only output the selected player's name without any additional information.";
+
+    public static string CreativeGroupSummaryPrompt = """
+                                                      Congratulations on being chosen as the leader of this group. 
+                                                      You need to select a name from the above discussion or the names suggested by other teammates that you believe represents the group, and briefly explain the reason.
+                                                      Please output the name and reason in the following JSON format,and do not include any additional data or characters:
+                                                      {
+                                                        "name": "{YourChosenName}",
+                                                        "reason": "{YourReason}"
+                                                      }
+                                                      """;
+
+    public static string CreativeGroupSummaryReason = "I think this name is the best.";
 }
