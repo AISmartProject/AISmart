@@ -26,9 +26,9 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
-    public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
-    public Task StartGroupAsync(GroupDto groupDto);
+    Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
+    Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
+    Task StartGroupAsync(GroupDto groupDto);
 }
 
 public class NamingContestService : INamingContestService
@@ -89,7 +89,7 @@ public class NamingContestService : INamingContestService
             
         }
 
-        await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
+        await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
             CreativeAgentIdList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
             JudgeAgentIdList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
@@ -118,7 +118,7 @@ public class NamingContestService : INamingContestService
             await groupAgent.RegisterAsync(trafficAgent);
             await groupAgent.RegisterAsync(namingContestGAgent);
             
-            await namingContestGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunGEvent()
+            await namingContestGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
             {
                 CallBackUrl = network.CallbackAddress,
                 Name = network.Name,
@@ -177,7 +177,7 @@ public class NamingContestService : INamingContestService
             // Add the new agent to the  list
             groupResponse.GroupDetails.Add(groupDetail);
 
-            await managerGAgent.InitGroupInfoAsync(new IniNetWorkMessageGEvent()
+            await managerGAgent.InitGroupInfoAsync(new IniNetWorkMessageSEvent()
             {
                 CallBackUrl = network.CallbackAddress,
                 Name = network.Name,

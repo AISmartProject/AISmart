@@ -5,9 +5,9 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 
 public interface IManagerGAgent:IGrainWithGuidKey
 {
-    Task InitAgentsAsync(InitAgentMessageGEvent initAgentMessageGEvent);
+    Task InitAgentsAsync(InitAgentMessageSEvent initAgentMessageSEvent);
     
-    Task InitGroupInfoAsync(IniNetWorkMessageGEvent iniNetWorkMessageGEvent,string groupAgentId );
+    Task InitGroupInfoAsync(IniNetWorkMessageSEvent iniNetWorkMessageSEvent,string groupAgentId );
 
     
 }

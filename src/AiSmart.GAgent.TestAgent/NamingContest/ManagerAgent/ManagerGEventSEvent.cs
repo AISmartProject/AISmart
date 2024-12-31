@@ -1,19 +1,29 @@
 using AISmart.Agents;
 using Orleans;
 
-namespace AISmart.Agent.GEvents;
-
-
+namespace AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 
 [GenerateSerializer]
-public abstract class PumpFunNameContestGEvent:Agents.GEventBase
+public abstract class ManagerSEvent:GEventBase
 {
    
 }
 
 
 [GenerateSerializer]
-public class IniNetWorkMessagePumpFunGEvent : PumpFunNameContestGEvent
+public class InitAgentMessageSEvent : ManagerSEvent
+{
+    [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
+    
+    [Id(1)] public List<string> JudgeAgentIdList { get; set; } 
+    
+    [Id(2)] public List<string> HostAgentIdList { get; set; } 
+ 
+}
+
+
+[GenerateSerializer]
+public class IniNetWorkMessageSEvent : ManagerSEvent
 {
     [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
     
@@ -29,5 +39,7 @@ public class IniNetWorkMessagePumpFunGEvent : PumpFunNameContestGEvent
     [Id(5)] public string Name { get; set; }
     
     [Id(6)] public string Round { get; set; }
+    
+    [Id(7)] public string GroupAgentId { get; set; }
  
 }

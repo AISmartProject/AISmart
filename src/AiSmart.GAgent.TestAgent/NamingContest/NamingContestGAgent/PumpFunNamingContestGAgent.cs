@@ -21,7 +21,7 @@ namespace AISmart.Agent;
 [Description("Handle NamingContest")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestGEvent>, IPumpFunNamingContestGAgent
+public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestSEvent>, IPumpFunNamingContestGAgent
 {
     private readonly ILogger<PumpFunPumpFunNamingContestGAgent> _logger;
     public PumpFunPumpFunNamingContestGAgent(ILogger<PumpFunPumpFunNamingContestGAgent> logger) : base(logger)
@@ -34,9 +34,9 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         throw new NotImplementedException();
     }
 
-    public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent)
+    public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent)
     {
-        RaiseEvent(iniNetWorkMessageGEvent);
+        RaiseEvent(iniNetWorkMessageSEvent);
         base.ConfirmEvents();
         return Task.CompletedTask;
     }
@@ -65,6 +65,6 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
 
 public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
 { 
-    Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent);
+    Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent);
 
 }
