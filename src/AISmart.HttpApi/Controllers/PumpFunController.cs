@@ -30,10 +30,10 @@ public class PumpFunController : AISmartController
     [Authorize]
     [HttpPost]
     [Route("setGroup")]
-    public async Task<string> SetGroupsAsync(string chatId, string bio)
+    public async Task<string> SetGroupsAsync(PumpFunSetGroupInputDto pumpFunSetGroupInputDto)
     {
-        _logger.LogInformation("PumpFunController SetGroupsAsync, chatId:{chatId}, botName:{botName}", chatId);
-        return await _pumpFunChatService.SetGroupsAsync(chatId, bio);
+        _logger.LogInformation("PumpFunController SetGroupsAsync, chatId:{chatId}", pumpFunSetGroupInputDto.ChatId);
+        return await _pumpFunChatService.SetGroupsAsync(pumpFunSetGroupInputDto.ChatId, pumpFunSetGroupInputDto.Bio);
     }
 
 
