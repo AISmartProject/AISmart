@@ -110,6 +110,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await DispatchJudgeAgent();
     }
 
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeSummaryCompleteGEvent @event)
+    {
+        
+    }
+    
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -127,8 +133,11 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         if (creativeList.Count == 0 && State.DiscussionCount == 0)
         {
             // todo: summary
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
-            await DispatchJudgeAgent();
+            var summaryCreativeId = await SelectCreativeToSummary();
+            await PublishAsync(new CreativeSummaryGEvent(){CreativeId = summaryCreativeId});
+            //
+            // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
+            // await DispatchJudgeAgent();
             return;
         }
 

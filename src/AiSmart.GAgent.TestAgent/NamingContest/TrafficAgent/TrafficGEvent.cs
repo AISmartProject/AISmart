@@ -81,3 +81,17 @@ public class DiscussionCompleteGEvent : EventBase
     [Id(1)] public string CreativeName { get; set; }
     [Id(2)] public string DiscussionReply { get; set; }
 }
+
+[GenerateSerializer]
+public class CreativeSummaryGEvent : EventBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+    [Id(1)] public List<Tuple<string, string>> CreativeNames { get; set; }
+}
+
+[GenerateSerializer]
+public class CreativeSummaryCompleteGEvent : EventBase
+{
+    [Id(0)] public string SummaryName { get; set; }
+    [Id(1)] public string Reason { get; set; }
+}

@@ -26,7 +26,7 @@ public static class AssembleMessageUtil
         return
             $"""
              The naming theme is: {describe}
-             
+
              Based on the summarized experience from the last round, here are the insights:
              {summary}
               
@@ -34,9 +34,17 @@ public static class AssembleMessageUtil
              {content.ToString()}
              """;
     }
-    
+
     public static string AssembleDiscussionContent(string agentName, string debateContent)
     {
         return $"{agentName} say: \"{debateContent}\".";
+    }
+
+    public static string AssembleDiscussionSummary(string naming, string reason)
+    {
+        return $"""
+                After the above discussion, we decided to use: {naming} as our chosen name. The reasons are as follows:
+                {reason}
+                """;
     }
 }

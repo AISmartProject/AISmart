@@ -17,6 +17,7 @@ public class SecondTrafficState : StateBase
     [Id(8)] public int DiscussionCount { get; set; }
     [Id(9)] public string AgentName { get; set; }
     [Id(10)] public string AgentDescription { get; set; }
+    [Id(11)] public string Summary { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
