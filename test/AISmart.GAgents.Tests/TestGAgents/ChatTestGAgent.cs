@@ -1,6 +1,7 @@
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
+using AISmart.GAgent.Telegram.Agent.GEvents;
 using AISmart.GAgents.Tests.TestEvents;
 using AISmart.GAgents.Tests.TestGEvents;
 using Microsoft.Extensions.Logging;

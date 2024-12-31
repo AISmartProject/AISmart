@@ -7,6 +7,7 @@ using AISmart.Agents.AutoGen;
 using AISmart.Agents.Group;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
+using AISmart.GAgent.Telegram.Agent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
 using AiSmart.GAgent.TestAgent.Voter;
 using AISmart.GEvents.MicroAI;
