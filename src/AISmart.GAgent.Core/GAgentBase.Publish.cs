@@ -28,6 +28,9 @@ public abstract partial class GAgentBase<TState, TEvent>
                 // This event is the first time appeared to silo.
                 await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
                 break;
+            case false when _streamIdDictionary.IsNullOrEmpty():
+                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+                break;
             case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
                 @event.StreamId = streamIdValue;
                 await PublishEventUpwardsAsync(@event, eventId);
