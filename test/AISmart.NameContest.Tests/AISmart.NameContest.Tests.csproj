@@ -10,7 +10,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\AISmart.Application\AISmart.Application.csproj" />
-      <ProjectReference Include="..\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj" />
+      <ProjectReference Include="..\..\src\AiSmart.GAgent.TestAgent\AiSmart.GAgent.TestAgent.csproj" />
       <ProjectReference Include="..\AISmart.Orleans.TestBase\AISmart.Orleans.TestBase.csproj" />
       <ProjectReference Include="..\AISmart.TestBase\AISmart.TestBase.csproj" />
 
