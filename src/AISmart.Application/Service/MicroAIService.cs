@@ -5,12 +5,12 @@ using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agents.AutoGen;
 using AISmart.Agents.Group;
+using AISmart.Common;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Telegram.Agent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
 using AiSmart.GAgent.TestAgent.Voter;
-using AISmart.GEvents.MicroAI;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -23,6 +23,7 @@ public class MicroAIService : ApplicationService, IMicroAIService
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<MicroAIService> _logger;
     private static readonly Guid PublishId = Guid.NewGuid();
+    private IMicroAIService _microAiServiceImplementation;
 
     public MicroAIService(IClusterClient clusterClient, ILogger<MicroAIService> logger)
     {
@@ -30,12 +31,13 @@ public class MicroAIService : ApplicationService, IMicroAIService
         _logger = logger;
     }
 
-    public async Task ReceiveMessagesAsync(string message)
+    public async Task ReceiveMessagesAsync(string message,string groupName)
     {
-        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(PublishId);
-        await publishingAgent.PublishEventAsync(new AutoGenCreatedEvent()
+        var publishId = GuidUtil.StringToGuid(groupName);
+        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
+        await publishingAgent.PublishEventAsync(new ReceiveMessageEvent()
         {
-            Content = message
+            Message = message
         });
     }
 

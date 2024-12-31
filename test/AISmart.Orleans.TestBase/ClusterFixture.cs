@@ -2,13 +2,16 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using AISmart.Agent.Grains;
 using AISmart.Application.Grains;
 using AISmart.CQRS;
 using AISmart.CQRS.Handler;
 using AISmart.CQRS.Provider;
 using AISmart.EventSourcing.Core.Hosting;
 using AISmart.GAgent.Core;
+using AISmart.Grains;
 using AISmart.Mock;
+using AISmart.Options;
 using AISmart.Provider;
 using AISmart.Service;
 using AutoMapper;
@@ -18,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Nest;
+using NSubstitute.Extensions;
 using Orleans.Hosting;
 using Orleans.Storage;
 using Orleans.TestingHost;
@@ -51,6 +55,11 @@ public class ClusterFixture : IDisposable, ISingletonDependency
     {
         public void Configure(ISiloBuilder hostBuilder)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.secrets.json")
+                .Build();
+            
             hostBuilder.ConfigureServices(services =>
             {
                 services.AddAutoMapper(typeof(AIApplicationGrainsModule).Assembly);
@@ -111,11 +120,15 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                     return new ElasticClient(settings);
                 });
                 services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
+                
+                services.AddSingleton(typeof(INameContestProvider), typeof(NameContestProvider));
             })
             .AddMemoryStreams("AISmart")
             .AddMemoryGrainStorage("PubSubStore")
             .AddMemoryGrainStorageAsDefault()
-            .AddLogStorageBasedLogConsistencyProvider("LogStorage");
+            .AddLogStorageBasedLogConsistencyProvider("LogStorage")
+            .Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"))
+            .Configure<NameContestOptions>(configuration.GetSection("NameContest"));
         }
     }
 

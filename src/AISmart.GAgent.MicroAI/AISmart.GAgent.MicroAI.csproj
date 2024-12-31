@@ -17,6 +17,8 @@
     <PackageReference Include="AutoGen" />
     <PackageReference Include="AutoGen.Core" />
     <PackageReference Include="Microsoft.Orleans.EventSourcing" />
+    <PackageReference Include="Microsoft.SemanticKernel" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" />
     <PackageReference Include="Volo.Abp.AutoMapper" />
   </ItemGroup>
 

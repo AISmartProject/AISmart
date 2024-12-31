@@ -21,6 +21,7 @@ public class AISmartGAgentTestAgentModule : AbpModule
         });
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"));
+        context.Services.Configure<NameContestOptions>(configuration.GetSection("NameContest"));
         context.Services.Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
     }
 }
