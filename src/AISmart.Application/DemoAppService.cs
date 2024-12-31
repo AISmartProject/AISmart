@@ -62,7 +62,7 @@ public class DemoAppService : ApplicationService, IDemoAppService
         await groupAgent.RegisterAsync(developerAgent);
         await groupAgent.RegisterAsync(investmentAgent);
 
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new XThreadCreatedEvent
         {
@@ -162,7 +162,7 @@ public class DemoAppService : ApplicationService, IDemoAppService
         foreach (var groupGAgent in groupGAgents)
         {
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-            await publishingAgent.PublishToAsync(groupGAgent);
+            await publishingAgent.RegisterAsync(groupGAgent);
 
             await publishingAgent.PublishEventAsync(new MockAThreadCreatedEvent
             {

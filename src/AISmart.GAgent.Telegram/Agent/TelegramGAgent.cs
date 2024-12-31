@@ -1,31 +1,23 @@
-using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using AISmart.Agent.GEvents;
 using AISmart.Agents;
-using AISmart.Agents.AutoGen;
-using AISmart.Application.Grains;
 using AISmart.Events;
-using AISmart.GEvents.NLP;
 using AISmart.GAgent.Core;
+using AISmart.GAgent.Telegram.Agent.GEvents;
+using AISmart.GAgent.Telegram.Grains;
 using AISmart.GEvents.Social;
-using AISmart.Grains;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Orleans.Providers;
 
-namespace AISmart.Agent;
+namespace AISmart.GAgent.Telegram.Agent;
 
 [Description("Handle telegram")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
 public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, ITelegramGAgent
 {
-    private readonly ILogger<TelegramGAgent> _logger;
-
     public TelegramGAgent(ILogger<TelegramGAgent> logger) : base(logger)
     {
-        _logger = logger;
     }
 
     public override Task<string> GetDescriptionAsync()
@@ -49,17 +41,17 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     public async Task UnRegisterTelegramAsync(string botName)
     {
         await GrainFactory.GetGrain<ITelegramGrain>(botName).UnRegisterTelegramAsync(
-            State.Token);
+            State.BotName);
     }
 
 
     [EventHandler]
     public async Task HandleEventAsync(ReceiveMessageEvent @event)
     {
-        _logger.LogInformation("Telegram ReceiveMessageEvent " + @event.MessageId);
+        Logger.LogInformation("Telegram ReceiveMessageEvent " + @event.MessageId);
         if (State.PendingMessages.TryGetValue(@event.MessageId, out _))
         {
-            _logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
+            Logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
             return;
         }
 
@@ -77,20 +69,20 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
             MessageId = @event.MessageId,
             ChatId = @event.ChatId
         });
-        _logger.LogDebug("Publish AutoGenCreatedEvent for Telegram Message ID: " + @event.MessageId);
+        Logger.LogDebug("Publish AutoGenCreatedEvent for Telegram Message ID: " + @event.MessageId);
     }
 
     [EventHandler]
     public async Task HandleEventAsync(SendMessageEvent @event)
     {
-        _logger.LogDebug("Publish SendMessageEvent for Telegram Message: " + @event.Message);
+        Logger.LogDebug("Publish SendMessageEvent for Telegram Message: " + @event.Message);
         await SendMessageAsync(@event.Message,@event.ChatId,@event.ReplyMessageId);
     }
     
     [EventHandler]
     public async Task HandleEventAsync(SocialResponseEvent @event)
     {
-        _logger.LogDebug("SocialResponse for Telegram Message: " + @event.ResponseContent);
+        Logger.LogDebug("SocialResponse for Telegram Message: " + @event.ResponseContent);
         await SendMessageAsync(@event.ResponseContent,@event.ChatId,@event.ReplyMessageId);
     }
 

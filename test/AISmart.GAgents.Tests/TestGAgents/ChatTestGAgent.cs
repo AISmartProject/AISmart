@@ -1,6 +1,7 @@
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
+using AISmart.GAgent.Telegram.Agent.GEvents;
 using AISmart.GAgents.Tests.TestEvents;
 using AISmart.GAgents.Tests.TestGEvents;
 using Microsoft.Extensions.Logging;
@@ -35,17 +36,17 @@ public class ChatTestGAgent : GAgentBase<ChatTestGAgentState, MessageGEvent>
             NeedReplyBotName = eventData.BotName
         });
         await ConfirmEvents();
-        await PublishAsync(new SocialTestEvent
-            {
-                MessageId = eventData.MessageId,
-                Message = eventData.Message
-            }
-            .WithContext("ChatId", eventData.ChatId)
-            .WithContext("GroupId", "Can't tell you.")
-            .WithContext(new Dictionary<string, object?>
-            {
-                ["BotName"] = eventData.BotName
-            }));
+        // await PublishAsync(new SocialTestEvent
+        //     {
+        //         MessageId = eventData.MessageId,
+        //         Message = eventData.Message
+        //     }
+        //     .WithContext("ChatId", eventData.ChatId)
+        //     .WithContext("GroupId", "Can't tell you.")
+        //     .WithContext(new Dictionary<string, object?>
+        //     {
+        //         ["BotName"] = eventData.BotName
+        //     }));
     }
 
     public async Task HandleEventAsync(SendMessageTestEvent eventData)

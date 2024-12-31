@@ -18,6 +18,5 @@ public class AISmartGAgentTwitterModule : AbpModule
         });
         var configuration = context.Services.GetConfiguration();
         Configure<TwitterOptions>(configuration.GetSection("Twitter")); 
-
     }
 }

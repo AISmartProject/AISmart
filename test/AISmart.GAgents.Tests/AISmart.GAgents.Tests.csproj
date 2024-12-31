@@ -33,6 +33,7 @@
       <ProjectReference Include="..\..\src\AISmart.GAgent.Core\AISmart.GAgent.Core.csproj" />
       <ProjectReference Include="..\..\src\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
       <ProjectReference Include="..\..\src\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
+      <ProjectReference Include="..\..\src\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
       <ProjectReference Include="..\OrleansTestKit\OrleansTestKit.csproj" />
     </ItemGroup>
 

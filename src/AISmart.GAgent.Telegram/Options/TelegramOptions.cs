@@ -1,5 +1,5 @@
 
-namespace AISmart.Options;
+namespace AISmart.GAgent.Telegram.Options;
 
 public class TelegramOptions
 {

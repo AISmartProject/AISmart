@@ -14,7 +14,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Options;
 using AISmart.Sender;
-using AISmart.Telegram;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -202,7 +201,7 @@ public class NamingContestService : INamingContestService
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
-            await publishingAgent.PublishToAsync(groupAgent);
+            await publishingAgent.RegisterAsync(groupAgent);
             await publishingAgent.PublishEventAsync(new GroupStartEvent());
         }
     }
