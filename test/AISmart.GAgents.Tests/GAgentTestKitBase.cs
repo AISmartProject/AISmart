@@ -16,7 +16,7 @@ public abstract class GAgentTestKitBase : TestKitBase, IAsyncLifetime
         Silo.AddProbe<IPublishingGAgent>(_ => publishingGAgent);
         foreach (var gAgent in gAgentsToPublish)
         {
-            await publishingGAgent.PublishToAsync(gAgent);
+            await publishingGAgent.RegisterAsync(gAgent);
         }
 
         return publishingGAgent;
@@ -59,10 +59,9 @@ public abstract class GAgentTestKitBase : TestKitBase, IAsyncLifetime
         Silo.AddProbe(lambda);
     }
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        var contextStorageGrain = await Silo.CreateGrainAsync<ContextStorageGrain>(Guid.NewGuid());
-        Silo.AddProbe<IContextStorageGrain>(_ => contextStorageGrain);
+        return Task.CompletedTask;
     }
 
     public Task DisposeAsync()

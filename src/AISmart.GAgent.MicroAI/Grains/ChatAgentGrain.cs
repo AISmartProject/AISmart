@@ -5,8 +5,11 @@ using AISmart.Options;
 using AutoGen.Core;
 using AutoGen.OpenAI;
 using AutoGen.OpenAI.Extension;
+using AutoGen.SemanticKernel;
+using AutoGen.SemanticKernel.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
@@ -16,7 +19,7 @@ namespace AISmart.Grains;
 [StorageProvider(ProviderName = "PubSubStore")]
 public class ChatAgentGrain : Grain, IChatAgentGrain
 {
-    private MiddlewareStreamingAgent<OpenAIChatAgent>? _agent;
+    private MiddlewareStreamingAgent<SemanticKernelAgent>? _agent;
     private readonly MicroAIOptions _options;
     private readonly ILogger<ChatAgentGrain> _logger;
 
@@ -41,22 +44,34 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
     public Task SetAgentAsync(string systemMessage)
     {
-        var agentName = this.GetPrimaryKeyString();
-        var client = new ChatClient(_options.Model, _options.ApiKey);
-
-        _agent = new OpenAIChatAgent(client, agentName, systemMessage)
+        var kernelBuilder = Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+        var systemName = this.GetPrimaryKeyString();
+        var kernel = kernelBuilder.Build();
+        var kernelAgent = new SemanticKernelAgent(
+                kernel: kernel,
+                name: systemName,
+                systemMessage: systemMessage)
             .RegisterMessageConnector();
+
+        _agent = kernelAgent;
         return Task.CompletedTask;
     }
 
     public Task SetAgentWithTemperature(string systemMessage, float temperature, int? seed = null,
         int? maxTokens = null)
     {
-        var agentName = this.GetPrimaryKeyString();
-        var client = new ChatClient(_options.Model, _options.ApiKey);
-
-        _agent = new OpenAIChatAgent(client, agentName, systemMessage, temperature, maxTokens, seed)
+        var kernelBuilder = Kernel.CreateBuilder()
+            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+        var systemName = this.GetPrimaryKeyString();
+        var kernel = kernelBuilder.Build();
+        var kernelAgent = new SemanticKernelAgent(
+                kernel: kernel,
+                name: systemName,
+                systemMessage: systemMessage)
             .RegisterMessageConnector();
+
+        _agent = kernelAgent;
         return Task.CompletedTask;
     }
 

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using AISmart.Telegram;
+using AISmart.GAgent.Telegram.Dtos;
 using Microsoft.Extensions.Primitives;
 
 namespace AISmart.Service;
@@ -10,6 +10,6 @@ public interface ITelegramService
     
     public Task SetGroupsAsync();
     Task RegisterBotAsync(RegisterTelegramDto registerTelegramDto);
-    Task SetNamingGroupAsync();
+    Task SetNamingGroupAsync(string groupName);
     Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto);
 }

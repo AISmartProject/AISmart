@@ -42,6 +42,7 @@ public abstract class MicroAIGAgent : GAgentBase<MicroAIGAgentState, AIMessageGE
             AgentResponsibility = agentResponsibility
         });
         await ConfirmEvents();
+
         await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
     }
 
