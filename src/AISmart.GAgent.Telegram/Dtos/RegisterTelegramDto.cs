@@ -1,4 +1,4 @@
-namespace AISmart.Telegram;
+namespace AISmart.GAgent.Telegram.Dtos;
 
 public class RegisterTelegramDto
 {

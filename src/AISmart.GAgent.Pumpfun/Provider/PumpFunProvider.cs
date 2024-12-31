@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using AISmart.Dto;
 using AISmart.Options;
-using AISmart.PumpFun;
-using AISmart.Telegram;
-using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;

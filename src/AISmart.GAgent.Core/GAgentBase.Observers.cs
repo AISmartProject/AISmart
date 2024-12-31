@@ -1,11 +1,14 @@
 using System.Reflection;
+using AElf.OpenTelemetry.ExecutionTime;
 using AISmart.Agents;
+using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
+    [AggregateExecutionTime]
     private Task UpdateObserverList()
     {
         var eventHandlerMethods = GetEventHandlerMethods();
@@ -14,32 +17,32 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
-                var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<object>.GrainId))?.GetValue(item)!;
-                if (grainId == this.GetGrainId())
+                var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
+                if (grainId == this.GetGrainId() && eventHandlerMethod.Name != nameof(ForwardEventAsync))
                 {
                     // Skip the event if it is sent by itself.
                     return;
                 }
 
-                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<object>.EventId))?.GetValue(item)!;
-                var eventType = item.GetType().GetProperty(nameof(EventWrapper<object>.Event))?.GetValue(item);
+                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))?.GetValue(item)!;
+                var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                /*var contextStorageGrainIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<object>.ContextGrainId))?
+                var streamIdValue = item.GetType()
+                    .GetProperty(nameof(EventWrapper<EventBase>.StreamId))?
                     .GetValue(item);
-                if (contextStorageGrainIdValue != null)
-                {
-                    var contextStorageGrainId = (GrainId)contextStorageGrainIdValue;
-                    var contextStorageGrain = GrainFactory.GetGrain<IContextStorageGrain>(contextStorageGrainId.GetGuidKey());
-                    if (contextStorageGrain != null)
-                    {
-                        var context = await contextStorageGrain.GetContext();
-                        (eventType! as EventBase)!.SetContext(context);
-                    }
-                }*/
+                var streamId = (StreamId)streamIdValue!;
 
-                if (parameter.ParameterType == eventType!.GetType())
+                _correlationId = eventType.CorrelationId;
+                if (_correlationId != null)
+                {
+                    _streamIdDictionary.TryAdd(_correlationId.Value, streamId);
+                }
+
+                var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+                eventType.StreamId = streamIdOfThisGAgent;
+
+                if (parameter.ParameterType == eventType.GetType())
                 {
                     await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
                 }
@@ -49,7 +52,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>((EventBase)eventType, eventId, this.GetGrainId());
+                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId());
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
@@ -91,7 +94,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                 methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase)));
     }
 
-    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, object eventType,
+    private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, EventBase eventType,
         Guid eventId)
     {
         if (IsEventWithResponse(parameter))
@@ -120,7 +123,7 @@ public abstract partial class GAgentBase<TState, TEvent>
                parameter.ParameterType.BaseType.GetGenericTypeDefinition() == typeof(EventWithResponseBase<>);
     }
 
-    private async Task HandleEventWithResponseAsync(MethodInfo method, object eventType, Guid eventId)
+    private async Task HandleEventWithResponseAsync(MethodInfo method, EventBase eventType, Guid eventId)
     {
         if (method.ReturnType.IsGenericType &&
             method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
@@ -131,7 +134,11 @@ public abstract partial class GAgentBase<TState, TEvent>
                 try
                 {
                     var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
-                    var eventWrapper = new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
+                    _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamId);
+                    eventResult.StreamId = streamId;
+                    eventResult.CorrelationId = _correlationId;
+                    var eventWrapper =
+                        new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());
                     await PublishAsync(eventWrapper);
                 }
                 catch (Exception ex)

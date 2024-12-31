@@ -16,6 +16,9 @@ using AISmart.Common;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
 using AiSmart.GAgent.SocialAgent.GAgent;
+using AISmart.GAgent.Telegram.Agent;
+using AISmart.GAgent.Telegram.Dtos;
+using AISmart.GAgent.Telegram.Options;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
@@ -27,7 +30,6 @@ using AiSmart.GAgent.TestAgent.NLPAgent;
 using AiSmart.GAgent.TestAgent.Voter;
 using AISmart.Options;
 using AISmart.Sender;
-using AISmart.Telegram;
 using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -134,7 +136,7 @@ public class TelegramService : ApplicationService, ITelegramService
         await groupAgent.RegisterAsync(marketLeaderAgent);
 
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }
@@ -193,7 +195,7 @@ public class TelegramService : ApplicationService, ITelegramService
         await groupAgent.RegisterAsync(conclusionAgent);
 
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
 
         await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
     }
@@ -209,7 +211,7 @@ public class TelegramService : ApplicationService, ITelegramService
         await groupAgent.RegisterAsync(telegramAgent);
         await groupAgent.RegisterAsync(socialAgent);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
     }
 
     public async Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto)
@@ -219,7 +221,7 @@ public class TelegramService : ApplicationService, ITelegramService
         await telegramAgent.UnRegisterTelegramAsync(unRegisterTelegramDto.BotName);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.UnpublishFromAsync(groupAgent);
+        await publishingAgent.UnregisterAsync(groupAgent);
     }
 
     public async Task SetNamingGroupAsync()
@@ -280,6 +282,6 @@ public class TelegramService : ApplicationService, ITelegramService
 
         var publishId = GuidUtil.StringToGuid("TelegramNamingContestDemo");
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
     }
 }

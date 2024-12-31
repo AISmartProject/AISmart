@@ -2,7 +2,6 @@ using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
 using Microsoft.Extensions.Logging;
-using Orleans.Storage;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
 

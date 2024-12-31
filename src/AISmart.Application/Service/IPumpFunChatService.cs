@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using AISmart.Dto;
 using AISmart.PumpFun;
-using AISmart.Telegram;
 
 namespace AISmart.Service;
 
