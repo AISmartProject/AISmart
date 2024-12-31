@@ -32,9 +32,9 @@ public class CqrsTestWithTestKit : GAgentTestKitBase
         _output = output;
         _mockIndexingService = new Mock<IIndexingService>();
         _mockIndexingService.Setup(service =>
-                service.SaveOrUpdateIndexAsync(It.IsAny<string>(), It.IsAny<BaseStateIndex>()))
+                service.SaveOrUpdateStateIndexAsync(It.IsAny<string>(), It.IsAny<BaseStateIndex>()))
             .Returns(Task.CompletedTask);
-        _mockIndexingService.Setup(b => b.QueryIndexAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockIndexingService.Setup(b => b.QueryStateIndexAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((string id, string indexName) => new BaseStateIndex
                 { Id = IndexId.ToString(), Ctime = DateTime.Now, State = Address });
 
@@ -43,6 +43,9 @@ public class CqrsTestWithTestKit : GAgentTestKitBase
         services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
         services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
+        services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
+        services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
+
         services.AddSingleton<ICQRSProvider, CQRSProvider>();
 
         var serviceProvider = services.BuildServiceProvider();

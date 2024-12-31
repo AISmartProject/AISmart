@@ -40,7 +40,7 @@ public class AElfGAgent : GAgentBase<AElfAgentGState, TransactionGEvent>, IAElfA
             ContractAddress = gEventData.ContractAddress,
             MethodName = gEventData.MethodName,
         };
-        base.RaiseEvent(gEvent);
+        RaiseEvent(gEvent);
         await ConfirmEvents();
         _= GrainFactory.GetGrain<ITransactionGrain>(gEvent.Id).SendAElfTransactionAsync(
             new SendTransactionDto
@@ -58,7 +58,7 @@ public class AElfGAgent : GAgentBase<AElfAgentGState, TransactionGEvent>, IAElfA
     [EventHandler]
     public Task ExecuteAsync(SendTransactionCallBackEvent gEventData)
     {
-        base.RaiseEvent(new SendTransactionGEvent
+        RaiseEvent(new SendTransactionGEvent
         {
             CreateTransactionGEventId = gEventData.CreateTransactionGEventId,
             ChainId = gEventData.ChainId,
@@ -80,14 +80,14 @@ public class AElfGAgent : GAgentBase<AElfAgentGState, TransactionGEvent>, IAElfA
     {
         if (gEventData.IsSuccess)
         {
-            base.RaiseEvent(new TransactionSuccessGEvent
+            RaiseEvent(new TransactionSuccessGEvent
             {
                 CreateTransactionGEventId = gEventData.CreateTransactionGEventId
             });
         }
         else
         {
-            base.RaiseEvent(new TransactionFailedGEvent()
+            RaiseEvent(new TransactionFailedGEvent()
             {
                 CreateTransactionGEventId = gEventData.CreateTransactionGEventId,
                 Error = gEventData.Error

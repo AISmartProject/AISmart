@@ -1,18 +1,23 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
-public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
+public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICreativeGAgent
 {
+    private readonly ILogger<CreativeGAgent> _logger;
+
     public CreativeGAgent(ILogger<CreativeGAgent> logger) : base(logger)
     {
+        _logger = logger;
     }
 
 
@@ -21,7 +26,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
     {
         if (@event.IfFirstStep == true)
         {
-            RaiseEvent(new AIReceiveMessageGEvent()
+            RaiseEvent(new AddHistoryChatSEvent()
             {
                 Message = new MicroAIMessage(Role.User.ToString(), @event.ThemeDescribe)
             });
@@ -33,13 +38,14 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 // clear history message
-                RaiseEvent(new AIClearMessageGEvent());
+                RaiseEvent(new ClearHistoryChatSEvent());
 
-                // todo:read naming
-                RaiseEvent(new AIReceiveMessageGEvent()
+                // summary the naming contest
+                RaiseEvent(new AddHistoryChatSEvent()
                 {
-                    Message = new MicroAIMessage(Role.Assistant.ToString(),
-                        AssembleMessageUtil.AssembleSummaryBeforeStep(response.Content, @event.ThemeDescribe))
+                    Message = new MicroAIMessage(Role.System.ToString(),
+                        AssembleMessageUtil.AssembleSummaryBeforeStep(@event.CreativeNameings, response.Content,
+                            @event.ThemeDescribe))
                 });
             }
         }
@@ -84,11 +90,13 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Naming, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, namingReply));
 
-            RaiseEvent(new AIReceiveMessageGEvent()
+            RaiseEvent(new AddHistoryChatSEvent()
             {
                 Message = new MicroAIMessage(Role.User.ToString(),
                     AssembleMessageUtil.AssembleNamingContent(State.AgentName, namingReply))
             });
+
+            RaiseEvent(new SetNamingSEvent { Naming = namingReply });
 
             await base.ConfirmEvents();
         }
@@ -97,7 +105,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
     [EventHandler]
     public async Task HandleEventAsync(NamedCompleteGEvent @event)
     {
-        RaiseEvent(new AIReceiveMessageGEvent()
+        RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleNamingContent(@event.CreativeName, @event.NamingReply))
@@ -109,7 +117,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
-        RaiseEvent(new AIReceiveMessageGEvent()
+        RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleDebateContent(@event.CreativeName, @event.DebateReply))
@@ -151,7 +159,7 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
                 CreativeName = State.AgentName,
             });
 
-            RaiseEvent(new AIReceiveMessageGEvent()
+            RaiseEvent(new AddHistoryChatSEvent()
             {
                 Message = new MicroAIMessage(Role.User.ToString(),
                     AssembleMessageUtil.AssembleDebateContent(State.AgentName, debateReply))
@@ -162,5 +170,113 @@ public class CreativeGAgent : MicroAIGAgent, ICreativeGAgent
 
             await base.ConfirmEvents();
         }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(DiscussionGEvent @event)
+    {
+        if (@event.CreativeId != this.GetPrimaryKey())
+        {
+            return;
+        }
+
+        var discussionReply = string.Empty;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.CreativeDiscussionPrompt, State.RecentMessages.ToList());
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                discussionReply = response.Content;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Creative] DiscussionGEvent error");
+        }
+        finally
+        {
+            await this.PublishAsync(new DiscussionCompleteGEvent()
+            {
+                CreativeId = this.GetPrimaryKey(),
+                DiscussionReply = discussionReply,
+                CreativeName = State.AgentName,
+            });
+
+            if (!discussionReply.IsNullOrEmpty())
+            {
+                RaiseEvent(new AddHistoryChatSEvent()
+                {
+                    Message = new MicroAIMessage(Role.User.ToString(),
+                        AssembleMessageUtil.AssembleDiscussionContent(State.AgentName, discussionReply))
+                });
+
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Discussion, this.GetPrimaryKey(),
+                    NamingRoleType.Contestant, State.AgentName, discussionReply));
+            }
+
+            await base.ConfirmEvents();
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(DiscussionCompleteGEvent @event)
+    {
+        if (@event.DiscussionReply.IsNullOrEmpty())
+        {
+            return;
+        }
+        
+        RaiseEvent(new AddHistoryChatSEvent()
+        {
+            Message = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleDiscussionContent(@event.CreativeName, @event.DiscussionReply))
+        });
+
+        await base.ConfirmEvents();
+    }
+    
+    public Task<MicroAIGAgentState> GetStateAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Task<string> GetDescriptionAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task SetAgent(string agentName, string agentResponsibility)
+    {
+        RaiseEvent(new SetAgentInfoSEvent { AgentName = agentName, Description = agentResponsibility });
+        await base.ConfirmEvents();
+
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
+    }
+
+    public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
+        int? seed = null,
+        int? maxTokens = null)
+    {
+        RaiseEvent(new SetAgentInfoSEvent { AgentName = agentName, Description = agentResponsibility });
+        await base.ConfirmEvents();
+
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName)
+            .SetAgentWithTemperature(agentResponsibility, temperature, seed, maxTokens);
+    }
+
+    public Task<MicroAIGAgentState> GetAgentState()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetCreativeNaming()
+    {
+        return Task.FromResult(State.Naming);
+    }
+
+    public Task<string> GetCreativeName()
+    {
+        return Task.FromResult(State.AgentName);
     }
 }

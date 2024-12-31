@@ -70,7 +70,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
 
         await PublishEventToExecutor(eventData.EventId, history);
 
-        base.RaiseEvent(new Create()
+        RaiseEvent(new Create()
         {
             TaskId = eventData.EventId,
             Messages = history,
@@ -117,7 +117,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
                 return;
             }
 
-            base.RaiseEvent(new CallAgentReply()
+            RaiseEvent(new CallAgentReply()
             {
                 EventId = eventId,
                 Reply = new AutogenMessage(Role.Assistant.ToString(), reply)
@@ -163,7 +163,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
             case TaskExecuteStatus.Break:
                 Logger.LogDebug(
                     $"[AutogenGAgent] Task Break,TaskId:{eventData.TaskId}, finish content:{eventData.EndContent}");
-                base.RaiseEvent(new Break()
+                RaiseEvent(new Break()
                 {
                     TaskId = eventData.TaskId,
                     BreakReason = eventData.EndContent
@@ -172,7 +172,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
             case TaskExecuteStatus.Finish:
                 Logger.LogDebug(
                     $"[AutogenGAgent] Task Finished,TaskId:{eventData.TaskId}, finish content:{eventData.EndContent}");
-                base.RaiseEvent(new Complete()
+                RaiseEvent(new Complete()
                 {
                     TaskId = eventData.TaskId,
                     Summary = eventData.EndContent
@@ -223,7 +223,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
                 Logger.LogInformation(
                     $"[AutogenGAgent] Publish Event, EventId{@event2.TaskId.ToString()}, eventId:{eventId.ToString()}, publish content: {JsonSerializer.Serialize(@event2.PassThroughData)}");
 
-                base.RaiseEvent(new PublishEvent()
+                RaiseEvent(new PublishEvent()
                 {
                     TaskId = @event2.TaskId,
                     EventId = eventId,

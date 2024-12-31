@@ -10,14 +10,11 @@ public class SecondTrafficState : StateBase
     [Id(1)] public List<CreativeInfo> CreativeList { get; set; } = new List<CreativeInfo>();
     [Id(2)] public Guid CurrentGrainId { get; set; }
     [Id(3)] public string NamingContent { get; set; }
-    [Id(4)] public string AgentName { get; set; }
-    [Id(5)] public string Description { get; set; }
-    [Id(6)] public int DebateRoundCount { get; set; }
-    [Id(7)] public List<Guid> DebateList { get; set; }
-    [Id(8)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
-    [Id(9)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
-    [Id(10)] public int AskJudgeCount { get; set; }
-    [Id(11)] public List<Guid> AskingJudges { get; set; } = new List<Guid>();
+    [Id(4)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
+    [Id(5)] public int AskJudgeCount { get; set; }
+    [Id(6)] public List<Guid> AskingJudges { get; set; } = new List<Guid>();
+    [Id(7)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
+    [Id(8)] public int DiscussionCount { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -35,12 +32,6 @@ public class SecondTrafficState : StateBase
         CurrentGrainId = Guid.Empty;
     }
 
-    public void Apply(TrafficSetAgentSEvent @event)
-    {
-        AgentName = @event.AgentName;
-        Description = @event.Description;
-    }
-
     public void Apply(AddCreativeAgent @event)
     {
         if (CreativeList.Exists(e => e.CreativeGrainId == @event.CreativeGrainId))
@@ -49,17 +40,7 @@ public class SecondTrafficState : StateBase
         }
 
         CreativeList.Add(new CreativeInfo()
-            { CreativeName = @event.CreativeName, CreativeGrainId = @event.CreativeGrainId });
-    }
-
-    public void Apply(SetDebateCountSEvent @event)
-    {
-        DebateRoundCount = @event.DebateCount;
-    }
-
-    public void Apply(ReduceDebateRoundSEvent @event)
-    {
-        DebateRoundCount -= 1;
+            { CreativeName = @event.CreativeName, CreativeGrainId = @event.CreativeGrainId, Naming = @event.Naming });
     }
 
     public void Apply(AddChatHistorySEvent @event)
@@ -94,5 +75,10 @@ public class SecondTrafficState : StateBase
     public void Apply(AddAskingJudgeSEvent @event)
     {
         AskingJudges.Add(@event.AskingJudgeGrainId);
+    }
+
+    public void Apply(SetDiscussionSEvent @event)
+    {
+        DiscussionCount = @event.DiscussionCount;
     }
 }

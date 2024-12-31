@@ -51,7 +51,8 @@ public class TrafficSetAgentSEvent : TrafficEventSourcingBase
 public class AddCreativeAgent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CreativeGrainId { get; set; }
-    [Id(1)] public String CreativeName { get; set; }
+    [Id(1)] public string CreativeName { get; set; }
+    [Id(2)] public string Naming { get; set; } 
 }
 
 [GenerateSerializer]
@@ -105,4 +106,10 @@ public class SetAskingJudgeSEvent : TrafficEventSourcingBase
 public class AddAskingJudgeSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid AskingJudgeGrainId { get; set; }
+}
+
+[GenerateSerializer]
+public class SetDiscussionSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public int DiscussionCount { get; set; }
 }

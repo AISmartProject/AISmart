@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using AISmart.Dto;
+using AISmart.GAgent.Telegram.Dtos;
 
-namespace AISmart.Provider;
+namespace AISmart.GAgent.Telegram.Provider;
 
 public interface ITelegramProvider
 {

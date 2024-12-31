@@ -4,6 +4,7 @@ using AISmart.Agents;
 using AISmart.Events;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
+using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AISmart.Grains;
 using AutoGen.Core;
@@ -28,10 +29,20 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
 
-        await PublishAsync(new GroupChatStartGEvent() { IfFirstStep = false, ThemeDescribe = @event.Message });
+        List<Tuple<string, string>> creativeNaming = new List<Tuple<string, string>>();
+        foreach (var creativeInfo in State.CreativeList)
+        {
+            creativeNaming.Add(new Tuple<string, string>(creativeInfo.CreativeName, creativeInfo.Naming));
+        }
 
-        await DispatchCreativeAgent();
+        await PublishAsync(new GroupChatStartGEvent()
+            { IfFirstStep = false, ThemeDescribe = @event.Message, CreativeNameings = creativeNaming });
 
+        await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DiscussionStart, Guid.Empty));
+
+        await GenerateDiscussionCount();
+        
+        await DispatchCreativeDiscussion();
 
         await base.ConfirmEvents();
     }
@@ -61,7 +72,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
         await base.ConfirmEvents();
 
-        await DispatchCreativeAgent();
+        await DispatchCreativeDiscussion();
     }
 
     [EventHandler]
@@ -133,43 +144,33 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         throw new NotImplementedException();
     }
 
-    private async Task DispatchCreativeAgent()
+    private async Task DispatchCreativeDiscussion()
     {
+        var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
+            .ToList();
+        if (creativeList.Count == 0 && State.DiscussionCount == 0)
+        {
+            // todo: summary
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
+            await DispatchJudgeAgent();
+            return;
+        }
+
+        if (creativeList.Count == 0 && State.DiscussionCount > 0)
+        {
+            creativeList = State.CreativeList;
+            RaiseEvent(new ClearCalledGrainsSEvent());
+        }
+
+        var random = new Random();
+        var randomId = random.Next(0, creativeList.Count());
+        var selectCreative = creativeList[randomId];
+        await PublishAsync(new DiscussionGEvent() { CreativeId = selectCreative.CreativeGrainId });
     }
 
     private async Task DispatchDebateAgent()
     {
-        // the second stage - debate
-        var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
-            .ToList();
-        if (State.DebateRoundCount == 0 && creativeList.Count == 0)
-        {
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVoteStart, Guid.Empty));
-            RaiseEvent(new ClearCalledGrainsSEvent());
-            await base.ConfirmEvents();
-
-            // begin the third stage judge
-            _ = DispatchJudgeAgent();
-            return;
-        }
-
-        if (creativeList.Count == 0 && State.DebateRoundCount > 0)
-        {
-            creativeList = State.CreativeList;
-            RaiseEvent(new ReduceDebateRoundSEvent());
-            RaiseEvent(new ClearCalledGrainsSEvent());
-        }
-
-        // random select one Agent
-        var random = new Random();
-        var index = random.Next(0, creativeList.Count);
-        var selectedInfo = creativeList[index];
-        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedInfo.CreativeGrainId });
-        await base.ConfirmEvents();
-
-        // route to the selectedId Agent 
-        await PublishAsync(new TrafficInformDebateGEvent()
-            { CreativeGrainId = selectedInfo.CreativeGrainId });
+       
     }
 
     private async Task DispatchJudgeAgent()
@@ -188,6 +189,15 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await base.ConfirmEvents();
 
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
+    }
+
+    private Task GenerateDiscussionCount()
+    {
+        var random = new Random();
+        var discussionCount = random.Next(State.CreativeList.Count * 3 / 2, State.CreativeList.Count * 2);
+        RaiseEvent(new SetDiscussionSEvent() { DiscussionCount = discussionCount });
+        
+        return Task.CompletedTask;
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)
@@ -224,7 +234,10 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
     public async Task AddCreativeAgent(string creativeName, Guid creativeGrainId)
     {
-        RaiseEvent(new AddCreativeAgent() { CreativeGrainId = creativeGrainId, CreativeName = creativeName });
+        var creativeAgent = GrainFactory.GetGrain<ICreativeGAgent>(creativeGrainId);
+        var naming = await creativeAgent.GetCreativeNaming();
+        RaiseEvent(new AddCreativeAgent()
+            { CreativeGrainId = creativeGrainId, CreativeName = creativeName, Naming = naming });
         await base.ConfirmEvents();
     }
 

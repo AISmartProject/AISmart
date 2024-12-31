@@ -98,18 +98,27 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
                 services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
                 services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
+                services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
+                services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
 
                 services.AddTransient<SaveStateCommandHandler>();
-                services.AddTransient<GetStateQueryHandler>();
+                services.AddTransient<GetGEventQueryHandler>();
                 services.AddTransient<SendEventCommandHandler>();
+                services.AddTransient<SaveGEventCommandHandler>();
                 services.AddSingleton<IIndexingService, ElasticIndexingService>();
 
                 services.AddSingleton(typeof(IEventDispatcher), typeof(CQRSProvider));
                 services.AddSingleton(typeof(ICQRSProvider), typeof(CQRSProvider));
-                var mockElasticClient = new Mock<IElasticClient>();
+                /*var mockElasticClient = new Mock<IElasticClient>();
                 services.AddSingleton(mockElasticClient.Object);
                 var _mockIndexingService = new Mock<IIndexingService>();
-                services.AddSingleton(_mockIndexingService.Object); 
+                services.AddSingleton(_mockIndexingService.Object); */
+                services.AddSingleton<IElasticClient>(provider =>
+                {
+                    var settings =new ConnectionSettings(new Uri("http://127.0.0.1:9200"))
+                        .DefaultIndex("cqrs");
+                    return new ElasticClient(settings);
+                });
                 services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
                 
                 services.AddSingleton(typeof(INameContestProvider), typeof(NameContestProvider));

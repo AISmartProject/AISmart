@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using AISmart.Service;
-using AISmart.Telegram;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
