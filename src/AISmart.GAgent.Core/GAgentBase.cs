@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +26,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     /// </summary>
     private readonly Dictionary<EventWrapperBaseAsyncObserver, Dictionary<StreamId, Guid>> Observers = new();
 
+    private IGrainState<StreamId> _parentStreamId = new GrainState<StreamId>();
+
     private IEventDispatcher EventDispatcher { get; set; }
 
     protected GAgentBase(ILogger logger)
@@ -44,14 +45,15 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     public async Task RegisterAsync(IGAgent gAgent)
     {
+        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        await gAgent.SubscribeAsync(streamOfThisGAgent);
         var guid = gAgent.GetPrimaryKey();
-        await AddSubscriberAsync(gAgent.GetGrainId());
         await OnRegisterAgentAsync(guid);
     }
 
     public async Task UnregisterAsync(IGAgent gAgent)
     {
-        await RemoveSubscriberAsync(gAgent.GetGrainId());
         await OnUnregisterAgentAsync(gAgent.GetPrimaryKey());
     }
 
@@ -73,47 +75,16 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task<SubscribedEventListEvent> HandleRequestAllSubscriptionsEventAsync(
         RequestAllSubscriptionsEvent request)
     {
-        return await GetGroupSubscribedEventListEvent();
-    }
-
-    private async Task<SubscribedEventListEvent> GetGroupSubscribedEventListEvent()
-    {
-        await LoadSubscribersAsync();
-
-        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
-
-        if (gAgentList.IsNullOrEmpty())
-        {
-            return new SubscribedEventListEvent
-            {
-                GAgentType = GetType()
-            };
-        }
-
-        if (gAgentList.Any(grain => grain == null))
-        {
-            // Only happened on test environment.
-            throw new InvalidOperationException("One or more grains in gAgentList are null.");
-        }
-
-        var dict = new ConcurrentDictionary<Type, List<Type>>();
-        foreach (var gAgent in gAgentList.AsParallel())
-        {
-            var eventList = await gAgent.GetAllSubscribedEventsAsync();
-            dict[gAgent.GetType()] = eventList ?? [];
-        }
-
-        return new SubscribedEventListEvent
-        {
-            Value = dict.ToDictionary(),
-            GAgentType = GetType()
-        };
+        var streamOfThisGAgent = GetStreamOfCurrentGAgent();
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        // TODO: Get event type list from handles.
+        return new SubscribedEventListEvent();
     }
 
     [AllEventHandler]
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
-        await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
+        await SendEventToSelfStreamAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
     protected virtual async Task OnRegisterAgentAsync(Guid agentGuid)
@@ -140,6 +111,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             var handleId = handle.HandleId;
             Observers[observer][streamId] = handleId;
         }
+
+        _parentStreamId.State = streamId;
     }
 
     public sealed override async Task OnActivateAsync(CancellationToken cancellationToken)
@@ -159,9 +132,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await UpdateObserverList();
 
         // Register to itself.
-        var agentGuid = this.GetPrimaryKey();
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        var streamOfThisGAgent = GetStreamOfCurrentGAgent();
         if ((await streamOfThisGAgent.GetAllSubscriptionHandles()).Count == 0)
         {
             foreach (var observer in Observers.Keys)
@@ -169,15 +140,10 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
                 await streamOfThisGAgent.SubscribeAsync(observer);
             }
         }
-
-        _stateSaveTimer =
-            this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        _stateSaveTimer.Dispose();
-        await SaveSubscriberAsync(cancellationToken);
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
@@ -201,5 +167,13 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await HandleStateChangedAsync();
         //TODO:  need optimize use kafka,ensure Es written successfully
         await EventDispatcher.PublishAsync(State, this.GetGrainId().ToString());
+    }
+
+    private IAsyncStream<EventWrapperBase> GetStreamOfCurrentGAgent()
+    {
+        var agentGuid = this.GetPrimaryKey();
+        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        return streamOfThisGAgent;
     }
 }
