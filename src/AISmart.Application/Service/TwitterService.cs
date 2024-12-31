@@ -38,7 +38,7 @@ public class TwitterService : ApplicationService, ITwitterService
         await groupAgent.RegisterAsync(twitterAgent);
         await groupAgent.RegisterAsync(socialAgent);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
     }
     
     public async Task UnbindTwitterAccountAsync(UnbindTwitterAccountDto unbindTwitterAccountDto)
@@ -48,7 +48,7 @@ public class TwitterService : ApplicationService, ITwitterService
         await twitterAgent.UnbindTwitterAccount();
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(groupId);
-        await publishingAgent.UnpublishFromAsync(groupAgent);
+        await publishingAgent.UnregisterAsync(groupAgent);
     }
 
     public async Task PostTweetAsync(PostTweetDto postTweetDto)
