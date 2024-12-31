@@ -170,8 +170,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             }
         }
 
-        _stateSaveTimer =
-            this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+        //_stateSaveTimer =
+        //    this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
