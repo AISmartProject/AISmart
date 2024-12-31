@@ -53,26 +53,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await OnUnregisterAgentAsync(gAgent.GetPrimaryKey());
     }
 
-    public async Task<IAsyncStream<EventWrapperBase>> GetStreamAsync()
-    {
-        var stream = GetStream(this.GetPrimaryKey());
-        var handles = await stream.GetAllSubscriptionHandles();
-        if (handles.Any())
-        {
-            foreach (var handle in handles)
-            {
-                await handle.UnsubscribeAsync();
-            }
-        }
-
-        foreach (var observer in Observers.Keys)
-        {
-            await stream.SubscribeAsync(observer);
-        }
-
-        return stream;
-    }
-
     public async Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false)
     {
         var eventHandlerMethods = GetEventHandlerMethods();
@@ -186,12 +166,17 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
         var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-        if (handles.Count == 0)
+        if (handles.Count != 0)
         {
-            foreach (var observer in Observers.Keys)
+            foreach (var handle in handles)
             {
-                await streamOfThisGAgent.SubscribeAsync(observer);
+                await handle.UnsubscribeAsync();
             }
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
         }
     }
 

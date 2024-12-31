@@ -65,9 +65,8 @@ public abstract partial class GAgentBase<TState, TEvent>
         foreach (var grainId in _subscribers.State)
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
-            var stream = await gAgent.GetStreamAsync();
-            var handles = await stream.GetAllSubscriptionHandles();
-            var count = handles.Count;
+            await gAgent.ActivateAsync();
+            var stream = GetStream(grainId.GetGuidKey());
             await stream.OnNextAsync(eventWrapper);
         }
     }
