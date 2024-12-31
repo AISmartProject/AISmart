@@ -34,9 +34,9 @@ public abstract partial class GAgentBase<TState, TEvent>
                 var streamId = (StreamId)streamIdValue!;
 
                 _correlationId = eventType.CorrelationId;
-                if (_streamIdDictionary.TryAdd(_correlationId!.Value, streamId))
+                if (_correlationId != null)
                 {
-                    ;
+                    _streamIdDictionary.TryAdd(_correlationId.Value, streamId);
                 }
 
                 var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
