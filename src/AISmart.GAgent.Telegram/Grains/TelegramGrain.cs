@@ -1,15 +1,14 @@
 using System.Threading.Tasks;
-using AISmart.Dto;
-using AISmart.Grains;
-using AISmart.Options;
-using AISmart.Provider;
+using AISmart.GAgent.Telegram.Dtos;
+using AISmart.GAgent.Telegram.Options;
+using AISmart.GAgent.Telegram.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Orleans;
 using Orleans.Providers;
 
-namespace AISmart.Agent.Grains;
+namespace AISmart.GAgent.Telegram.Grains;
 
 [StorageProvider(ProviderName = "PubSubStore")]
 public class TelegramGrain : Grain<TelegramState>, ITelegramGrain

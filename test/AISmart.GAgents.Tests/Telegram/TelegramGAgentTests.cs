@@ -3,6 +3,8 @@ using AISmart.Agent.Grains;
 using AISmart.Application.Grains.Agents.Group;
 using AISmart.Application.Grains.Agents.Publisher;
 using AISmart.Events;
+using AISmart.GAgent.Telegram.Agent;
+using AISmart.GAgent.Telegram.Grains;
 using AISmart.GAgents.Tests;
 using AISmart.Grains;
 using AISmart.Sender;
@@ -22,7 +24,7 @@ public class TelegramGAgentTests : GAgentTestKitBase
         var txGrain = await Silo.CreateGrainAsync<TelegramGrain>(guid.ToString());
         Silo.AddProbe<ITelegramGrain>(_ => txGrain);
         var publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(guid);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
         Silo.AddProbe<IPublishingGAgent>(_ => publishingAgent);
         await publishingAgent.PublishEventAsync(new ReceiveMessageEvent
         {
@@ -42,7 +44,7 @@ public class TelegramGAgentTests : GAgentTestKitBase
         var txGrain = await Silo.CreateGrainAsync<TelegramGrain>(guid.ToString());
         Silo.AddProbe<ITelegramGrain>(_ => txGrain);
         var publishingAgent = await Silo.CreateGrainAsync<PublishingGAgent>(guid);
-        await publishingAgent.PublishToAsync(groupAgent);
+        await publishingAgent.RegisterAsync(groupAgent);
         Silo.AddProbe<IPublishingGAgent>(_ => publishingAgent);
         await publishingAgent.PublishEventAsync(new SendMessageEvent
         {

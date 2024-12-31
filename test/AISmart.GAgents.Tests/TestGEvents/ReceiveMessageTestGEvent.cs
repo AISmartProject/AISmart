@@ -1,4 +1,5 @@
 using AISmart.Agent.GEvents;
+using AISmart.GAgent.Telegram.Agent.GEvents;
 
 namespace AISmart.GAgents.Tests.TestGEvents;
 

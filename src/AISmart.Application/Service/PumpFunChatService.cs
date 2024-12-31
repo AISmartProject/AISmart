@@ -46,7 +46,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             _logger.LogInformation("ReceiveMessagesAsync4, publishingAgent:{groupAgentId}", JsonConvert.SerializeObject(publishingAgent));
             // await publishingAgent.ActivateAsync();
-            await publishingAgent.PublishToAsync(groupAgent);
+            await publishingAgent.RegisterAsync(groupAgent);
             // groupAgent.RegisterAsync(publishingAgent);
             // publishingAgent.GetDescriptionAsync();
             
