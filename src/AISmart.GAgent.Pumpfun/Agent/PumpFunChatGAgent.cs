@@ -22,7 +22,7 @@ public class PumpFunChatGAgent : MicroAIGAgent, IPumpFunChatGrain
     [EventHandler]
     public async Task HandleEventAsync(PumpFunReceiveMessageEvent @event)
     {
-        var response = string.Empty;
+        var response = _defaultReply;
         try
         {
             if (!@event.RequestMessage.IsNullOrEmpty())
@@ -45,7 +45,9 @@ public class PumpFunChatGAgent : MicroAIGAgent, IPumpFunChatGrain
             if (response != _defaultReply)
             {
                 RaiseEvent(new AIReceiveMessageGEvent()
-                    { Message = new MicroAIMessage(Role.User.ToString(), response) });
+                    { Message = new MicroAIMessage(Role.User.ToString(), @event.RequestMessage) });
+                RaiseEvent(new AIReceiveMessageGEvent()
+                    { Message = new MicroAIMessage(Role.Assistant.ToString(), response) });
             }
         }
     }
