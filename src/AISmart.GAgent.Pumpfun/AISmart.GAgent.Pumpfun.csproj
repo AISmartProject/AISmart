@@ -11,6 +11,7 @@
     <ItemGroup>
         <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
         <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
+        <ProjectReference Include="..\AISmart.GAgent.MicroAI\AISmart.GAgent.MicroAI.csproj" />
     </ItemGroup>
 
     <ItemGroup>
