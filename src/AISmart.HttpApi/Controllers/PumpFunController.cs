@@ -20,31 +20,31 @@ public class PumpFunController : AISmartController
 {
     private readonly ILogger<PumpFunController> _logger;
     private readonly IPumpFunChatService _pumpFunChatService;
-    
+
     public PumpFunController(ILogger<PumpFunController> logger, IPumpFunChatService pumpFunChatService)
     {
         _logger = logger;
         _pumpFunChatService = pumpFunChatService;
     }
-    
+
     [Authorize]
     [HttpPost]
     [Route("setGroup")]
-    public async Task<string> SetGroupsAsync(string chatId)
+    public async Task<string> SetGroupsAsync(string chatId, string bio)
     {
         _logger.LogInformation("PumpFunController SetGroupsAsync, chatId:{chatId}, botName:{botName}", chatId);
-        return await _pumpFunChatService.SetGroupsAsync(chatId);
+        return await _pumpFunChatService.SetGroupsAsync(chatId, bio);
     }
-    
-    
+
+
     [HttpPost]
     [Route("chat")]
     [Authorize]
-    public Task<PumpFunOutputDto> Chat([FromBody]PumpFunInputDto inputDto)
+    public Task<PumpFunOutputDto> Chat([FromBody] PumpFunInputDto inputDto)
     {
         var replyId = Guid.NewGuid().ToString();
         _logger.LogInformation("PumpFunController chat, UserIdentityName:{UserIdentityName}", User.Identity.Name);
-        _logger.LogInformation("PumpFunController chat, inputDto:{inputDto}",JsonConvert.SerializeObject(inputDto));
+        _logger.LogInformation("PumpFunController chat, inputDto:{inputDto}", JsonConvert.SerializeObject(inputDto));
 
         inputDto.ReplyId = replyId;
         _pumpFunChatService.ReceiveMessagesAsync(inputDto);
@@ -55,8 +55,8 @@ public class PumpFunController : AISmartController
         };
         return Task.FromResult(outputDto);
     }
-    
-    
+
+
     [Authorize]
     [HttpGet("search")]
     public Task<PumFunResponseDto> SearchByReplyId(string replyId)

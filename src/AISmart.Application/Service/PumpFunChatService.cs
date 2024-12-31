@@ -11,6 +11,7 @@ using AISmart.Dto;
 using AISmart.Events;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Dto;
+using AISmart.Grains;
 using AISmart.PumpFun;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
@@ -60,16 +61,22 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         }
     }
 
-    public async Task<string> SetGroupsAsync(string chatId)
+    public async Task<string> SetGroupsAsync(string chatId, string bio)
     {
         _logger.LogInformation("SetGroupsAsync, chatId:{chatId}", chatId);
         Guid groupAgentId = GuidUtil.StringToGuid(chatId);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
+        
         var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(groupAgentId);
+        
         _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}", chatId, pumpFunGAgent.GetGrainId());
         await pumpFunGAgent.SetPumpFunConfig(chatId);
         var autogenAgent=  _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());
 
+        var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(groupAgentId);
+        await pumpFunChatAgent.SetAgent(chatId, bio);
+        await groupAgent.RegisterAsync(pumpFunChatAgent);
+        
         _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}", chatId);
         autogenAgent.RegisterAgentEvent(typeof(PumpFunGAgent), [typeof(PumpFunSendMessageEvent)]);
         
