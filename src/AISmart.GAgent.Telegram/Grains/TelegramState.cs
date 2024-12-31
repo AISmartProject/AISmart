@@ -1,7 +1,7 @@
 using System;
 using Orleans;
 
-namespace AISmart.Grains;
+namespace AISmart.GAgent.Telegram.Grains;
 [GenerateSerializer]
 public class TelegramState
 {

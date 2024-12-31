@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AISmart.Application.Grains;
 using AISmart.GAgent.Autogen;
 using AiSmart.GAgent.SocialAgent;
+using AISmart.GAgent.Telegram;
 using AiSmart.GAgent.TestAgent;
 using Serilog;
 using Volo.Abp.AspNetCore.Serilog;

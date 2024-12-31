@@ -1,6 +1,6 @@
 using Orleans;
 
-namespace AISmart.Agent.GEvents;
+namespace AISmart.GAgent.Telegram.Agent.GEvents;
 [GenerateSerializer]
 public class SendMessageGEvent : MessageGEvent
 {

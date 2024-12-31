@@ -1,5 +1,6 @@
 ﻿using AISmart.Application.Grains;
 using AiSmart.GAgent.SocialAgent;
+using AISmart.GAgent.Telegram;
 using AISmart.CQRS;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
