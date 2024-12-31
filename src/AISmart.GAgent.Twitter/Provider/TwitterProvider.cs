@@ -3,126 +3,233 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using AElfScanServer.Worker.Core.Dtos;
+using AISmart.Dto;
 using AISmart.Options;
+using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Provider;
 
 public interface ITwitterProvider
 {
-    public  Task<List<Tweet>> GetLatestTwittersAsync(string sendUser, string userId, string sinceTweetId);
-
-    public Task<string> PostTwitterAsync(string sendUser, string message);
+    public Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret);
+    public Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret);
+    public Task<List<Tweet>> GetMentionsAsync(string userName);
 }
 
 
 public class TwitterProvider : ITwitterProvider, ISingletonDependency
 {
     private readonly ILogger<ITwitterProvider> _logger;
-    private readonly IOptionsMonitor<TwitterOptions> _telegramOptions;
-    public TwitterProvider(ILogger<ITwitterProvider> logger,IOptionsMonitor<TwitterOptions> telegramOptions)
+    private readonly IOptionsMonitor<TwitterOptions> _twitterOptions;
+    private readonly HttpClient _httpClient;
+    private readonly AESCipher _aesCipher;
+    
+    public TwitterProvider(ILogger<ITwitterProvider> logger, IOptionsMonitor<TwitterOptions> twitterOptions)
     {
         _logger = logger;
-        _telegramOptions = telegramOptions;
-    }
-
-    public async Task<List<Tweet>> GetLatestTwittersAsync(string sendUser, string userId, string sinceTweetId)
-    {
-        var bearerToken = GetAccount(sendUser);
-        string url = $"https://api.twitter.com/2/tweets"; 
-        int maxResults = 3; 
-        _logger.LogInformation($"twitterToken = {bearerToken}, userId = {userId},sinceTweetId = {sinceTweetId}");
-
-        using (var client = new HttpClient())
-        {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-            var requestUrl = $"{url}?max_results={maxResults}&since_id={{sinceTweetId}}";
-            var response = await client.GetAsync(requestUrl);
-          
-            if (response.Headers.Contains("x-rate-limit-limit"))
-            {
-                var rateLimit = response.Headers.GetValues("x-rate-limit-limit");
-                var rateLimitRemaining = response.Headers.GetValues("x-rate-limit-remaining");
-                var rateLimitReset = response.Headers.GetValues("x-rate-limit-reset");
-
-                _logger.LogInformation($"rateLimit = {rateLimit.First()}, rateLimitRemaining = {rateLimitRemaining.First()},rateLimitReset = {rateLimitReset.First()}");
-                if (rateLimitRemaining.First() == "0")
-                {
-                    var resetTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(rateLimitReset.First()));
-                    var waitTime = resetTime - DateTimeOffset.UtcNow;
-                    _logger.LogInformation($"waitTime {waitTime.TotalSeconds} ");
-                }
-            }
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation("responseBody: " + responseBody);
-                var responseData = JsonConvert.DeserializeObject<TwitterResponseDto>(responseBody);
-                return responseData.Tweets;
-            }
-          
-            string errorResponse = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning($"response failed，code: {response.StatusCode}, body: {errorResponse}");
-            return null;
-        }
+        _twitterOptions = twitterOptions;
+        _httpClient = new HttpClient();
+        string password = twitterOptions.CurrentValue.EncryptionPassword;
+        _aesCipher = new AESCipher(password);
     }
     
-    private string GetAccount(string accountName)
+    public async Task<List<Tweet>> GetMentionsAsync(string userName)
     {
-        var optionExists = _telegramOptions.CurrentValue.AccountDictionary.TryGetValue(accountName, out var account);
-        if (!optionExists)
+        var bearerToken = _twitterOptions.CurrentValue.BearerToken;
+        string query = $"@{userName}";
+        string encodedQuery = Uri.EscapeDataString(query);
+        string url = $"https://api.twitter.com/2/tweets/search/recent?query={encodedQuery}&tweet.fields=author_id,conversation_id&max_results=100";
+        
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+        try
         {
-            throw new UserFriendlyException($"Twitter Account {accountName} not found");
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("GetMentionsAsync Response: {resp}", responseBody);
+            var responseData = JsonConvert.DeserializeObject<TwitterResponseDto>(responseBody);
+            if (responseData?.Data != null)
+            {
+                return responseData.Data;
+            }
         }
-        return account;
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("GetMentionsAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+        
+        return new List<Tweet>();
     }
-
-
-    public async Task<string> PostTwitterAsync(string sendUser, string message)
+    
+    private string GetDecryptedData(string data)
     {
-        var tweetData = new
+        try
         {
-            text = message
-        };
-        var jsonContent = JsonConvert.SerializeObject(tweetData);
-   
-        using (var httpClient = new HttpClient())
+            return  _aesCipher.Decrypt(data);
+        }
+        catch (Exception e)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.twitter.com/2/tweets")
-            {
-                Content = new StringContent(jsonContent, Encoding.UTF8, "application/json")
-            };
-            var bearerToken = GetAccount(sendUser);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-   
-            // 发送请求
-            HttpResponseMessage response = await httpClient.SendAsync(request);
-   
-            // 处理响应
-            if (response.IsSuccessStatusCode)
-            {
-                Console.WriteLine("Successfully posted tweet!");
-                var responseData = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("Response: " + responseData);
-            }
-            else
-            {
-                Console.WriteLine($"Failed to post tweet: {response.StatusCode}");
-                var errorData = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("Error: " + errorData);
-            }
+            _logger.LogError("GetDecryptedData Error: {err}, data: {data}", e.Message, data);
         }
         return "";
     }
+    
+    public async Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret)
+    {
+        var url = "https://api.twitter.com/2/tweets";
 
-   
-       
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
+
+        var jsonBody = JsonConvert.SerializeObject(new { text = message });
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        };
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseData = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("PostTwitterAsync Response: {resp}", responseData);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("PostTwitterAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+    }
+    
+    public async Task<string> GetUserName(string accessToken, string accessTokenSecret)
+    {
+        var url = "https://api.x.com/2/users/me";
+
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("GET", url, accessToken, accessTokenSecret);
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("GetUserName Response: {res[}", responseBody);
+            var responseData = JsonConvert.DeserializeObject<UserInfoDto>(responseBody);
+            if (responseData?.UserName != null)
+            {
+                return responseData.UserName;
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("Request GetUserName Error, err: {err}", e.Message);
+        }
+
+        return "";
+    }
+    
+    public async Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret)
+    {
+        var url = "https://api.twitter.com/2/tweets";
+        
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
+        
+        var jsonBody = JsonConvert.SerializeObject(new
+        {
+            text = message,
+            reply = new
+            {
+                in_reply_to_tweet_id = tweetId
+            }
+        });
+        
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        };
+        
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseData = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation(responseData);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("ReplyAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+    }
+    
+    private string GenerateOAuthHeader(string httpMethod, string url, string accessToken, string accessTokenSecret, Dictionary<string, string>? additionalParams = null)
+    {
+        var consumerKey = _twitterOptions.CurrentValue.ConsumerKey;
+        var consumerSecret = _twitterOptions.CurrentValue.ConsumerSecret;
+      
+        var oauthParameters = new Dictionary<string, string>
+        {
+            { "oauth_consumer_key", consumerKey },
+            { "oauth_nonce", Guid.NewGuid().ToString("N") },
+            { "oauth_signature_method", "HMAC-SHA1" },
+            { "oauth_timestamp", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString() },
+            { "oauth_token", accessToken },
+            { "oauth_version", "1.0" }
+        };
+        
+        var allParams = new Dictionary<string, string>(oauthParameters);
+        if (additionalParams != null)
+        {
+            foreach (var param in additionalParams)
+            {
+                allParams.Add(param.Key, param.Value);
+            }
+        }
+        
+        var sortedParams = allParams.OrderBy(kvp => kvp.Key).ThenBy(kvp => kvp.Value);
+        var parameterString = string.Join("&", sortedParams.Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
+
+        var signatureBaseString = $"{httpMethod.ToUpper()}&{Uri.EscapeDataString(url)}&{Uri.EscapeDataString(parameterString)}";
+        
+        var signingKey = $"{Uri.EscapeDataString(consumerSecret)}&{Uri.EscapeDataString(accessTokenSecret)}";
+        
+        string oauthSignature;
+        using (var hasher = new HMACSHA1(Encoding.ASCII.GetBytes(signingKey)))
+        {
+            var hash = hasher.ComputeHash(Encoding.ASCII.GetBytes(signatureBaseString));
+            oauthSignature = Convert.ToBase64String(hash);
+        }
+        
+        allParams.Add("oauth_signature", oauthSignature);
+
+        var authHeader = "OAuth " + string.Join(", ",
+            allParams.OrderBy(kvp => kvp.Key)
+                    .Where(kvp => kvp.Key.StartsWith("oauth_"))
+                    .Select(kvp => $"{Uri.EscapeDataString(kvp.Key)}=\"{Uri.EscapeDataString(kvp.Value)}\""));
+
+        return authHeader;
+    }
+    
 }
+

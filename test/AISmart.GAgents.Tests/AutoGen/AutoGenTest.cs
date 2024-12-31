@@ -35,7 +35,7 @@ public class AutoGenTest : GAgentTestKitBase
         Silo.AddProbe<IPublishingGAgent>(_ => publishingGAgent);
         Silo.AddProbe<IAutoGenExecutor>(_ => autoGenExecutor);
 
-        await publishingGAgent.PublishToAsync(groupGAgent);
+        await publishingGAgent.RegisterAsync(groupGAgent);
 
         Silo.AddStreamProbe<AutoGenInternalEventBase>();
 

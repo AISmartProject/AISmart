@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Orleans;
 
-namespace AElfScanServer.Worker.Core.Dtos;
+namespace AISmart.Dto;
 
+[GenerateSerializer]
 public class Tweet
 {
     
@@ -28,7 +30,7 @@ public class Meta
 public class TwitterResponseDto
 {
     [JsonProperty("data")]
-    public List<Tweet> Tweets { get; set; }
+    public List<Tweet> Data { get; set; }
     
     [JsonProperty("meta")]
     public Meta Meta { get; set; }
