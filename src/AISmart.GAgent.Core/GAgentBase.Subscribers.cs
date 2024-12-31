@@ -34,7 +34,10 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SaveSubscriberAsync(CancellationToken cancellationToken)
     {
-        await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
-            _subscribers);
+        if (!_subscribers.State.IsNullOrEmpty())
+        {
+            await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscribersStateName, this.GetGrainId(),
+                _subscribers);
+        }
     }
 }
