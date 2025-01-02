@@ -138,3 +138,9 @@ public class JudgeScoreCompleteGEvent : EventBase
 {
     [Id(0)] public Guid JudgeGrainId { get; set; }
 }
+
+[GenerateSerializer]
+public class NamingContestComplete : EventBase
+{
+    
+}
