@@ -6,10 +6,13 @@ namespace AISmart.CQRS.Dto;
 
 public class AIChatLogIndexDto : IRequest
 {
-    [Keyword] public string Id{ get; set; }
-    [Keyword] public string GroupId { get; set; }
-    [Keyword] public string From { get; set; }
-    [Keyword] public string Request { get; set; }
-    [Keyword] public string Response { get; set; }
-    [Keyword] public DateTime Ctime { get; set; }
+    public string Id{ get; set; }
+    public string GroupId { get; set; }
+    public string AgentId { get; set; }
+    public string AgentName { get; set; }
+    public string RoleType { get; set; }
+    public string AgentResponsibility{ get; set; }
+    public string Request { get; set; }
+    public string Response { get; set; }
+    public DateTime Ctime { get; set; }
 }

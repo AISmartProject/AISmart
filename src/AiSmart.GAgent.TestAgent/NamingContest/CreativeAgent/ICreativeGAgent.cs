@@ -9,4 +9,7 @@ public interface ICreativeGAgent:IMicroAIGAgent
     Task<string> GetCreativeNaming();
 
     Task<string> GetCreativeName();
+    
+    Task SetGroupId(Guid guid);
+
 }

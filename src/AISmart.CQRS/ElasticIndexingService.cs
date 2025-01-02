@@ -236,7 +236,7 @@ public class ElasticIndexingService : IIndexingService
         if (!input.AgentId.IsNullOrEmpty())
         {
             mustQuery.Add(q => q.Term(i
-                => i.Field(f => f.From).Field(input.AgentId)));
+                => i.Field(f => f.AgentId).Field(input.AgentId)));
         }
         
         if (input.Ids?.Count > 0)
