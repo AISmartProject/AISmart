@@ -31,7 +31,8 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
 
-        List<Tuple<string, string>> creativeNaming = State.CreativeList.Select(creativeInfo => new Tuple<string, string>(creativeInfo.CreativeName, creativeInfo.Naming)).ToList();
+        List<Tuple<string, string>> creativeNaming = State.CreativeList.Select(creativeInfo =>
+            new Tuple<string, string>(creativeInfo.CreativeName, creativeInfo.Naming)).ToList();
 
         await PublishAsync(new GroupChatStartGEvent()
             { IfFirstStep = false, ThemeDescribe = @event.Message, CreativeNameings = creativeNaming });
@@ -40,9 +41,9 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
         await GenerateDiscussionCount();
 
-        await DispatchCreativeDiscussion();
-
         await ConfirmEvents();
+
+        await DispatchCreativeDiscussion();
     }
 
     [EventHandler]
@@ -104,6 +105,10 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
                 AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
         });
 
+        RaiseEvent(new TrafficGrainCompleteSEvent() { CompleteGrainId = @event.JudgeGuid });
+
+        await ConfirmEvents();
+        
         await DispatchCreativeToAnswer();
     }
 
@@ -117,10 +122,9 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
                 ChatMessage = new MicroAIMessage(Role.User.ToString(),
                     AssembleMessageUtil.AssembleCreativeAnswer(@event.CreativeName, @event.Answer))
             });
-
-            await ConfirmEvents();
         }
 
+        await ConfirmEvents();
         await DispatchJudgeAsking();
     }
 
@@ -136,7 +140,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             await PublishAsync(new NamingContestComplete());
         }
     }
-    
+
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -149,24 +153,38 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
     private async Task DispatchCreativeDiscussion()
     {
-        var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
-            .ToList();
-        if (creativeList.Count == 0 && State.DiscussionCount == 0)
+        var random = new Random();
+        var probility = random.Next(0, 10);
+        var creativeList = new List<CreativeInfo>();
+        if (probility > 7)
+        {
+            creativeList = State.CreativeList;
+        }
+        else
+        {
+            creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
+                .ToList();
+        }
+
+        if (State.DiscussionCount == 0)
         {
             var summaryCreativeId = await SelectCreativeToSummary();
             await PublishAsync(new CreativeSummaryGEvent() { CreativeId = summaryCreativeId });
 
             RaiseEvent(new ClearCalledGrainsSEvent());
-            //
-            // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
-            // await DispatchJudgeAgent();
             return;
         }
 
-        var random = new Random();
+        if (creativeList.Count == 0 && State.DiscussionCount > 0)
+        {
+            creativeList = State.CreativeList;
+            RaiseEvent(new ClearCalledGrainsSEvent());
+        }
+
         var randomId = random.Next(0, creativeList.Count());
         var selectCreative = creativeList[randomId];
         await PublishAsync(new DiscussionGEvent() { CreativeId = selectCreative.CreativeGrainId });
+        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectCreative.CreativeGrainId });
 
         await ConfirmEvents();
     }

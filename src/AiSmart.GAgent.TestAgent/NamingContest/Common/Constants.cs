@@ -28,6 +28,7 @@ public static class NamingConstants
                                                     c. Highlight the advantages or disadvantages of a name suggested by a team member.
                                                     (2) There is a 30% probability of discussing one of the following:
                                                     a. Engage in casual conversation with other group members or reply to their messages.
+                                                    Please select one of the topics and directly output its content.
                                                     """;
 
     public static string TrafficSelectCreativePrompt = "Please select one of the more capable players from the above discussion to summarize the discussion. Only output the selected player's name without any additional information.";
@@ -49,6 +50,7 @@ public static class NamingConstants
                                              (1) A question about the conclusion.
                                              (2) A question about the connection between the conclusion and real-time events.
                                              (3) A question about the discussion process.
+                                             Please directly output your question without any additional information.
                                              """;
 
     public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the question posed by the previous judge.";

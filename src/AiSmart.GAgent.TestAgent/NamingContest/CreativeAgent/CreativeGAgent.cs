@@ -318,6 +318,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(CreativeAnswerQuestionGEvent @event)
     {
+        if (@event.CreativeId != this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         var answer = string.Empty;
         try
         {

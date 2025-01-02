@@ -45,7 +45,7 @@ public class TelegramService : ApplicationService, ITelegramService
     private static List<ICreativeGAgent> _creativeList = new List<ICreativeGAgent>();
     private static List<IJudgeGAgent> _judgeList = new List<IJudgeGAgent>();
     private static List<IFirstTrafficGAgent> _firstTrafficList = new List<IFirstTrafficGAgent>();
-    private static List<IPublishingGAgent>  _firstStepPublishingList = new List<IPublishingGAgent>();
+    private static List<IPublishingGAgent> _firstStepPublishingList = new List<IPublishingGAgent>();
     private static List<ISecondTrafficGAgent> _secondTrafficList = new List<ISecondTrafficGAgent>();
 
 
@@ -64,7 +64,7 @@ public class TelegramService : ApplicationService, ITelegramService
         // await SetGroupsAsync();
         // To filter only messages that mention the bot, check if message.Entities.type == "mention".
         // Group message auto-reply, just add the bot as a group admin.
-        _logger.LogInformation("IPublishingGAgent {token}",token);
+        _logger.LogInformation("IPublishingGAgent {token}", token);
         {
             if (NeedReply(updateMessage, token))
             {
@@ -371,46 +371,40 @@ public class TelegramService : ApplicationService, ITelegramService
     public async Task StartFirstRoundTestAsync()
     {
         var groupList = new List<IStateGAgent<GroupAgentState>>();
-        var groupCount = 1;
+        var groupCount = 2;
         for (var i = 0; i < groupCount; i++)
         {
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
             groupList.Add(groupAgent);
-            
+
             var traffic = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
             _firstTrafficList.Add(traffic);
             await groupAgent.RegisterAsync(traffic);
-            
+
             var publishAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             await publishAgent.RegisterAsync(groupAgent);
             _firstStepPublishingList.Add(publishAgent);
         }
-        
-        for (var i = 0; i < _creativeList.Count / groupCount; i++)
+
+        for (var i = 0; i < _creativeList.Count; i++)
         {
-            for (var groupIndex = 0; groupIndex < groupCount; groupIndex++)
-            {
-                var creative = _creativeList[i * groupCount + groupIndex]; 
-                await groupList[groupIndex].RegisterAsync(creative);
-                await _firstTrafficList[groupIndex]
-                    .AddCreativeAgent(await creative.GetCreativeName(), creative.GetPrimaryKey());
-            }
+            var creative = _creativeList[i];
+            await groupList[i % groupCount].RegisterAsync(creative);
+            await _firstTrafficList[i % groupCount]
+                .AddCreativeAgent(await creative.GetCreativeName(), creative.GetPrimaryKey());
         }
-        
-        for (var i = 0; i < _judgeList.Count / groupCount; i++)
+
+        for (var i = 0; i < _judgeList.Count; i++)
         {
-            for (var groupIndex = 0; groupIndex < groupCount; groupIndex++)
-            {
-                var judge = _judgeList[i * groupCount + groupIndex]; 
-                await groupList[groupIndex].RegisterAsync(judge);
-                await _firstTrafficList[groupIndex].AddJudgeAgent(judge.GetPrimaryKey());
-            }
+            var judge = _judgeList[i];
+            await groupList[i % groupCount].RegisterAsync(judge);
+            await _firstTrafficList[i % groupCount].AddJudgeAgent(judge.GetPrimaryKey());
         }
 
         for (var i = 0; i < groupCount; i++)
         {
             var groupAgent = _firstStepPublishingList[i];
-            await groupAgent.PublishEventAsync(new GroupStartEvent(){Message="为一款主打年轻人市场的便携式智能翻译器起名字."});
+            await groupAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
         }
     }
 
@@ -419,7 +413,9 @@ public class TelegramService : ApplicationService, ITelegramService
         var groupCount = 2;
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
         var secondTraffic = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
-
+        await secondTraffic.SetAgent("secondTraffic", "");
+        await secondTraffic.SetAskJudgeNumber(2);
+        
         await groupAgent.RegisterAsync(secondTraffic);
         for (var i = 0; i < groupCount; i++)
         {
@@ -434,7 +430,7 @@ public class TelegramService : ApplicationService, ITelegramService
             await groupAgent.RegisterAsync(judge);
             await secondTraffic.AddJudgeAgent(judge.GetPrimaryKey());
         }
-        
+
         var publishAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishAgent.RegisterAsync(groupAgent);
 
