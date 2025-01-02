@@ -10,6 +10,6 @@ public interface ITelegramService
     
     public Task SetGroupsAsync();
     Task RegisterBotAsync(RegisterTelegramDto registerTelegramDto);
-    Task SetNamingGroupAsync();
+    Task SetNamingGroupAsync(string groupName);
     Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto);
 }
