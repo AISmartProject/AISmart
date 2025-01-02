@@ -33,22 +33,6 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, Agents.GEventBase>, 
     }
 
     [EventHandler]
-    public async Task HandleEventAsync(PumpFunReceiveMessageEvent @event)
-    { 
-        _logger.LogInformation("PumpFunReceiveMessageEvent:" + JsonConvert.SerializeObject(@event));
-       RaiseEvent(new PumpFunReceiveMessageGEvent
-       {
-           Id = Guid.Parse(@event.ReplyId),
-           ChatId = @event.ChatId,
-           ReplyId = @event.ReplyId,
-           RequestMessage = @event.RequestMessage
-       });
-       await ConfirmEvents();
-       
-       _logger.LogInformation("PumpFunReceiveMessageEvent2:" + JsonConvert.SerializeObject(@event));
-    }
-    
-    [EventHandler]
     public async Task HandleEventAsync(PumpFunSendMessageEvent @event)
     {
         _logger.LogInformation("PumpFunSendMessageEvent:" + JsonConvert.SerializeObject(@event));
