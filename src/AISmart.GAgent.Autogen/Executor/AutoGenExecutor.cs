@@ -243,7 +243,7 @@ public class AutoGenExecutor : Grain, IAutoGenExecutor
 
     private async Task PublishInternalEvent(AutoGenInternalEventBase publishData)
     {
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         var stream = StreamProvider.GetStream<AutoGenInternalEventBase>(streamId);
         await stream.OnNextAsync(publishData);
     }

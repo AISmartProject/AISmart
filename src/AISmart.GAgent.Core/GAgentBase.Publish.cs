@@ -22,7 +22,7 @@ public abstract partial class GAgentBase<TState, TEvent>
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         var eventId = Guid.NewGuid();
         switch (isTop)
         {
@@ -56,7 +56,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
         var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
         var count = handles.Count;
         foreach (var handle in handles)
@@ -84,7 +84,7 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
             await gAgent.ActivateAsync();
-            var stream = GetStream(grainId.GetGuidKey());
+            var stream = GetStream(grainId.ToString());
             await stream.OnNextAsync(eventWrapper);
         }
     }

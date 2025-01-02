@@ -36,12 +36,12 @@ public abstract partial class GAgentBase<TState, TEvent>
                 _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
                     ?.GetValue(item);
                 if (_correlationId != null &&
-                    StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey()) != streamId)
+                    StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString()) != streamId)
                 {
                     _streamIdDictionary.TryAdd(_correlationId.Value, streamId);
                 }
 
-                var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+                var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
                 eventType.StreamId = streamIdOfThisGAgent;
 
                 if (parameter.ParameterType == eventType.GetType())
