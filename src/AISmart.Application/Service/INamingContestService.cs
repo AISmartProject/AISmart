@@ -136,7 +136,7 @@ public class NamingContestService : ApplicationService,INamingContestService
 
                 MicroAIGAgentState microAigAgentState = await creativeAgent.GetAgentState();
                 
-                _ = trafficAgent.AddCreativeAgent(microAigAgentState.AgentName,creativeAgent.GetPrimaryKey());
+                _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(),creativeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(creativeAgent);
             }
