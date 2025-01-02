@@ -53,7 +53,7 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
                 HostName = State.AgentName,
             });
 
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Naming, this.GetPrimaryKey(),
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummary, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, summaryReply));
 
             RaiseEvent(new AddHistoryChatSEvent()

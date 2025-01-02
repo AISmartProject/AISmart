@@ -119,6 +119,28 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         await DispatchJudgeAgent();
     }
+    
+    [EventHandler]
+    public async Task HandleEventAsync(NamingLogEvent @event)
+    {
+        // if (State.CurrentGrainId != @event.GrainGuid)
+        // {
+        //     Logger.LogError(
+        //         $"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
+        //     return;
+        // }
+
+        base.RaiseEvent(new AddChatHistorySEvent()
+        {
+            ChatMessage = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleDebateContent(@event.AgentName, @event.Content))
+        });
+
+
+        await base.ConfirmEvents();
+
+        await DispatchHostAgent();
+    }
 
     public Task<MicroAIGAgentState> GetStateAsync()
     {
@@ -218,6 +240,24 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
+    }
+    
+    private async Task DispatchHostAgent()
+    {
+        var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
+        if (hostAgentList.Count == 0)
+        {
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummary, Guid.Empty));
+            return;
+        }
+
+        var random = new Random();
+        var index = random.Next(0, hostAgentList.Count);
+        var selectedId = hostAgentList[index];
+        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
+        await base.ConfirmEvents();
+
+        await PublishAsync(new HostSummaryGEvent(){ HostId = selectedId, History = State.ChatHistory });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)

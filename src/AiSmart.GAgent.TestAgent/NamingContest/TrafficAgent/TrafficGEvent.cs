@@ -1,3 +1,4 @@
+using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 
@@ -87,6 +88,10 @@ public class DiscussionCompleteGEvent : EventBase
 public class HostSummaryGEvent : EventBase
 {
     [Id(0)] public Guid HostId { get; set; }
+    
+    [Id(1)] public List<MicroAIMessage> History { get; set; } = new List<MicroAIMessage>();
+    
+    
 }
 
 [GenerateSerializer]
