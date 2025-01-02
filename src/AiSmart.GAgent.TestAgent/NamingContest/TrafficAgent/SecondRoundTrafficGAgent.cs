@@ -89,7 +89,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await base.ConfirmEvents();
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartAsking, Guid.Empty));
 
-        await DispatchJudgeAgent();
+        await DispatchJudgeAsking();
     }
 
     [EventHandler]
@@ -107,8 +107,39 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
         });
+
+        await DispatchCreativeToAnswer();
     }
 
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeAnswerCompleteGEvent @event)
+    {
+        if (!@event.Answer.IsNullOrEmpty())
+        {
+            RaiseEvent(new AddChatHistorySEvent()
+            {
+                ChatMessage = new MicroAIMessage(Role.User.ToString(),
+                    AssembleMessageUtil.AssembleCreativeAnswer(@event.CreativeName, @event.Answer))
+            });
+
+            await base.ConfirmEvents();
+        }
+
+        await DispatchJudgeAsking();
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeScoreCompleteGEvent @event)
+    {
+        RaiseEvent(new AddScoreJudgeCount());
+        await base.ConfirmEvents();
+
+        if (State.JudgeScoreCount == State.JudgeAgentList.Count)
+        {
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
+        }
+    }
+    
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -125,9 +156,10 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             .ToList();
         if (creativeList.Count == 0 && State.DiscussionCount == 0)
         {
-            // todo: summary
             var summaryCreativeId = await SelectCreativeToSummary();
             await PublishAsync(new CreativeSummaryGEvent() { CreativeId = summaryCreativeId });
+
+            RaiseEvent(new ClearCalledGrainsSEvent());
             //
             // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
             // await DispatchJudgeAgent();
@@ -185,13 +217,14 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         return Task.CompletedTask;
     }
 
-    private async Task DispatchJudgeAgent()
+    private async Task DispatchJudgeAsking()
     {
         var creativeList = State.JudgeAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
-        if (State.AskJudgeCount == 0)
+        if (State.AskJudgeCount == State.CalledGrainIdList.Count)
         {
-            // todo: score
-            // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartScore, Guid.Empty));
+
+            await PublishAsync(new JudgeScoreGEvent() { History = State.ChatHistory });
             return;
         }
 

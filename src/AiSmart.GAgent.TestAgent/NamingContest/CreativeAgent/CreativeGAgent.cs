@@ -307,12 +307,12 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         RaiseEvent(new AddHistoryChatSEvent()
         {
-            Message = new MicroAIMessage(Role.User.ToString(), AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
+            Message = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
         });
-        
     }
 
     [EventHandler]
@@ -336,9 +336,34 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             if (!answer.IsNullOrWhiteSpace())
             {
+                RaiseEvent(new AddHistoryChatSEvent()
+                {
+                    Message = new MicroAIMessage(Role.User.ToString(),
+                        AssembleMessageUtil.AssembleCreativeAnswer(State.AgentName, answer))
+                });
                 
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                    NamingRoleType.Contestant, State.AgentName, answer));
             }
+
+            await PublishAsync(new CreativeAnswerCompleteGEvent()
+                { CreativeId = this.GetPrimaryKey(), CreativeName = State.AgentName, Answer = answer });
         }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeAnswerCompleteGEvent @event)
+    {
+        if (@event.CreativeName.IsNullOrWhiteSpace())
+        {
+            return;
+        }
+
+        RaiseEvent(new AddHistoryChatSEvent()
+        {
+            Message = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleCreativeAnswer(@event.CreativeName, @event.Answer))
+        });
     }
 
     public Task<MicroAIGAgentState> GetStateAsync()

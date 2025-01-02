@@ -20,7 +20,15 @@ public static class NamingConstants
     public static string CreativeSummaryHistoryPrompt =
         "Congratulations on winning the last naming contest. Please state the name you chose and provide a brief summary of your winning experience and the lessons learned from your opponent's failure.";
 
-    public static string CreativeDiscussionPrompt = "";
+    public static string CreativeDiscussionPrompt = """
+                                                    Next, you will collaborate with others in a group to come up with a better name. Within this group, you can discuss the following topics:
+                                                    (1) There is a 70% probability of discussing one of the following:
+                                                    a. Propose a better name
+                                                    b. Discuss the name already proposed
+                                                    c. Highlight the advantages or disadvantages of a name suggested by a team member.
+                                                    (2) There is a 30% probability of discussing one of the following:
+                                                    a. Engage in casual conversation with other group members or reply to their messages.
+                                                    """;
 
     public static string TrafficSelectCreativePrompt = "Please select one of the more capable players from the above discussion to summarize the discussion. Only output the selected player's name without any additional information.";
 
@@ -44,4 +52,8 @@ public static class NamingConstants
                                              """;
 
     public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the question posed by the previous judge.";
+    
+    public static string JudgeScorePrompt = """
+                                            Please score the name chosen by this group based on the naming theme and the contestants' answers to the judges' questions. The score should be between 1-100, allowing one decimal place. Please output the score directly without any additional information.
+                                            """;
 }

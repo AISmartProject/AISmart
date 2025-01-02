@@ -18,6 +18,7 @@ public class SecondTrafficState : StateBase
     [Id(9)] public string AgentName { get; set; }
     [Id(10)] public string AgentDescription { get; set; }
     [Id(11)] public string Summary { get; set; }
+    [Id(12)] public  int JudgeScoreCount { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -95,4 +96,10 @@ public class SecondTrafficState : StateBase
         AgentName = @event.AgentName;
         AgentDescription = @event.Description;
     }
+
+    public void Apply(AddScoreJudgeCount @event)
+    {
+        JudgeScoreCount += 1;
+    }
+
 }

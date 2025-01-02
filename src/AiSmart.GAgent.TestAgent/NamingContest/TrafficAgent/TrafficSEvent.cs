@@ -119,3 +119,9 @@ public class DiscussionCountReduce : TrafficEventSourcingBase
 {
     
 }
+
+[GenerateSerializer]
+public class AddScoreJudgeCount : TrafficEventSourcingBase
+{
+    
+}

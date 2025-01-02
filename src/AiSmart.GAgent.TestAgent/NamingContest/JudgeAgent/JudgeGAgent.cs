@@ -134,11 +134,41 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
                     NamingRoleType.Judge, State.AgentName, reply));
             }
+
             await PublishAsync(new JudgeAskingCompleteGEvent()
             {
                 JudgeGuid = this.GetPrimaryKey(),
                 Reply = reply,
             });
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeScoreGEvent @event)
+    {
+        var defaultScore = "84.3";
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.JudgeScorePrompt, @event.History);
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                defaultScore = response.Content;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "[JudgeGAgent] JudgeScoreGEvent error");
+        }
+        finally
+        {
+            if (!defaultScore.IsNullOrWhiteSpace())
+            {
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeScore, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, defaultScore));
+            }
+
+            await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
         }
     }
 }
