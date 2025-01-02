@@ -270,7 +270,7 @@ Global
 		{ADFE5268-C662-450B-A727-A6CC974FEE15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ADFE5268-C662-450B-A727-A6CC974FEE15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADFE5268-C662-450B-A727-A6CC974FEE15}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {ADFE5268-C662-450B-A727-A6CC974FEE15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADFE5268-C662-450B-A727-A6CC974FEE15}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
