@@ -287,7 +287,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         var history = new List<MicroAIMessage>()
         {
             new MicroAIMessage(Role.User.ToString(),
-                $"The theme of this naming contest is: \"{JsonConvert.ToString(@event.VoteMessage)}\""),
+                $"The theme of this naming contest is: \"{JsonConvert.SerializeObject(@event.VoteMessage)}\""),
         };
 
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -295,7 +295,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content;
+            var namingReply = message.Content.Replace("\"","");
             var winner = Guid.Parse(namingReply);
                 
             await PublishAsync(new VoteCharmingCompleteEvent()

@@ -23,6 +23,6 @@ public static class NamingConstants
     public static string CreativeDiscussionPrompt = "";
     
     public static string SummaryPrompt = "";
-    public static string VotePrompt = "The below JSON contains each GUID with their names and associated conversations. Please select the GUID that is most appealing to you";
+    public static string VotePrompt = "The below JSON contains each GUID with their names and associated conversations. Please select the GUID that is most appealing to you,Just return guid";
 
 }
