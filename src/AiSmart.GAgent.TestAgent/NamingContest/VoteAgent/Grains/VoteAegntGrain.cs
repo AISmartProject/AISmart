@@ -3,6 +3,7 @@ using AISmart.Dapr;
 using AISmart.Provider;
 using AutoGen.Core;
 using AutoGen.OpenAI;
+using AutoGen.SemanticKernel;
 using Newtonsoft.Json;
 using Orleans.Streams;
 
@@ -11,7 +12,7 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent.Grains;
 public class VoteAegntGrain : Grain,IVoteAgentGrain
 {
     private IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
-    private MiddlewareStreamingAgent<OpenAIChatAgent>? _agent;
+    private MiddlewareStreamingAgent<SemanticKernelAgent>? _agent;
     private IAIAgentProvider _aiAgentProvider;
     public async Task VoteAgentAsync(VoteCharmingEvent voteCharmingEvent)
     {
