@@ -21,9 +21,15 @@ public class InitAgentMessageSEvent : ManagerSEvent
  
 }
 
+[GenerateSerializer]
+public class ClearAllAgentMessageSEvent : ManagerSEvent
+{
+    
+}
+
 
 [GenerateSerializer]
-public class IniNetWorkMessageSEvent : ManagerSEvent
+public class InitNetWorkMessageSEvent : ManagerSEvent
 {
     [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
     
@@ -42,4 +48,10 @@ public class IniNetWorkMessageSEvent : ManagerSEvent
     
     [Id(7)] public string GroupAgentId { get; set; }
  
+}
+
+[GenerateSerializer]
+public class ClearAllNetWorkMessageSEvent : ManagerSEvent
+{
+    
 }

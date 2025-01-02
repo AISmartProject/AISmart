@@ -34,10 +34,17 @@ public class ManagerGAgent : GAgentBase<ManagerAgentState, ManagerSEvent>, IMana
         
     }
 
-    public async Task InitGroupInfoAsync(IniNetWorkMessageSEvent iniNetWorkMessageSEvent,string groupAgentId )
+    public async Task InitGroupInfoAsync(InitNetWorkMessageSEvent initNetWorkMessageSEvent,string groupAgentId )
     {
-        RaiseEvent(iniNetWorkMessageSEvent);
+        RaiseEvent(initNetWorkMessageSEvent);
         await base.ConfirmEvents();
         
+    }
+
+    public async Task ClearAllAgentsAsync()
+    {
+        RaiseEvent(new ClearAllAgentMessageSEvent());
+        RaiseEvent(new ClearAllNetWorkMessageSEvent());
+        await base.ConfirmEvents();
     }
 }

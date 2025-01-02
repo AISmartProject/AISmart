@@ -36,6 +36,13 @@ public class NameContestController: AISmartController
         await _namingContestService.InitAgentsAsync(contestAgentsDto);
     }
     
+    [HttpPost("clearallagents")]
+    public async Task ClearAllAgents()
+    {
+        await _namingContestService.ClearAllAgentsAsync();
+    }
+    
+    
     [HttpPost("initnetwork")]
     public async Task<GroupResponse> InitNetworks([FromBody]NetworksDto networksDto)
     {

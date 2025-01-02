@@ -16,7 +16,7 @@ public class ManagerAgentState: StateBase
     [Id(2)] public List<string> HostAgentIdList { get; set; } = new List<string>();
     
     
-    [Id(3)] public Dictionary<string, IniNetWorkMessageSEvent> NetworkDictionary { get; set; } = new Dictionary<string, IniNetWorkMessageSEvent>();
+    [Id(3)] public Dictionary<string, InitNetWorkMessageSEvent> NetworkDictionary { get; set; } = new Dictionary<string, InitNetWorkMessageSEvent>();
 
     
     
@@ -28,9 +28,21 @@ public class ManagerAgentState: StateBase
         HostAgentIdList.AddRange(initAgentMessageSEvent.HostAgentIdList);
     }
     
-    public void Apply(IniNetWorkMessageSEvent iniNetWorkMessageSEvent)
+    public void Apply(InitNetWorkMessageSEvent initNetWorkMessageSEvent)
     {
-        NetworkDictionary[iniNetWorkMessageSEvent.GroupAgentId] = iniNetWorkMessageSEvent;
+        NetworkDictionary[initNetWorkMessageSEvent.GroupAgentId] = initNetWorkMessageSEvent;
+    }
+    
+    public void Apply(ClearAllAgentMessageSEvent initNetWorkMessageSEvent)
+    {
+        CreativeAgentIdList.Clear();
+        JudgeAgentIdList.Clear();
+        HostAgentIdList.Clear();
+    }
+    
+    public void Apply(ClearAllNetWorkMessageSEvent initNetWorkMessageSEvent)
+    {
+        NetworkDictionary = new Dictionary<string, InitNetWorkMessageSEvent>();
     }
     
     
