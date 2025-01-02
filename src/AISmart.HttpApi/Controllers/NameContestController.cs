@@ -12,7 +12,7 @@ namespace AISmart.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("namingcontest")]
-[Host("api/namecontest/")]
+[Route("api/namecontest/")]
 public class NameContestController: AISmartController
 {
     
@@ -29,7 +29,7 @@ public class NameContestController: AISmartController
     }
     
     [HttpPost]
-    [Host("initagents")]
+    [Route("initagents")]
     public async Task<AgentResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
