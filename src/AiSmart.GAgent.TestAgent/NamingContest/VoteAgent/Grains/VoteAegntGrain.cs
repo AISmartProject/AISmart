@@ -29,7 +29,7 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
     
     private async Task PublishEventAsync(EventBase publishData)
     {
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         var stream = StreamProvider.GetStream<EventBase>(streamId);
         await stream.OnNextAsync(publishData);
     }

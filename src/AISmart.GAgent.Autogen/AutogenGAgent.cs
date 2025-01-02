@@ -193,8 +193,7 @@ public class AutogenGAgent : GAgentBase<AutoGenAgentState, AutogenEventBase>, IA
 
     private async Task SubscribeStream(IGrainWithGuidKey grain)
     {
-        var agentGuid = grain.GetPrimaryKey();
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, grain.GetGrainId().ToString());
         var stream = StreamProvider.GetStream<AutoGenInternalEventBase>(streamId);
         await stream.SubscribeAsync(async (message, token) =>
         {
