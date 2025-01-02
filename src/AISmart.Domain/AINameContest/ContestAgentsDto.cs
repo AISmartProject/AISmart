@@ -9,7 +9,7 @@ public class CommonAgent
     public string Name { get; set; }
     public string Label { get; set; }
     public string Bio { get; set; }
-    public List<Goal> Goals { get; set; }
+    // public List<Goal> Goals { get; set; }
 }
 
 
