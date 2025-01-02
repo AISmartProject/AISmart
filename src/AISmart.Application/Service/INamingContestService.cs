@@ -106,38 +106,38 @@ public class NamingContestService : ApplicationService,INamingContestService
         }
         else
         {
-            foreach (var contestant in contestAgentsDto.ContestantAgentList)
-            {
-                var agentId = Guid.NewGuid();
-                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
-                await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
-            
-                var newAgent = new AgentReponse()
-                {
-                    AgentId = agentId.ToString(),
-                    Name = contestant.Name
-                };
-                
-                // Add the new agent to the contestant list
-                agentResponse.ContestantAgentList.Add(newAgent);
-            }
-
-            foreach (var judge in contestAgentsDto.JudgeAgentList)
-            {
-                var agentId = Guid.NewGuid();
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
-        
-                await judgeAgent.SetAgent(judge.Name, judge.Bio);
-
-                var newAgent = new AgentReponse()
-                {
-                    AgentId = agentId.ToString(),
-                    Name = judge.Name
-                };
-
-                // Add the new agent to the contestant list
-                agentResponse.JudgeAgentList.Add(newAgent);
-            }
+            // foreach (var contestant in contestAgentsDto.ContestantAgentList)
+            // {
+            //     var agentId = Guid.NewGuid();
+            //     var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
+            //     await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
+            //
+            //     var newAgent = new AgentReponse()
+            //     {
+            //         AgentId = agentId.ToString(),
+            //         Name = contestant.Name
+            //     };
+            //     
+            //     // Add the new agent to the contestant list
+            //     agentResponse.ContestantAgentList.Add(newAgent);
+            // }
+            //
+            // foreach (var judge in contestAgentsDto.JudgeAgentList)
+            // {
+            //     var agentId = Guid.NewGuid();
+            //     var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+            //
+            //     await judgeAgent.SetAgent(judge.Name, judge.Bio);
+            //
+            //     var newAgent = new AgentReponse()
+            //     {
+            //         AgentId = agentId.ToString(),
+            //         Name = judge.Name
+            //     };
+            //
+            //     // Add the new agent to the contestant list
+            //     agentResponse.JudgeAgentList.Add(newAgent);
+            // }
         }
         
         await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
