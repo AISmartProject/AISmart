@@ -13,7 +13,7 @@ public class TrafficEventSourcingBase : GEventBase
 [GenerateSerializer]
 public class TrafficCallSelectGrainIdSEvent : TrafficEventSourcingBase
 {
-    public Guid GrainId { get; set; }
+   [Id(0)] public Guid GrainId { get; set; }
 }
 
 [GenerateSerializer]
