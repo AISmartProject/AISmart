@@ -30,7 +30,7 @@ public class NameContestController: AISmartController
     
     [HttpPost]
     [Route("initagents")]
-    public async Task<AgentResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
+    public async Task<AiSmartInitResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
         _logger.LogInformation("Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
