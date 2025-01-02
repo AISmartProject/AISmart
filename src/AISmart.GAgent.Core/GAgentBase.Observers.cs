@@ -33,8 +33,10 @@ public abstract partial class GAgentBase<TState, TEvent>
                     .GetValue(item);
                 var streamId = (StreamId)streamIdValue!;
 
-                _correlationId = eventType.CorrelationId;
-                if (_correlationId != null)
+                _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
+                    ?.GetValue(item);
+                if (_correlationId != null &&
+                    StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey()) != streamId)
                 {
                     _streamIdDictionary.TryAdd(_correlationId.Value, streamId);
                 }
@@ -52,7 +54,10 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId());
+                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId())
+                            {
+                                CorrelationId = _correlationId
+                            };
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
