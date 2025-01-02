@@ -33,8 +33,8 @@ public class TwitterService : ApplicationService, ITwitterService
     public async Task BindTwitterAccountAsync(BindTwitterAccountDto bindTwitterAccountDto)
     {
         var twitterAgent = _clusterClient.GetGrain<ITwitterGAgent>(GuidUtil.StringToGuid(bindTwitterAccountDto.UserId));
-        var userHasBound = await twitterAgent.UserHasBoundAsync();
-        if (userHasBound)
+        var hasGroup = await twitterAgent.UserHasBoundAsync();
+        if (hasGroup)
         {
             await twitterAgent.BindTwitterAccountAsync(bindTwitterAccountDto.UserName, bindTwitterAccountDto.UserId, bindTwitterAccountDto.Token, bindTwitterAccountDto.TokenSecret);
         }
