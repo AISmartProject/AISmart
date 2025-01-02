@@ -26,7 +26,7 @@ public class PumpFunChatGAgent : MicroAIGAgent, IPumpFunChatGrain
     [EventHandler]
     public async Task HandleEventAsync(PumpFunReceiveMessageEvent @event)
     {
-        _logger.LogInformation("PumpFunChatGAgent HandleEventAsync:" + JsonConvert.SerializeObject(@event));
+        _logger.LogInformation("PumpFunReceiveMessageEvent:" + JsonConvert.SerializeObject(@event));
         var response = _defaultReply;
         try
         {

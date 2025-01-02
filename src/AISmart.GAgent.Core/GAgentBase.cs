@@ -44,6 +44,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task RegisterAsync(IGAgent gAgent)
     {
         var guid = gAgent.GetPrimaryKey();
+        if (gAgent.GetGrainId() == this.GetGrainId())
+        {
+            Logger.LogError($"Cannot register GAgent with same GrainId.");
+            return;
+        }
         await AddSubscriberAsync(gAgent.GetGrainId());
         await OnRegisterAgentAsync(guid);
     }
@@ -112,6 +117,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
+        Logger.LogInformation($"Forwarding event {((EventWrapper<EventBase>)eventWrapper)} downwards.");
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
@@ -165,7 +171,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task InitializeStreamOfThisGAgentAsync()
     {
-        var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
         var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
         if (handles.Count != 0)
         {
@@ -233,9 +239,9 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         
     }
 
-    private IAsyncStream<EventWrapperBase> GetStream(Guid guid)
+    private IAsyncStream<EventWrapperBase> GetStream(string grainIdString)
     {
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, guid);
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainIdString);
         return StreamProvider.GetStream<EventWrapperBase>(streamId);
     }
 }

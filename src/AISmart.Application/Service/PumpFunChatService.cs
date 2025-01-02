@@ -46,10 +46,7 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
             
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             _logger.LogInformation("ReceiveMessagesAsync4, publishingAgent:{groupAgentId}", JsonConvert.SerializeObject(publishingAgent));
-            // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
-            // groupAgent.RegisterAsync(publishingAgent);
-            // publishingAgent.GetDescriptionAsync();
             
             await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
 
@@ -67,24 +64,18 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         Guid groupAgentId = GuidUtil.StringToGuid(chatId);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
         
-        var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(groupAgentId);
+        var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(Guid.NewGuid());
         
         _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}", chatId, pumpFunGAgent.GetGrainId());
         await pumpFunGAgent.SetPumpFunConfig(chatId);
-        var autogenAgent=  _clusterClient.GetGrain<IAutogenGAgent>(Guid.NewGuid());
 
-        var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(groupAgentId);
+        var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(Guid.NewGuid());
         await pumpFunChatAgent.SetAgent(chatId, bio);
         await groupAgent.RegisterAsync(pumpFunChatAgent);
         
         _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}", chatId);
-        autogenAgent.RegisterAgentEvent(typeof(PumpFunGAgent), [typeof(PumpFunSendMessageEvent)]);
         
-        await groupAgent.RegisterAsync(autogenAgent);
-
         await groupAgent.RegisterAsync(pumpFunGAgent);
-        
-
 
         return groupAgentId.ToString();
     }
