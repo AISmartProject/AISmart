@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using AISmart.Dto;
 using System.Text.Json.Serialization;
 
-
-namespace AISmart.Telegram;
+namespace AISmart.GAgent.Telegram.Dtos;
 
 public class GetUpdatedDto
 {

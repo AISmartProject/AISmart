@@ -1,5 +1,6 @@
 ﻿using AISmart.Application.Grains;
 using AiSmart.GAgent.SocialAgent;
+using AISmart.GAgent.Telegram;
 using AISmart.CQRS;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
@@ -46,5 +47,7 @@ public class AISmartApplicationModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<RagOptions>(configuration.GetSection("Rag"));
         Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
+        Configure<NameContestOptions>(configuration.GetSection("NameContest"));
+
     }
 }

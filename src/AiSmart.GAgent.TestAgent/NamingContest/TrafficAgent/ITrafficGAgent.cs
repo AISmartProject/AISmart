@@ -4,5 +4,6 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
 public interface ITrafficGAgent:IMicroAIGAgent
 {
-    Task AddCreativeAgent(Guid creativeGrainId);
+    Task AddCreativeAgent(string creativeName, Guid creativeGrainId);
+    Task AddJudgeAgent(Guid judgeGrainId);
 }

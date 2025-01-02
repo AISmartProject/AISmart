@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace AISmart.Telegram;
+namespace AISmart.GAgent.Telegram.Dtos;
 
 public class MessageParamsRequest
 {

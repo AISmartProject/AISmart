@@ -111,8 +111,6 @@ public class ElasticIndexingService : IIndexingService
                     props.Date(d => d
                         .Name(CTime)
                     );
-                    _logger.LogError("creating gevent index props{props}", JsonConvert.SerializeObject(props));
-
                     return props;
                 })
             )
@@ -130,8 +128,6 @@ public class ElasticIndexingService : IIndexingService
     public async Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase
     {
         var indexName = gEvent.GetType().Name.ToLower() + IndexSuffix;
-        _logger.LogInformation("{indexName} save start.info:{info}", indexName, JsonConvert.SerializeObject(gEvent));
-
         var properties = gEvent.GetType().GetProperties();
         var document = new Dictionary<string, object>();
 
@@ -153,7 +149,7 @@ public class ElasticIndexingService : IIndexingService
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.id:{id}", indexName, gEvent.Id);
+            _logger.LogInformation("{indexName} save Successfully.",indexName);
         }
     }
     
@@ -163,6 +159,10 @@ public class ElasticIndexingService : IIndexingService
         {
             var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
             var source = response.Source;
+            if (source == null)
+            {
+                return "";
+            }
             var documentContent = JsonConvert.SerializeObject(source);
             return documentContent;
         }

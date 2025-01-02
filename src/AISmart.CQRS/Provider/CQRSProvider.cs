@@ -57,7 +57,7 @@ public class CQRSProvider : ICQRSProvider, ISingletonDependency
         return documentContent;
     }
 
-    public async Task PublishGEventAsync(GEventBase eventBase, string id)
+    public async Task PublishAsync(GEventBase eventBase, string id)
     {
         var command = new SaveGEventCommand
         {
