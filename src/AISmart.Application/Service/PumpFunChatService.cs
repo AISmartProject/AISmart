@@ -48,8 +48,6 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
             _logger.LogInformation("ReceiveMessagesAsync4, publishingAgent:{groupAgentId}", JsonConvert.SerializeObject(publishingAgent));
             await publishingAgent.RegisterAsync(groupAgent);
             
-            await publishingAgent.PublishEventAsync(new RequestAllSubscriptionsEvent());
-
             await  publishingAgent.PublishEventAsync(new PumpFunReceiveMessageEvent
             {
                 ReplyId = inputDto.ReplyId,
