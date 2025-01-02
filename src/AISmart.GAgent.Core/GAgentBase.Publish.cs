@@ -1,6 +1,7 @@
 using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AISmart.GAgent.Core;
 
@@ -18,24 +19,26 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
-        Logger.LogInformation($"Published event {@event}.");
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
         @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
+        Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
         var eventId = Guid.NewGuid();
         switch (isTop)
         {
             case true:
-                Logger.LogInformation($"Event {@event} is the first time appeared to silo.");
+                Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
                 // This event is the first time appeared to silo.
                 await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
                 break;
             case false when _streamIdDictionary.IsNullOrEmpty():
+                Logger.LogInformation($"Reusing publishingGAgent: {JsonConvert.SerializeObject(@event)}");
                 await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
                 break;
             case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
                 @event.StreamId = streamIdValue;
+                Logger.LogInformation($"{this.GetGrainId().ToString()} is publishing event upwards: {JsonConvert.SerializeObject(@event)}");
                 await PublishEventUpwardsAsync(@event, eventId);
                 break;
         }
@@ -56,9 +59,10 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
+        Logger.LogInformation(
+            $"{this.GetGrainId().ToString()} is sending event to self: {JsonConvert.SerializeObject(eventWrapper)}");
         var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
         var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-        var count = handles.Count;
         foreach (var handle in handles)
         {
             await handle.UnsubscribeAsync();

@@ -118,7 +118,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
         Logger.LogInformation(
-            $"Forwarding event downwards: {JsonConvert.SerializeObject((EventWrapper<EventBase>)eventWrapper)}");
+            $"{this.GetGrainId().ToString()} is forwarding event downwards: {JsonConvert.SerializeObject((EventWrapper<EventBase>)eventWrapper)}");
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
