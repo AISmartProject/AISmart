@@ -30,7 +30,7 @@ public interface INamingContestService
     public Task StartGroupAsync(GroupDto groupDto);
 }
 
-public class NamingContestService : INamingContestService
+public class NamingContestService : ApplicationService,INamingContestService
 {
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<NamingContestService> _logger;
