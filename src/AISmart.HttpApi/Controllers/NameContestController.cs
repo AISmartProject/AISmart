@@ -28,11 +28,11 @@ public class NameContestController: AISmartController
     }
     
     [HttpPost("initagents")]
-    public async Task InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
+    public async Task<AgentResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
         _logger.LogInformation("Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
-        await _namingContestService.InitAgentsAsync(contestAgentsDto);
+        return await _namingContestService.InitAgentsAsync(contestAgentsDto);
     }
     
     [HttpPost("initnetwork")]
