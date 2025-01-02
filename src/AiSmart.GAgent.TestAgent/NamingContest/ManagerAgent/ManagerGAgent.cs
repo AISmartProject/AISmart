@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 
-public class ManagerGAgent : GAgentBase<ManagerAgentState, ManagerGEvent>, IManagerGAgent
+public class ManagerGAgent : GAgentBase<ManagerAgentState, ManagerSEvent>, IManagerGAgent
 {
     
 
@@ -27,17 +27,24 @@ public class ManagerGAgent : GAgentBase<ManagerAgentState, ManagerGEvent>, IMana
         throw new NotImplementedException();
     }
 
-    public async Task InitAgentsAsync(InitAgentMessageGEvent initAgentMessageGEvent)
+    public async Task InitAgentsAsync(InitAgentMessageSEvent initAgentMessageSEvent)
     {
-        RaiseEvent(initAgentMessageGEvent);
+        RaiseEvent(initAgentMessageSEvent);
         await base.ConfirmEvents();
         
     }
 
-    public async Task InitGroupInfoAsync(IniNetWorkMessageGEvent iniNetWorkMessageGEvent,string groupAgentId )
+    public async Task InitGroupInfoAsync(InitNetWorkMessageSEvent initNetWorkMessageSEvent,string groupAgentId )
     {
-        RaiseEvent(iniNetWorkMessageGEvent);
+        RaiseEvent(initNetWorkMessageSEvent);
         await base.ConfirmEvents();
         
+    }
+
+    public async Task ClearAllAgentsAsync()
+    {
+        RaiseEvent(new ClearAllAgentMessageSEvent());
+        RaiseEvent(new ClearAllNetWorkMessageSEvent());
+        await base.ConfirmEvents();
     }
 }

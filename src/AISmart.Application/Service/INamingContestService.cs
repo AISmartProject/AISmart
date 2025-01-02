@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Options;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
@@ -25,12 +27,13 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
-    public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
-    public Task StartGroupAsync(GroupDto groupDto);
+    Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
+    Task ClearAllAgentsAsync();
+    Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
+    Task StartGroupAsync(GroupDto groupDto);
 }
 
-public class NamingContestService : INamingContestService
+public class NamingContestService : ApplicationService,INamingContestService
 {
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<NamingContestService> _logger;
@@ -88,7 +91,7 @@ public class NamingContestService : INamingContestService
             
         }
 
-        await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
+        await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
             CreativeAgentIdList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
             JudgeAgentIdList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
@@ -98,11 +101,16 @@ public class NamingContestService : INamingContestService
         return agentResponse;
     }
 
+    public async Task ClearAllAgentsAsync()
+    {
+        IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        await managerGAgent.ClearAllAgentsAsync();
+    }
+
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
         
         IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
-
         
         GroupResponse groupResponse = new GroupResponse();
         foreach (var network in networksDto.Networks)
@@ -117,7 +125,7 @@ public class NamingContestService : INamingContestService
             await groupAgent.RegisterAsync(trafficAgent);
             await groupAgent.RegisterAsync(namingContestGAgent);
             
-            await namingContestGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunGEvent()
+            await namingContestGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
             {
                 CallBackUrl = network.CallbackAddress,
                 Name = network.Name,
@@ -176,7 +184,7 @@ public class NamingContestService : INamingContestService
             // Add the new agent to the  list
             groupResponse.GroupDetails.Add(groupDetail);
 
-            await managerGAgent.InitGroupInfoAsync(new IniNetWorkMessageGEvent()
+            await managerGAgent.InitGroupInfoAsync(new InitNetWorkMessageSEvent()
             {
                 CallBackUrl = network.CallbackAddress,
                 Name = network.Name,
@@ -189,7 +197,18 @@ public class NamingContestService : INamingContestService
 
             }, groupAgentId.ToString());
         }
+        
+        
+        IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
 
+        var round = networksDto.Networks.FirstOrDefault()!.Round;
+        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
+        {
+            GrainGuidList = groupResponse.GroupDetails.Select(g=>Guid.Parse(g.GroupId)).ToList(),
+            Round = Convert.ToInt32(round)
+        });
         
         return groupResponse;
     }

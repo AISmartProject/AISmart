@@ -81,3 +81,18 @@ public class DiscussionCompleteGEvent : EventBase
     [Id(1)] public string CreativeName { get; set; }
     [Id(2)] public string DiscussionReply { get; set; }
 }
+
+
+[GenerateSerializer]
+public class HostSummaryGEvent : EventBase
+{
+    [Id(0)] public Guid HostId { get; set; }
+}
+
+[GenerateSerializer]
+public class HostSummaryCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid HostId { get; set; }
+    [Id(1)] public string HostName { get; set; }
+    [Id(2)] public string SummaryReply { get; set; }
+}
