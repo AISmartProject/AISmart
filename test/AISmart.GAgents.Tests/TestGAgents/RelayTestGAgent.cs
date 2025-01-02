@@ -18,15 +18,15 @@ public class RelayTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
 
     public async Task HandleEventAsync(SocialTestEvent eventData)
     {
-        var chatIdKey = $"{typeof(ReceiveMessageTestEvent).FullName}.ChatId";
-        if (eventData.TryGetContext("ChatId", out var chatId)
-            && chatId != null)
-        {
-            await PublishAsync(new SendMessageTestEvent
-            {
-                ChatId = (string)chatId!,
-                Message = "I handled a social event: " + eventData.Message
-            });
-        }
+        // var chatIdKey = $"{typeof(ReceiveMessageTestEvent).FullName}.ChatId";
+        // if (eventData.TryGetContext("ChatId", out var chatId)
+        //     && chatId != null)
+        // {
+        //     await PublishAsync(new SendMessageTestEvent
+        //     {
+        //         ChatId = (string)chatId!,
+        //         Message = "I handled a social event: " + eventData.Message
+        //     });
+        // }
     }
 }

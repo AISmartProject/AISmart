@@ -7,7 +7,7 @@ namespace AISmart.GAgents.Tests.GAgentBase;
 [Trait("Category", "BVT")]
 public class ChattingTests : GAgentTestKitBase
 {
-    [Fact]
+    [Fact(Skip = "Implementation reverted.")]
     public async Task ChatIdRelayTest()
     {
         var chatTestGAgent = await Silo.CreateGrainAsync<ChatTestGAgent>(Guid.NewGuid());

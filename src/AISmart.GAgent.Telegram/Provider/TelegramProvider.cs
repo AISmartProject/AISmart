@@ -3,19 +3,16 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using AISmart.Dto;
-using AISmart.Helper;
-using AISmart.Options;
-using AISmart.Telegram;
+using AISmart.GAgent.Telegram.Dtos;
+using AISmart.GAgent.Telegram.Helper;
+using AISmart.GAgent.Telegram.Options;
 using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
-namespace AISmart.Provider;
+namespace AISmart.GAgent.Telegram.Provider;
 
 public class TelegramProvider : ITelegramProvider,ISingletonDependency
 {

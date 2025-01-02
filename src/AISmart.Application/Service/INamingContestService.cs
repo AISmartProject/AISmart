@@ -16,7 +16,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Options;
 using AISmart.Sender;
-using AISmart.Telegram;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -202,7 +201,7 @@ public class NamingContestService : ApplicationService,INamingContestService
         
         IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-        await publishingAgent.PublishToAsync(voteCharmingGAgent);
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
 
         var round = networksDto.Networks.FirstOrDefault()!.Round;
         await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
@@ -221,7 +220,7 @@ public class NamingContestService : ApplicationService,INamingContestService
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
-            await publishingAgent.PublishToAsync(groupAgent);
+            await publishingAgent.RegisterAsync(groupAgent);
             await publishingAgent.PublishEventAsync(new GroupStartEvent());
         }
     }

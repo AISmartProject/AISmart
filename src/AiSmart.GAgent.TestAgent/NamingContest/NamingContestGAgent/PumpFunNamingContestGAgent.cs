@@ -24,6 +24,7 @@ namespace AISmart.Agent;
 public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestSEvent>, IPumpFunNamingContestGAgent
 {
     private readonly ILogger<PumpFunPumpFunNamingContestGAgent> _logger;
+
     public PumpFunPumpFunNamingContestGAgent(ILogger<PumpFunPumpFunNamingContestGAgent> logger) : base(logger)
     {
         _logger = logger;
@@ -43,28 +44,30 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
 
     public override Task<string> GetDescriptionAsync()
     {
-        return Task.FromResult("Represents an agent responsible for informing other agents when a PumpFun thread is published.");
+        return Task.FromResult(
+            "Represents an agent responsible for informing other agents when a PumpFun thread is published.");
     }
 
-    
+
     [EventHandler]
     public async Task HandleRequestAllSubscriptionsEventAsync(RequestAllSubscriptionsEvent @event)
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" + JsonConvert.SerializeObject(@event));
-        
+        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
+                               JsonConvert.SerializeObject(@event));
     }
-    
+
     [EventHandler]
-    public async Task HandleRequestAllSubscriptionsEventAsync<T>(EventWrapper<T> @event)
+    public async Task HandleRequestAllSubscriptionsEventAsync<T>(EventWrapper<T> @event) where T : EventBase
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" + JsonConvert.SerializeObject(@event));
+        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
+                               JsonConvert.SerializeObject(@event));
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync((@event.Event as NameContentGEvent)!,State.CallBackUrl);
+            .SendMessageAsync((@event.Event as NameContentGEvent)!, State.CallBackUrl);
     }
 }
 
 public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
 { 
     Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent);
-
+ 
 }

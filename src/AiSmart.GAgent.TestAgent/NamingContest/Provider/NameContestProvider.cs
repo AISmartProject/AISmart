@@ -7,7 +7,6 @@ using AISmart.Dto;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Options;
 using AISmart.PumpFun;
-using AISmart.Telegram;
 using AISmart.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
