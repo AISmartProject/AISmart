@@ -18,6 +18,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
+        Logger.LogInformation($"Published event {@event}.");
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
