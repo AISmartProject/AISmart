@@ -46,17 +46,6 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, Agents.GEventBase>, 
        await ConfirmEvents();
        
        _logger.LogInformation("PumpFunReceiveMessageEvent2:" + JsonConvert.SerializeObject(@event));
-//        await PublishAsync(new AutoGenCreatedEvent
-//        {
-//            EventId = Guid.NewGuid(),
-//            Content = $"""
-//              Received a JSON-formatted message:{JsonConvert.SerializeObject(@event)}, The fields will be used in the final response except "RequestMessage".
-//              Please follow the process below.
-//              1. parse the message content, the fields in the JSON may be used in the final response..
-//              2. Please understand the content of the "RequestMessage" in the JSON format, process the response accordingly.
-//              3. Must pass the final result to the PumpFunSendMessageEvent of the PumpFunGAgent.
-//              """
-//        });
     }
     
     [EventHandler]
