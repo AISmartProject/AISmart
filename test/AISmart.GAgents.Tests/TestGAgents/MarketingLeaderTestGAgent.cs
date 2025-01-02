@@ -1,3 +1,4 @@
+using AISmart.Agents;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
@@ -5,8 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
 
+public interface IMarketingLeaderTestGAgent : IGAgent
+{
+    
+}
+
 [GAgent]
-public class MarketingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
+public class MarketingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>, IMarketingLeaderTestGAgent
 {
     public MarketingLeaderTestGAgent(ILogger<MarketingLeaderTestGAgent> logger) : base(logger)
     {

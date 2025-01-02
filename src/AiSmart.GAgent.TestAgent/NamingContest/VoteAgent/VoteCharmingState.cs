@@ -22,7 +22,7 @@ public class VoteCharmingState: StateBase
     public void Apply(VoteCharmingGEvent @event)
     {
         VoterIds.RemoveAll(@event.GrainGuidList);
-        CurrentBatch--;
+        CurrentBatch++;
     }
    
 }

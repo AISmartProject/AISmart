@@ -28,6 +28,9 @@ public abstract partial class GAgentBase<TState, TEvent>
                 // This event is the first time appeared to silo.
                 await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
                 break;
+            case false when _streamIdDictionary.IsNullOrEmpty():
+                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+                break;
             case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
                 @event.StreamId = streamIdValue;
                 await PublishEventUpwardsAsync(@event, eventId);
@@ -48,18 +51,21 @@ public abstract partial class GAgentBase<TState, TEvent>
         await stream.OnNextAsync(eventWrapper);
     }
 
-    private async Task PublishEventDownwardsAsync<T>(T @event, Guid eventId) where T : EventBase
-    {
-        @event.CorrelationId ??= Guid.NewGuid();
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        @event.StreamId ??= streamOfThisGAgent;
-        await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-    }
-    
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        var streamOfThisGAgent = GetStream(this.GetPrimaryKey());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        var count = handles.Count;
+        foreach (var handle in handles)
+        {
+            await handle.UnsubscribeAsync();
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
+        }
+
         await streamOfThisGAgent.OnNextAsync(eventWrapper);
     }
 
@@ -71,10 +77,11 @@ public abstract partial class GAgentBase<TState, TEvent>
             return;
         }
 
-        foreach (var stream in _subscribers.State
-                     .Select(subscriber => StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey()))
-                     .Select(streamId => StreamProvider.GetStream<EventWrapperBase>(streamId)))
+        foreach (var grainId in _subscribers.State)
         {
+            var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+            await gAgent.ActivateAsync();
+            var stream = GetStream(grainId.GetGuidKey());
             await stream.OnNextAsync(eventWrapper);
         }
     }
