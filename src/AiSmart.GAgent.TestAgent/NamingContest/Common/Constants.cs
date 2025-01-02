@@ -21,4 +21,6 @@ public static class NamingConstants
         "Congratulations on winning the last naming contest. Please state the name you chose and provide a brief summary of your winning experience and the lessons learned from your opponent's failure.";
 
     public static string CreativeDiscussionPrompt = "";
+    public static string VotePrompt = "The below JSON contains each GUID with their names and associated conversations. Please select the GUID that is most appealing to you";
+
 }
