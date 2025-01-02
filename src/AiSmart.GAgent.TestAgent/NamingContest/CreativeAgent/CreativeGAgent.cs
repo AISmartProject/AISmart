@@ -310,10 +310,36 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         
         RaiseEvent(new AddHistoryChatSEvent()
         {
-            Message = new MicroAIMessage(Role.User.ToString(), )
+            Message = new MicroAIMessage(Role.User.ToString(), AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
         });
-    }
         
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeAnswerQuestionGEvent @event)
+    {
+        var answer = string.Empty;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.CreativeAnswerQuestionPrompt, State.RecentMessages.ToList());
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                answer = response.Content.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("[Creative] CreativeSummaryGEvent error");
+        }
+        finally
+        {
+            if (!answer.IsNullOrWhiteSpace())
+            {
+                
+            }
+        }
+    }
 
     public Task<MicroAIGAgentState> GetStateAsync()
     {

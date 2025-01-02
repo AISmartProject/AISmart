@@ -48,8 +48,8 @@ public static class AssembleMessageUtil
                 """;
     }
 
-    public static string AssembleJudgeAsking(string judgeName, string content)
+    public static string AssembleJudgeAsking(string judgeName, string question)
     {
-        return $"";
+        return $"Judge {judgeName}'s question is: {question}";
     }
 }

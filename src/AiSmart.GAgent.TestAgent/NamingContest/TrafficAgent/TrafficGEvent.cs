@@ -112,3 +112,17 @@ public class JudgeAskingCompleteGEvent : EventBase
     [Id(1)] public string JudgeName { get; set; }
     [Id(2)] public string Reply { get; set; }
 }
+
+[GenerateSerializer]
+public class CreativeAnswerQuestionGEvent : EventBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+}
+
+[GenerateSerializer]
+public class CreativeAnswerCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+    [Id(1)] public string CreativeName { get; set; }
+    [Id(2)] public string Answer { get; set; }
+}

@@ -42,4 +42,6 @@ public static class NamingConstants
                                              (2) A question about the connection between the conclusion and real-time events.
                                              (3) A question about the discussion process.
                                              """;
+
+    public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the question posed by the previous judge.";
 }

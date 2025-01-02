@@ -101,10 +101,14 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
                 $"Traffic JudgeAskingCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGuid.ToString()}");
             return;
         }
-        
-        
+
+        base.RaiseEvent(new AddChatHistorySEvent()
+        {
+            ChatMessage = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
+        });
     }
-    
+
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -136,10 +140,6 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await PublishAsync(new DiscussionGEvent() { CreativeId = selectCreative.CreativeGrainId });
 
         await base.ConfirmEvents();
-    }
-
-    private async Task DispatchDebateAgent()
-    {
     }
 
     private async Task<Guid> SelectCreativeToSummary()
@@ -201,12 +201,16 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
-        await PublishAsync(new JudgeAskingGEvent(){JudgeGuid = selectedId, History = State.ChatHistory});
+        await PublishAsync(new JudgeAskingGEvent() { JudgeGuid = selectedId, History = State.ChatHistory });
     }
 
     public async Task DispatchCreativeToAnswer()
     {
-        
+        var random = new Random();
+        var index = random.Next(0, State.CreativeList.Count);
+        var selectedCreative = State.CreativeList[index];
+
+        await PublishAsync(new CreativeAnswerQuestionGEvent() { CreativeId = selectedCreative.CreativeGrainId });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)
