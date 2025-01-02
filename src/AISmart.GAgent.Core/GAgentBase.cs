@@ -50,7 +50,13 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             return;
         }
         await AddSubscriberAsync(gAgent.GetGrainId());
+        await gAgent.SubscribeToAsync(this);
         await OnRegisterAgentAsync(guid);
+    }
+
+    public Task SubscribeToAsync(IGAgent gAgent)
+    {
+        return SetSubscriptionAsync(gAgent.GetGrainId());
     }
 
     public async Task UnregisterAsync(IGAgent gAgent)
@@ -135,17 +141,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public Task<TState> GetStateAsync()
     {
         return Task.FromResult(State);
-    }
-
-    public async Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream)
-    {
-        var streamId = stream.StreamId;
-        foreach (var observer in Observers.Keys)
-        {
-            var handle = await stream.SubscribeAsync(observer);
-            var handleId = handle.HandleId;
-            Observers[observer][streamId] = handleId;
-        }
     }
 
     public sealed override async Task OnActivateAsync(CancellationToken cancellationToken)

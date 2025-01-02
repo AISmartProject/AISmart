@@ -22,25 +22,18 @@ public abstract partial class GAgentBase<TState, TEvent>
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
         var eventId = Guid.NewGuid();
-        switch (isTop)
+        if (_subscription.State.IsDefault)
         {
-            case true:
-                Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
-                // This event is the first time appeared to silo.
-                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-                break;
-            case false when _streamIdDictionary.IsNullOrEmpty():
-                Logger.LogInformation($"Reusing publishingGAgent: {JsonConvert.SerializeObject(@event)}");
-                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-                break;
-            case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
-                @event.StreamId = streamIdValue;
-                Logger.LogInformation($"{this.GetGrainId().ToString()} is publishing event upwards: {JsonConvert.SerializeObject(@event)}");
-                await PublishEventUpwardsAsync(@event, eventId);
-                break;
+            Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
+            // This event is the first time appeared to silo.
+            await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+        }
+        else
+        {
+            Logger.LogInformation($"{this.GetGrainId().ToString()} is publishing event upwards: {JsonConvert.SerializeObject(@event)}");
+            await PublishEventUpwardsAsync(@event, eventId);
         }
 
         return eventId;
@@ -53,7 +46,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var stream = StreamProvider.GetStream<EventWrapperBase>(eventWrapper.StreamId!.Value);
+        var stream = GetStream(_subscription.State.ToString());
         await stream.OnNextAsync(eventWrapper);
     }
 
