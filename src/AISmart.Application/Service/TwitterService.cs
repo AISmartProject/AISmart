@@ -34,6 +34,8 @@ public class TwitterService : ApplicationService, ITwitterService
     {
         var twitterAgent = _clusterClient.GetGrain<ITwitterGAgent>(GuidUtil.StringToGuid(bindTwitterAccountDto.UserId));
         var hasGroup = await twitterAgent.UserHasBoundAsync();
+        _logger.LogInformation("BindTwitterAccountAsync，userId: {userId}, userName: {userName}, hasGroup:{hasGroup}", 
+            bindTwitterAccountDto.UserId, bindTwitterAccountDto.UserName, hasGroup);
         if (hasGroup)
         {
             await twitterAgent.BindTwitterAccountAsync(bindTwitterAccountDto.UserName, bindTwitterAccountDto.UserId, bindTwitterAccountDto.Token, bindTwitterAccountDto.TokenSecret);
@@ -53,6 +55,7 @@ public class TwitterService : ApplicationService, ITwitterService
     
     public async Task UnbindTwitterAccountAsync(UnbindTwitterAccountDto unbindTwitterAccountDto)
     {
+        _logger.LogInformation("UnbindTwitterAccountAsync，userId: {userId}", unbindTwitterAccountDto.UserId);
         var groupId = GuidUtil.StringToGuid(unbindTwitterAccountDto.UserId);
         var twitterAgent = _clusterClient.GetGrain<ITwitterGAgent>(groupId);
         await twitterAgent.UnbindTwitterAccountAsync();
@@ -66,6 +69,7 @@ public class TwitterService : ApplicationService, ITwitterService
 
     public async Task PostTweetAsync(PostTweetDto postTweetDto)
     {
+        _logger.LogInformation("PostTweetAsync，userId: {userId}", postTweetDto.UserId);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new CreateTweetEvent
         {
@@ -75,6 +79,7 @@ public class TwitterService : ApplicationService, ITwitterService
     
     public async Task ReplyMentionAsync(ReplyMentionDto replyMentionDto)
     {
+        _logger.LogInformation("ReplyMentionAsync，userId: {userId}", replyMentionDto.UserId);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new ReplyMentionEvent
         {
