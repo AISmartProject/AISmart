@@ -114,6 +114,7 @@ public class SetDiscussionSEvent : TrafficEventSourcingBase
     [Id(0)] public int DiscussionCount { get; set; }
 }
 
+[GenerateSerializer]
 public class DiscussionCountReduce : TrafficEventSourcingBase
 {
     

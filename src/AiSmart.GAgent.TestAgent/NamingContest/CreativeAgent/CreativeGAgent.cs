@@ -7,6 +7,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AutoGen.Core;
+using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -298,6 +299,21 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         await base.ConfirmEvents();
     }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeAskingCompleteGEvent @event)
+    {
+        if (@event.Reply.IsNullOrEmpty())
+        {
+            return;
+        }
+        
+        RaiseEvent(new AddHistoryChatSEvent()
+        {
+            Message = new MicroAIMessage(Role.User.ToString(), )
+        });
+    }
+        
 
     public Task<MicroAIGAgentState> GetStateAsync()
     {

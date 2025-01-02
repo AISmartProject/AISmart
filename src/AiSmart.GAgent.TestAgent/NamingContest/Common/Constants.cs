@@ -35,4 +35,11 @@ public static class NamingConstants
                                                       """;
 
     public static string CreativeGroupSummaryReason = "I think this name is the best.";
+
+    public static string JudgeAskingPrompt = """
+                                             You are a judge, and you need to ask a question based on the discussion above. You can only ask one question, and it must not be the same as questions from other judges. The question can be one of the following:
+                                             (1) A question about the conclusion.
+                                             (2) A question about the connection between the conclusion and real-time events.
+                                             (3) A question about the discussion process.
+                                             """;
 }

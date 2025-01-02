@@ -1,3 +1,4 @@
+using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 
@@ -94,4 +95,20 @@ public class CreativeSummaryCompleteGEvent : EventBase
 {
     [Id(0)] public string SummaryName { get; set; }
     [Id(1)] public string Reason { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeAskingGEvent : EventBase
+{
+    [Id(0)] public Guid JudgeGuid { get; set; }
+         
+    [Id(1)] public List<MicroAIMessage> History { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeAskingCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid JudgeGuid { get; set; }
+    [Id(1)] public string JudgeName { get; set; }
+    [Id(2)] public string Reply { get; set; }
 }

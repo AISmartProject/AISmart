@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
@@ -17,7 +18,6 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
 public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEventSourcingBase>, ISecondTrafficGAgent
 {
-    
     public SecondRoundTrafficGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
     }
@@ -43,7 +43,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DiscussionStart, Guid.Empty));
 
         await GenerateDiscussionCount();
-        
+
         await DispatchCreativeDiscussion();
 
         await base.ConfirmEvents();
@@ -69,45 +69,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             CompleteGrainId = @event.CreativeId,
         });
-        
+
         base.RaiseEvent(new DiscussionCountReduce());
-        
+
         await base.ConfirmEvents();
 
         await DispatchCreativeDiscussion();
-    }
-
-    [EventHandler]
-    public async Task HandleEventAsync(JudgeVoteResultGEvent @event)
-    {
-        if (State.CurrentGrainId != @event.JudgeGrainId)
-        {
-            Logger.LogError(
-                $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGrainId.ToString()}");
-            return;
-        }
-
-        var creativeInfo = State.CreativeList.FirstOrDefault(f => f.Naming == @event.VoteName);
-        if (creativeInfo != null)
-        {
-            var voteInfoStr = JsonConvert.SerializeObject(new JudgeVoteInfo()
-            {
-                AgentId = creativeInfo.CreativeGrainId, AgentName = creativeInfo.CreativeName,
-                Nameing = @event.VoteName, Reason = @event.Reason
-            });
-
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.JudgeGrainId,
-                NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
-        }
-
-        base.RaiseEvent(new TrafficGrainCompleteSEvent()
-        {
-            CompleteGrainId = @event.JudgeGrainId,
-        });
-
-        await base.ConfirmEvents();
-
-        await DispatchJudgeAgent();
     }
 
     [EventHandler]
@@ -118,6 +85,23 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleDiscussionSummary(@event.SummaryName, @event.SummaryName))
         });
+
+        await base.ConfirmEvents();
+        await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartAsking, Guid.Empty));
+
+        await DispatchJudgeAgent();
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeAskingCompleteGEvent @event)
+    {
+        if (@event.JudgeGuid != State.CurrentGrainId)
+        {
+            Logger.LogError(
+                $"Traffic JudgeAskingCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGuid.ToString()}");
+            return;
+        }
+        
         
     }
     
@@ -139,17 +123,11 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             // todo: summary
             var summaryCreativeId = await SelectCreativeToSummary();
-            await PublishAsync(new CreativeSummaryGEvent(){CreativeId = summaryCreativeId});
+            await PublishAsync(new CreativeSummaryGEvent() { CreativeId = summaryCreativeId });
             //
             // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, Guid.Empty));
             // await DispatchJudgeAgent();
             return;
-        }
-
-        if (creativeList.Count == 0 && State.DiscussionCount > 0)
-        {
-            creativeList = State.CreativeList;
-            RaiseEvent(new ClearCalledGrainsSEvent());
         }
 
         var random = new Random();
@@ -162,7 +140,6 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
     private async Task DispatchDebateAgent()
     {
-       
     }
 
     private async Task<Guid> SelectCreativeToSummary()
@@ -199,12 +176,22 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         return result;
     }
 
+    private Task GenerateDiscussionCount()
+    {
+        var random = new Random();
+        var discussionCount = random.Next(State.CreativeList.Count * 3 / 2, State.CreativeList.Count * 2);
+        RaiseEvent(new SetDiscussionSEvent() { DiscussionCount = discussionCount });
+
+        return Task.CompletedTask;
+    }
+
     private async Task DispatchJudgeAgent()
     {
         var creativeList = State.JudgeAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
-        if (creativeList.Count == 0)
+        if (State.AskJudgeCount == 0)
         {
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
+            // todo: score
+            // await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             return;
         }
 
@@ -214,16 +201,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
-        await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
+        await PublishAsync(new JudgeAskingGEvent(){JudgeGuid = selectedId, History = State.ChatHistory});
     }
 
-    private Task GenerateDiscussionCount()
+    public async Task DispatchCreativeToAnswer()
     {
-        var random = new Random();
-        var discussionCount = random.Next(State.CreativeList.Count * 3 / 2, State.CreativeList.Count * 2);
-        RaiseEvent(new SetDiscussionSEvent() { DiscussionCount = discussionCount });
         
-        return Task.CompletedTask;
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)

@@ -47,4 +47,9 @@ public static class AssembleMessageUtil
                 {reason}
                 """;
     }
+
+    public static string AssembleJudgeAsking(string judgeName, string content)
+    {
+        return $"";
+    }
 }

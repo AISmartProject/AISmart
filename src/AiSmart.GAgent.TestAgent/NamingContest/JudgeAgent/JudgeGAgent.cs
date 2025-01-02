@@ -94,13 +94,50 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 });
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
             await PublishAsync(new JudgeVoteResultGEvent()
             {
                 VoteName = "", Reason = "", JudgeGrainId = this.GetPrimaryKey(),
                 JudgeName = State.AgentName
+            });
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeAskingGEvent @event)
+    {
+        if (@event.JudgeGuid != this.GetPrimaryKey())
+        {
+            return;
+        }
+
+        var reply = string.Empty;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.JudgeAskingPrompt, @event.History);
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                reply = response.Content;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "[JudgeGAgent] JudgeAskingGEvent error");
+        }
+        finally
+        {
+            if (!reply.IsNullOrWhiteSpace())
+            {
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, reply));
+            }
+            await PublishAsync(new JudgeAskingCompleteGEvent()
+            {
+                JudgeGuid = this.GetPrimaryKey(),
+                Reply = reply,
             });
         }
     }
