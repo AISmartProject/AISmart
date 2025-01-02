@@ -70,6 +70,9 @@ public class TwitterService : ApplicationService, ITwitterService
     public async Task PostTweetAsync(PostTweetDto postTweetDto)
     {
         _logger.LogInformation("PostTweetAsync，userId: {userId}", postTweetDto.UserId);
+        var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+SocialAgentName));
+        await socialAgent.SetAgent(postTweetDto.UserId, "You need to answer all the questions you know.");
+        
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new CreateTweetEvent
         {
@@ -80,6 +83,9 @@ public class TwitterService : ApplicationService, ITwitterService
     public async Task ReplyMentionAsync(ReplyMentionDto replyMentionDto)
     {
         _logger.LogInformation("ReplyMentionAsync，userId: {userId}", replyMentionDto.UserId);
+        var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId+SocialAgentName));
+        await socialAgent.SetAgent(replyMentionDto.UserId, "You need to answer all the questions you know.");
+        
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new ReplyMentionEvent
         {
