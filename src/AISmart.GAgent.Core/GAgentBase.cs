@@ -44,9 +44,9 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task RegisterAsync(IGAgent gAgent)
     {
         var guid = gAgent.GetPrimaryKey();
-        if (guid == this.GetPrimaryKey())
+        if (gAgent.GetGrainId() == this.GetGrainId())
         {
-            Logger.LogError($"Cannot register GAgent with same Guid.");
+            Logger.LogError($"Cannot register GAgent with same GrainId.");
             return;
         }
         await AddSubscriberAsync(gAgent.GetGrainId());
