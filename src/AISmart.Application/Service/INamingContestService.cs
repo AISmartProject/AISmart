@@ -54,40 +54,89 @@ public class NamingContestService : ApplicationService,INamingContestService
 
         AgentResponse agentResponse = new AgentResponse();
 
-        foreach (var contestant in contestAgentsDto.ContestantAgentList)
+        if (contestAgentsDto.Network is not null )
         {
-            var agentId = Guid.NewGuid();
-            var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
-            await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
-            
-            var newAgent = new AgentReponse()
+            foreach (var agent in contestAgentsDto.Network)
             {
-                AgentId = agentId.ToString(),
-                Name = contestant.Name
-            };
+                Guid agentId;
+                AgentReponse? newAgent;
+                switch (agent.Label)
+                {
+                    case "Contestant":
+                        agentId = Guid.NewGuid();
+                        var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
+                        await creativeAgent.SetAgent(agent.Name, agent.Bio);
+            
+                        newAgent = new AgentReponse()
+                        {
+                            AgentId = agentId.ToString(),
+                            Name = agent.Name
+                        };
 
-            // Add the new agent to the contestant list
-            agentResponse.ContestantAgentList.Add(newAgent);
-        }
+                        // Add the new agent to the contestant list
+                        agentResponse.ContestantAgentList.Add(newAgent);
+                        break;
 
-        foreach (var judge in contestAgentsDto.JudgeAgentList)
-        {
-            var agentId = Guid.NewGuid();
-            var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+                    case "Judge":
+                        agentId = Guid.NewGuid();
+                        var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
         
-            await judgeAgent.SetAgent(judge.Name, judge.Bio);
+                        await judgeAgent.SetAgent(agent.Name, agent.Bio);
 
-            var newAgent = new AgentReponse()
-            {
-                AgentId = agentId.ToString(),
-                Name = judge.Name
-            };
+                        newAgent = new AgentReponse()
+                        {
+                            AgentId = agentId.ToString(),
+                            Name = agent.Name
+                        };
 
-            // Add the new agent to the contestant list
-            agentResponse.JudgeAgentList.Add(newAgent);
-            
+                        // Add the new agent to the contestant list
+                        agentResponse.JudgeAgentList.Add(newAgent);
+                        break;
+                    
+                    case "Host":
+                        break;
+
+                    default:
+                        break;
+                }
+            }
         }
+        else
+        {
+            foreach (var contestant in contestAgentsDto.ContestantAgentList)
+            {
+                var agentId = Guid.NewGuid();
+                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
+                await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
+            
+                var newAgent = new AgentReponse()
+                {
+                    AgentId = agentId.ToString(),
+                    Name = contestant.Name
+                };
+                
+                // Add the new agent to the contestant list
+                agentResponse.ContestantAgentList.Add(newAgent);
+            }
 
+            foreach (var judge in contestAgentsDto.JudgeAgentList)
+            {
+                var agentId = Guid.NewGuid();
+                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+        
+                await judgeAgent.SetAgent(judge.Name, judge.Bio);
+
+                var newAgent = new AgentReponse()
+                {
+                    AgentId = agentId.ToString(),
+                    Name = judge.Name
+                };
+
+                // Add the new agent to the contestant list
+                agentResponse.JudgeAgentList.Add(newAgent);
+            }
+        }
+        
         await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
         {
             CreativeAgentIdList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
