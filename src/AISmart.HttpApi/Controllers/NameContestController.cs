@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AISmart.Service;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Volo.Abp;
@@ -27,15 +28,17 @@ public class NameContestController: AISmartController
         _microAiService = microAiService;
     }
     
-    [HttpPost("initagents")]
-    public async Task InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
+    [HttpPost]
+    [Route("initagents")]
+    public async Task<AiSmartInitResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
         _logger.LogInformation("Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
-        await _namingContestService.InitAgentsAsync(contestAgentsDto);
+        return await _namingContestService.InitAgentsAsync(contestAgentsDto);
     }
     
-    [HttpPost("initnetwork")]
+    [HttpPost]
+    [Route("initnetwork")]
     public async Task<GroupResponse> InitNetworks([FromBody]NetworksDto networksDto)
     {
         var headers = Request.Headers;
@@ -44,7 +47,8 @@ public class NameContestController: AISmartController
         return groupResponse;
     }
     
-    [HttpPost("start")]
+    [HttpPost]
+    [Route("start")]
     public async Task StartGroup([FromBody]GroupDto groupDto)
     {
         var headers = Request.Headers;

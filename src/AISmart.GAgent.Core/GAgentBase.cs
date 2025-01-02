@@ -44,6 +44,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public async Task RegisterAsync(IGAgent gAgent)
     {
         var guid = gAgent.GetPrimaryKey();
+        if (guid == this.GetPrimaryKey())
+        {
+            Logger.LogError($"Cannot register GAgent with same Guid.");
+            return;
+        }
         await AddSubscriberAsync(gAgent.GetGrainId());
         await OnRegisterAgentAsync(guid);
     }
@@ -112,6 +117,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
+        Logger.LogInformation($"Forwarding event {((EventWrapper<EventBase>)eventWrapper)} downwards.");
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 

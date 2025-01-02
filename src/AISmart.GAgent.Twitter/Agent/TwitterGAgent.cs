@@ -119,7 +119,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         }
     }
     
-    public async Task BindTwitterAccount(string userName, string userId, string token, string tokenSecret)
+    public async Task BindTwitterAccountAsync(string userName, string userId, string token, string tokenSecret)
     {
         _logger.LogDebug("HandleEventAsync BindTwitterAccount，userId: {userId}, userName: {userName}", 
             userId, userName);
@@ -133,7 +133,7 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         await ConfirmEvents();
     }
     
-    public async Task UnbindTwitterAccount()
+    public async Task UnbindTwitterAccountAsync()
     {
         _logger.LogDebug("HandleEventAsync UnbindTwitterAccount，userId: {userId}", State.UserId);
         RaiseEvent(new UnbindTwitterAccountEvent()
@@ -141,10 +141,16 @@ public class TwitterGAgent : GAgentBase<TwitterGAgentState, TweetGEvent>, ITwitt
         });
         await ConfirmEvents();
     }
+
+    public Task<bool> UserHasBoundAsync()
+    {
+        return Task.FromResult(!State.UserName.IsNullOrEmpty());
+    }
 }
 
 public interface ITwitterGAgent : IStateGAgent<TwitterGAgentState>
 {
-    Task BindTwitterAccount(string userName, string userId, string token, string tokenSecret);
-    Task UnbindTwitterAccount();
+    Task BindTwitterAccountAsync(string userName, string userId, string token, string tokenSecret);
+    Task UnbindTwitterAccountAsync();
+    Task<bool> UserHasBoundAsync();
 }
