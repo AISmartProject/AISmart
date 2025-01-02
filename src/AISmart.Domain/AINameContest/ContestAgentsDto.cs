@@ -53,6 +53,19 @@ public class ContestAgentsDto
 
 }
 
+public class AiSmartInitResponse
+{
+    public string Message { get; set; } 
+    public List<AiSmartInitResponseDetail> Details { get; set; } =  new List<AiSmartInitResponseDetail>();
+}
+
+public class AiSmartInitResponseDetail
+{
+    public string AgentId { get; set; } 
+    public string AgentName { get; set; } 
+    public string Label { get; set; } 
+}
+
 
 public class Network
 {

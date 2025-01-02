@@ -25,7 +25,7 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    public Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
+    public Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     public Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
     public Task StartGroupAsync(GroupDto groupDto);
 }
@@ -46,20 +46,21 @@ public class NamingContestService : ApplicationService,INamingContestService
         _nameContestOptions = nameContestOptions.Value;
     }
 
-    public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
+    public async Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
         IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
         
         var random = new Random();
 
         AgentResponse agentResponse = new AgentResponse();
+        AiSmartInitResponse aiSmartInitResponse = new AiSmartInitResponse();
 
         if (contestAgentsDto.Network is not null )
         {
             foreach (var agent in contestAgentsDto.Network)
             {
                 Guid agentId;
-                AgentReponse? newAgent;
+                AiSmartInitResponseDetail? newAgent;
                 switch (agent.Label)
                 {
                     case "Contestant":
@@ -67,14 +68,15 @@ public class NamingContestService : ApplicationService,INamingContestService
                         var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
                         await creativeAgent.SetAgent(agent.Name, agent.Bio);
             
-                        newAgent = new AgentReponse()
+                        newAgent = new AiSmartInitResponseDetail()
                         {
                             AgentId = agentId.ToString(),
-                            Name = agent.Name
+                            AgentName = agent.Name,
+                            Label = agent.Label
                         };
 
                         // Add the new agent to the contestant list
-                        agentResponse.ContestantAgentList.Add(newAgent);
+                        aiSmartInitResponse.Details.Add(newAgent);
                         break;
 
                     case "Judge":
@@ -83,14 +85,15 @@ public class NamingContestService : ApplicationService,INamingContestService
         
                         await judgeAgent.SetAgent(agent.Name, agent.Bio);
 
-                        newAgent = new AgentReponse()
+                        newAgent = new AiSmartInitResponseDetail()
                         {
                             AgentId = agentId.ToString(),
-                            Name = agent.Name
+                            AgentName = agent.Name,
+                            Label = agent.Label
                         };
 
                         // Add the new agent to the contestant list
-                        agentResponse.JudgeAgentList.Add(newAgent);
+                        aiSmartInitResponse.Details.Add(newAgent);
                         break;
                     
                     case "Host":
@@ -144,7 +147,7 @@ public class NamingContestService : ApplicationService,INamingContestService
             HostAgentIdList = agentResponse.HostAgentList.Select(agent => agent.AgentId).ToList(),
         });
 
-        return agentResponse;
+        return aiSmartInitResponse;
     }
 
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
