@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
+using AISmart.Agents.LoadTestAgent;
 using AISmart.Authors;
 using AISmart.Dapr;
 using AISmart.Dto;
@@ -8,10 +9,12 @@ using AISmart.Provider;
 using AISmart.Service;
 using Asp.Versioning;
 using Dapr;
+using Google.Type;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Volo.Abp;
+using DateTime = System.DateTime;
 
 namespace AISmart.Controllers;
 
@@ -56,6 +59,12 @@ public class TelegramController: AISmartController
     public async Task TestMessages(string message,string groupName)
     {
         await _microAiService.ReceiveMessagesAsync(message,groupName);
+    }
+    
+    [HttpGet("LoadTestMessageCount")]
+    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
+    {
+        return await _telegramService.GetLoadTestMessageCount(groupName);
     }
     
     [HttpPost("registerBot")]

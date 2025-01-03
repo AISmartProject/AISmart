@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.NamingContestTelegram;
@@ -8,10 +9,12 @@ using AISmart.Agents.Developer;
 using AISmart.Agents.Group;
 using AISmart.Agents.ImplementationAgent.Events;
 using AISmart.Agents.Investment;
+using AISmart.Agents.LoadTestAgent;
 using AISmart.Agents.MarketLeader;
 using AISmart.Agents.MarketLeader.Events;
 using AISmart.Application.Grains.Agents.Developer;
 using AISmart.Application.Grains.Agents.Investment;
+using AISmart.Application.Grains.Agents.LoadTestAgent;
 using AISmart.Application.Grains.Agents.MarketLeader;
 using AISmart.Common;
 using AISmart.Events;
@@ -46,6 +49,9 @@ public class TelegramService : ApplicationService, ITelegramService
     private readonly ILogger<TelegramService> _logger;
     private readonly TelegramTestOptions _telegramTestOptions;
     private readonly TelegramOptions _telegramOptions;
+
+    private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
+        new Dictionary<string, ILoadTestGAgentCount>();
 
     public TelegramService(IOptions<TelegramTestOptions> telegramTestOptions, IOptions<TelegramOptions> telegramOption,
         IClusterClient clusterClient,
@@ -283,9 +289,16 @@ public class TelegramService : ApplicationService, ITelegramService
         await telegramAgent.RegisterTelegramAsync(_telegramTestOptions.BotName, encryptToken);
         await groupAgent.RegisterAsync(telegramAgent);
 
-        var namingTelegram = _clusterClient.GetGrain<INamingContestTelegramGAgent>(Guid.NewGuid());
-        await namingTelegram.SetAgent("namingTelegram","You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
-        await groupAgent.RegisterAsync(namingTelegram);
+        // var namingTelegram = _clusterClient.GetGrain<INamingContestTelegramGAgent>(Guid.NewGuid());
+        // await namingTelegram.SetAgent("namingTelegram","You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
+        // await groupAgent.RegisterAsync(namingTelegram);
+
+        var loadTestGAgent = _clusterClient.GetGrain<ILoadTestGAgentCount>(Guid.NewGuid());
+        await groupAgent.RegisterAsync(loadTestGAgent);
+        RecordLoadTest(groupName, loadTestGAgent);
+        _logger.LogInformation("Current LoadTestRecords: {LoadTestRecords}",
+            string.Join(", ", _loadTestRecords.Select(kv => $"{kv.Key}: {kv.Value}")));
+
         //
         // var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
         // await groupAgent.RegisterAsync(rankingAgent);
@@ -293,5 +306,53 @@ public class TelegramService : ApplicationService, ITelegramService
         var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
         await publishingAgent.RegisterAsync(groupAgent);
+    }
+
+    private void RecordLoadTest(string groupName, ILoadTestGAgentCount agent)
+    {
+        _logger.LogInformation($"Recording load test for group: {groupName}");
+        _loadTestRecords[groupName] = agent;
+    }
+
+    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
+    {
+        if (string.IsNullOrEmpty(groupName))
+        {
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = "Group name cannot be null or empty."
+            };
+        }
+
+        if (!_loadTestRecords.TryGetValue(groupName, out var agent) || agent == null)
+        {
+            _logger.LogInformation($"No agent found for group: {groupName}");
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = $"No agent found for group: {groupName}"
+            };
+        }
+
+        (int Count, DateTime? LastEventTime) agentCount;
+        try
+        {
+            agentCount = await agent.GetLoadTestGAgentCount();
+        }
+        catch (Exception ex)
+        {
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = "An error occurred while retrieving the agent count."
+            };
+        }
+
+        return new LoadTestMessageCountResult
+        {
+            Success = true,
+            AgentCount = agentCount
+        };
     }
 }

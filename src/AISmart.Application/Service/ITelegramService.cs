@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using AISmart.Agents.LoadTestAgent;
 using AISmart.GAgent.Telegram.Dtos;
 using Microsoft.Extensions.Primitives;
 
@@ -12,4 +14,5 @@ public interface ITelegramService
     Task RegisterBotAsync(RegisterTelegramDto registerTelegramDto);
     Task SetNamingGroupAsync(string groupName);
     Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto);
+    Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName);
 }
