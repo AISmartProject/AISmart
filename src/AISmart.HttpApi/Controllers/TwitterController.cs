@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using AISmart.Service;
 using AISmart.Twitter;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -22,28 +21,24 @@ public class TwitterController
         _twitterService = twitterService;
     }
     
-    [Authorize]
     [HttpPost("bindAccount")]
     public async Task BindAccountAsync([FromBody] BindTwitterAccountDto bindTwitterAccountDto)
     {
         await _twitterService.BindTwitterAccountAsync(bindTwitterAccountDto);
     }
     
-    [Authorize]
     [HttpPost("unbindAccount")]
     public async Task UnbindAccountAsync([FromBody] UnbindTwitterAccountDto unbindTwitterAccountDto)
     {
         await _twitterService.UnbindTwitterAccountAsync(unbindTwitterAccountDto);
     }
     
-    [Authorize]
     [HttpPost("tweet")]
     public async Task PostTweetAsync([FromBody] PostTweetDto postTweetDto)
     {
         await _twitterService.PostTweetAsync(postTweetDto);
     }
     
-    [Authorize]
     [HttpPost("replyMention")]
     public async Task ReplyMentionAsync([FromBody] ReplyMentionDto replyMentionDto)
     {
