@@ -1,91 +1,93 @@
 using System.Collections.Immutable;
-using AElf;
-using AElf.Types;
+using AISmart.OpenIddict;
+using AISmart.Provider;
+using AISmart.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
-using Volo.Abp.DistributedLocking;
+using Volo.Abp;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 
-namespace AISmart.AuthServer;
+namespace AISmart;
 
-public class SignatureGrantHandler: ITokenExtensionGrant
+public class SignatureGrantHandler: ITokenExtensionGrant, ITransientDependency
 {
-    private ILogger<SignatureGrantHandler>? _logger;
-
-    public string Name { get; } = "signature";
+    private ILogger<SignatureGrantHandler> _logger;
+    private IWalletLoginProvider _walletLoginProvider;
+    private IUserInformationProvider _userInformationProvider;
+    
+    public string Name { get; } = GrantTypeConstants.SIGNATURE;
 
     public async Task<IActionResult> HandleAsync(ExtensionGrantContext context)
     {
-       
+        var publicKeyVal = context.Request.GetParameter("publickey").ToString();
+        var signatureVal = context.Request.GetParameter("signature").ToString();
+        var chainId = context.Request.GetParameter("chain_id").ToString();
+        var caHash = context.Request.GetParameter("ca_hash").ToString();
         var timestampVal = context.Request.GetParameter("timestamp").ToString();
-        var userName = context.Request.GetParameter("user_name").ToString();
-        var userId = context.Request.GetParameter("user_id").ToString();
+        var address = context.Request.GetParameter("address").ToString();
         
+        _walletLoginProvider = context.HttpContext.RequestServices.GetRequiredService<IWalletLoginProvider>();
+        _userInformationProvider = context.HttpContext.RequestServices.GetRequiredService<IUserInformationProvider>();
+        _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
 
-        var invalidParamResult = CheckParams(timestampVal,userName);
-        if (invalidParamResult != null)
+        var errors = _walletLoginProvider.CheckParams(publicKeyVal, signatureVal, chainId, address, timestampVal);
+        if (errors.Count > 0)
         {
-            return invalidParamResult;
+            return new ForbidResult(
+                new[] { OpenIddictServerAspNetCoreDefaults.AuthenticationScheme },
+                properties: new AuthenticationProperties(new Dictionary<string, string>
+                {
+                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.InvalidRequest,
+                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = _walletLoginProvider.GetErrorMessage(errors)
+                }!));
         }
-        var timestamp = long.Parse(timestampVal!);
 
-        var time = DateTime.UnixEpoch.AddMilliseconds(timestamp);
-        var timeRangeConfig = context.HttpContext.RequestServices.GetRequiredService<IOptionsSnapshot<TimeRangeOption>>()
-            .Value;
-
-        if (time < DateTime.UtcNow.AddMinutes(-timeRangeConfig.TimeRange) ||
-            time > DateTime.UtcNow.AddMinutes(timeRangeConfig.TimeRange))
+        string wallectAddress = string.Empty;
+        UserExtensionDto userExtensionDto = null;
+        try
+        {
+            wallectAddress = await _walletLoginProvider.VerifySignatureAndParseWalletAddressAsync(publicKeyVal,
+                signatureVal, timestampVal, caHash, address, chainId);
+        }
+        catch (UserFriendlyException verifyException)
         {
             return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                $"The time should be {timeRangeConfig.TimeRange} minutes before and after the current time.");
+                verifyException.Message);
         }
-        _logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<SignatureGrantHandler>>();
-        var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
-        var user = await userManager.FindByNameAsync(userName!);
-        _logger.LogInformation("AISmartAuthServer user login:loginUser:{userName}, userDto:{user}", 
-            userName,JsonConvert.SerializeObject(user));
-
-        if (user == null)
+        catch (Exception e)
         {
-            _logger.LogInformation("AISmartAuthServer user login:loginUser:{user} is not exist", userName);
-
-            var userIdGuid = Guid.NewGuid();
-
-            var createUserResult = await CreateUserAsync(userManager, userIdGuid,userName:userName);
-            if (!createUserResult)
-            {
-                return GetForbidResult(OpenIddictConstants.Errors.ServerError, "Create user failed.");
-            }
-
-            user = await userManager.GetByIdAsync(userIdGuid);
+            _logger.LogError("[SignatureGrantHandler] Signature validation failed: {e}",
+                e.Message);
+            throw;
         }
-        else
-        {
-            _logger.LogInformation("AISmartAuthServer user login:loginUser:{user} is exist,userDto:{user}", userName,user);
-            if (userId != user.Id.ToString())
-            {
-                return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
-                    $"The user_id and user_name must match.");
-            }
-
-        }
-        var signInManager = context.HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.SignInManager<IdentityUser>>();
-        var principal = await signInManager.CreateUserPrincipalAsync(user);
-        principal.SetScopes("AISmartAuthServer");
-        principal.SetResources(await GetResourcesAsync(context, principal.GetScopes()));
-        principal.SetAudiences("AISmartAuthServer");
         
-        var abpOpenIddictClaimDestinationsManager = context.HttpContext.RequestServices
-            .GetRequiredService<AbpOpenIddictClaimsPrincipalManager>();
+        userExtensionDto = await _userInformationProvider.GetUserExtensionInfoByWalletAddressAsync(wallectAddress);
+        if (userExtensionDto == null)
+        {
+            return GetForbidResult(OpenIddictConstants.Errors.InvalidRequest,
+                $"Invalid user, please register an account first,then bind your wallet.");
+        }
+        
+        var userManager = context.HttpContext.RequestServices.GetRequiredService<IdentityUserManager>();
+        var user = await userManager.FindByIdAsync(userExtensionDto.UserId.ToString());
+        var userClaimsPrincipalFactory = context.HttpContext.RequestServices
+            .GetRequiredService<Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<IdentityUser>>();
+        var claimsPrincipal = await userClaimsPrincipalFactory.CreateAsync(user);
+        
+        claimsPrincipal.SetScopes(context.Request.GetScopes());
+        claimsPrincipal.SetResources(await GetResourcesAsync(context, claimsPrincipal.GetScopes()));
+        claimsPrincipal.SetAudiences("AISmart");
 
-        await abpOpenIddictClaimDestinationsManager.HandleAsync(context.Request, principal);
-        return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, principal);
+        
+        await context.HttpContext.RequestServices.GetRequiredService<AbpOpenIddictClaimsPrincipalManager>()
+            .HandleAsync(context.Request, claimsPrincipal);
+
+        return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, claimsPrincipal);
     }
     
     private ForbidResult GetForbidResult(string errorType, string errorDescription)
@@ -96,67 +98,10 @@ public class SignatureGrantHandler: ITokenExtensionGrant
             {
                 [OpenIddictServerAspNetCoreConstants.Properties.Error] = errorType,
                 [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = errorDescription
-            }!));
+            }));
     }
     
-    private static ForbidResult? CheckParams(string? timestampVal ,string? userName)
-    {
-        var errors = new List<string>();
-        if (string.IsNullOrWhiteSpace(userName))
-        {
-            errors.Add("invalid parameter source.");
-        }
-
-        if (string.IsNullOrWhiteSpace(timestampVal) || !long.TryParse(timestampVal, out var time) || time <= 0)
-        {
-            errors.Add("invalid parameter timestamp.");
-        }
-
-        if (errors.Count > 0)
-        {
-            return new ForbidResult(
-                new[] { OpenIddictServerAspNetCoreDefaults.AuthenticationScheme },
-                properties: new AuthenticationProperties(new Dictionary<string, string>
-                {
-                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.InvalidRequest,
-                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = GetErrorMessage(errors)
-                }!));
-        }
-
-        return null;
-    }
-    
-    private static string GetErrorMessage(List<string> errors)
-    {
-        var message = string.Empty;
-
-        errors?.ForEach(t => message += $"{t}, ");
-        if (message.Contains(','))
-        {
-            return message.TrimEnd().TrimEnd(',');
-        }
-
-        return message;
-    }
-
-    private async Task<bool> CreateUserAsync(IdentityUserManager userManager, Guid userId, 
-        string userName)
-    {
-        var result = false;
-        var user = new IdentityUser(userId, userName: userName, email: userName+ "@ai-smart.io");
-        var identityResult = await userManager.CreateAsync(user);
-
-        if (identityResult.Succeeded)
-        {
-            _logger.LogDebug($"create user success: {userId.ToString()}");
-        }
-
-        result = identityResult.Succeeded;
-
-        return result;
-    }
-
-    private static async Task<IEnumerable<string>> GetResourcesAsync(ExtensionGrantContext context,
+    private async Task<IEnumerable<string>> GetResourcesAsync(ExtensionGrantContext context,
         ImmutableArray<string> scopes)
     {
         var resources = new List<string>();
@@ -173,4 +118,5 @@ public class SignatureGrantHandler: ITokenExtensionGrant
 
         return resources;
     }
+    
 }
