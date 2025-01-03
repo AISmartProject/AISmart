@@ -474,7 +474,7 @@ namespace AISmart.Samples
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            aiSmartInitResponse.Details.Count.ShouldBe(4);
+            aiSmartInitResponse.Details.Count.ShouldBe(6);
             aiSmartInitResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
             aiSmartInitResponse.Details[1].AgentName.ShouldBe("kob");
 
@@ -520,6 +520,8 @@ namespace AISmart.Samples
             };
 
             await _namingContestService.StartGroupAsync(groupDto);
+
+            await Task.Delay(1000 * 60);
         }
 
 
