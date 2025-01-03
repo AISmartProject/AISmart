@@ -1,11 +1,17 @@
+using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
 using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
 
+public interface IDevelopingLeaderTestGAgent: IGAgent
+{
+    
+}
+
 [GAgent]
-public class DevelopingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
+public class DevelopingLeaderTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>, IDevelopingLeaderTestGAgent
 {
     public DevelopingLeaderTestGAgent(ILogger<DevelopingLeaderTestGAgent> logger) : base(logger)
     {

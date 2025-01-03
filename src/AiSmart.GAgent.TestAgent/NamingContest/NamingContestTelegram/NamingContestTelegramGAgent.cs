@@ -85,8 +85,6 @@ public class NamingContestTelegramGAgent : MicroAIGAgent, INamingContestTelegram
                 break;
             case NamingContestStepEnum.JudgeAsking:
                 break;
-            case NamingContestStepEnum.JudgeRating:
-                break;
             case NamingContestStepEnum.Complete:
                 await PublishAsync(new SendMessageEvent()
                 {

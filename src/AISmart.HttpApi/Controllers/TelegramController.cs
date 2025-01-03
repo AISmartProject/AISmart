@@ -75,4 +75,22 @@ public class TelegramController: AISmartController
     {
         await _telegramService.UnRegisterBotAsync(unRegisterTelegramDto);
     }
+    
+    [HttpPost("initNamingGroup")]
+    public async Task InitGroupListAsync()
+    {
+        await _telegramService.InitGroupListAsync();
+    }
+    
+    [HttpPost("startFirstRoundTest")]
+    public async Task StartFirstRoundTestAsync()
+    {
+        await _telegramService.StartFirstRoundTestAsync();
+    }
+    
+    [HttpPost("startSecondRoundTest")]
+    public async Task StartSecondRoundTestAsync()
+    {
+        await _telegramService.StartSecondRoundTestAsync();
+    }
 }
