@@ -160,8 +160,6 @@ public class NamingContestService : INamingContestService
             foreach (var agentId in network.ConstentList)
             {
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
-
-                MicroAIGAgentState microAigAgentState = await creativeAgent.GetAgentState();
                 
                 _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(),creativeAgent.GetPrimaryKey());
 
@@ -240,7 +238,7 @@ public class NamingContestService : INamingContestService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
-            await publishingAgent.PublishEventAsync(new GroupStartEvent());
+            await publishingAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
         }
     }
 }
