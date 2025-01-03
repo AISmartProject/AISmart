@@ -43,7 +43,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -77,7 +77,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 AssembleMessageUtil.AssembleDebateContent(@event.CreativeName, @event.DebateReply))
         });
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
         });
@@ -110,7 +110,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
         }
 
-        base.RaiseEvent(new TrafficGrainCompleteGEvent()
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.JudgeGrainId,
         });
@@ -119,7 +119,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         await DispatchJudgeAgent();
     }
-
+    
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -208,6 +208,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         if (creativeList.Count == 0)
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
+            await PublishAsync(new NamingContestComplete());
             return;
         }
 
@@ -218,6 +219,24 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
+    }
+    
+    private async Task DispatchHostAgent()
+    {
+        var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
+        if (hostAgentList.Count == 0)
+        {
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummary, Guid.Empty));
+            return;
+        }
+
+        var random = new Random();
+        var index = random.Next(0, hostAgentList.Count);
+        var selectedId = hostAgentList[index];
+        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
+        await base.ConfirmEvents();
+
+        await PublishAsync(new HostSummaryGEvent(){ HostId = selectedId, History = State.ChatHistory });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)

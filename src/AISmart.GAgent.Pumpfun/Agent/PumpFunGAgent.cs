@@ -19,7 +19,7 @@ namespace AISmart.Agent;
 [Description("Handle PumpFun")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent>, IPumpFunGAgent
+public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, Agents.GEventBase>, IPumpFunGAgent
 {
     private readonly ILogger<PumpFunGAgent> _logger;
     public PumpFunGAgent(ILogger<PumpFunGAgent> logger) : base(logger)
@@ -33,45 +33,21 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
     }
 
     [EventHandler]
-    public async Task HandleEventAsync(PumpFunReceiveMessageEvent @event)
-    { 
-        _logger.LogInformation("PumpFunReceiveMessageEvent:" + JsonConvert.SerializeObject(@event));
-       RaiseEvent(new PumpFunReceiveMessageGEvent
-       {
-           ChatId = @event.ChatId,
-           ReplyId = @event.ReplyId,
-           RequestMessage = @event.RequestMessage
-       });
-       await ConfirmEvents();
-       
-       _logger.LogInformation("PumpFunReceiveMessageEvent2:" + JsonConvert.SerializeObject(@event));
-       await PublishAsync(new AutoGenCreatedEvent
-       {
-           EventId = Guid.NewGuid(),
-           Content = $"""
-             Received a JSON-formatted message:{JsonConvert.SerializeObject(@event)}, The fields will be used in the final response except "RequestMessage".
-             Please follow the process below.
-             1. parse the message content, the fields in the JSON may be used in the final response..
-             2. Please understand the content of the "RequestMessage" in the JSON format, process the response accordingly.
-             3. Must pass the final result to the PumpFunSendMessageEvent of the PumpFunGAgent.
-             """
-       });
-    }
-    
-    [EventHandler]
     public async Task HandleEventAsync(PumpFunSendMessageEvent @event)
     {
         _logger.LogInformation("PumpFunSendMessageEvent:" + JsonConvert.SerializeObject(@event));
         if (@event.ReplyId != null)
         {
-            RaiseEvent(new PumpFunSendMessageGEvent()
+            PumpFunSendMessageGEvent pumpFunSendMessageGEvent = new PumpFunSendMessageGEvent()
             {
                 Id = Guid.Parse(@event.ReplyId),
                 ReplyId = @event.ReplyId,
                 ReplyMessage = @event.ReplyMessage
-            });
+            };
+            
+            RaiseEvent(pumpFunSendMessageGEvent);
             await ConfirmEvents();
-            _logger.LogInformation("PumpFunSendMessageEvent2:" + JsonConvert.SerializeObject(@event));
+            _logger.LogInformation("PumpFunSendMessageEvent2:" + JsonConvert.SerializeObject(@pumpFunSendMessageGEvent));
             await GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId))
                 .SendMessageAsync(@event.ReplyId, @event.ReplyMessage);
             _logger.LogInformation("PumpFunSendMessageEvent3,grainId:" + 

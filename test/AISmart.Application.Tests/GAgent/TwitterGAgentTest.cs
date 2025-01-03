@@ -20,10 +20,22 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
         _output = output;
     }
     
-    //https://developer.twitter.com/en/portal/products
-    //https://developer.twitter.com/apitools/api
-
+    [Fact]
+    public async Task PostTwittersAsyncTest ()
+    {
+        var accessToken = "";
+        var accessTokenSecret = "";
+        await _twitterProvider.PostTwitterAsync( "Today is Friday！", accessToken, accessTokenSecret);
+    }
     
+    [Fact]
+    public async Task ReplyAsyncAsyncTest ()
+    {
+        var tweetId = "1873625128661381262";
+        var accessToken = "";
+        var accessTokenSecret = "";
+        await _twitterProvider.ReplyAsync("Today is Friday！", tweetId, accessToken, accessTokenSecret);
+    }
     
     [Fact]
     public async Task QueryRecentTwittersAsyncTest ()

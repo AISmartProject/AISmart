@@ -3,6 +3,7 @@ using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Orleans.EventSourcing;
 using Orleans.Providers;
 using Orleans.Storage;
@@ -36,15 +37,18 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         EventDispatcher = ServiceProvider.GetRequiredService<IEventDispatcher>();
     }
 
-    public Task ActivateAsync()
+    public async Task ActivateAsync()
     {
-        //do nothing
-        return Task.CompletedTask;
     }
 
     public async Task RegisterAsync(IGAgent gAgent)
     {
         var guid = gAgent.GetPrimaryKey();
+        if (gAgent.GetGrainId() == this.GetGrainId())
+        {
+            Logger.LogError($"Cannot register GAgent with same GrainId.");
+            return;
+        }
         await AddSubscriberAsync(gAgent.GetGrainId());
         await OnRegisterAgentAsync(guid);
     }
@@ -113,6 +117,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
+        Logger.LogInformation($"Forwarding event {((EventWrapper<EventBase>)eventWrapper)} downwards.");
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
@@ -158,25 +163,33 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         // This must be called first to initialize Observers field.
         await UpdateObserverList();
 
-        // Register to itself.
-        var agentGuid = this.GetPrimaryKey();
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
-        if ((await streamOfThisGAgent.GetAllSubscriptionHandles()).Count == 0)
+        await InitializeStreamOfThisGAgentAsync();
+
+        //_stateSaveTimer =
+        // this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    private async Task InitializeStreamOfThisGAgentAsync()
+    {
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        if (handles.Count != 0)
         {
-            foreach (var observer in Observers.Keys)
+            foreach (var handle in handles)
             {
-                await streamOfThisGAgent.SubscribeAsync(observer);
+                await handle.UnsubscribeAsync();
             }
         }
 
-        _stateSaveTimer =
-            this.RegisterGrainTimer(SaveSubscriberAsync, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
+        }
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        _stateSaveTimer.Dispose();
+        _stateSaveTimer?.Dispose();
         await SaveSubscriberAsync(cancellationToken);
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
@@ -205,6 +218,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     
     protected sealed override async void RaiseEvent<TEvent>(TEvent @event)
     {
+        Logger.LogInformation("base raiseEvent info:{info}", JsonConvert.SerializeObject(@event));
         base.RaiseEvent(@event);
         InternalRaiseEventAsync(@event).ContinueWith(task =>
         {
@@ -223,5 +237,11 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected virtual async Task HandleRaiseEventAsync()
     {
         
+    }
+
+    private IAsyncStream<EventWrapperBase> GetStream(string grainIdString)
+    {
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainIdString);
+        return StreamProvider.GetStream<EventWrapperBase>(streamId);
     }
 }

@@ -190,7 +190,7 @@ public class GroupingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(marketingLeader, developingLeader);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
-        AddProbesByGrainId(marketingLeader, developingLeader, developer1, developer2, developer3, investor1, investor2);
+        AddProbesByGrainId(publishingGAgent, groupGAgent, marketingLeader, developingLeader, developer1, developer2, developer3, investor1, investor2);
 
         // Act.
         await publishingGAgent.PublishEventAsync(new NewDemandTestEvent

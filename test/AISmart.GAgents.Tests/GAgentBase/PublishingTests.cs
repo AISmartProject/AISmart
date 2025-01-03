@@ -15,6 +15,8 @@ public class PublishingTests : GAgentTestKitBase
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
 
+        AddProbesByGrainId(publishingGAgent, groupGAgent, eventHandlerTestGAgent);
+
         // Act.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
         {
@@ -43,6 +45,8 @@ public class PublishingTests : GAgentTestKitBase
         await level2A.RegisterAsync(level3B);
         var level1 = await CreateGroupGAgentAsync(level2A, level2B);
         var publishingGAgent = await CreatePublishingGAgentAsync(level1);
+
+        AddProbesByGrainId(publishingGAgent, level1, level2A, level2B, level3A, level3B);
 
         // Act.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
@@ -73,6 +77,8 @@ public class PublishingTests : GAgentTestKitBase
         await level2A.RegisterAsync(level3B);
         var level1 = await CreateGroupGAgentAsync(level2A, level2B);
         var publishingGAgent = await CreatePublishingGAgentAsync(level1);
+
+        AddProbesByGrainId(publishingGAgent, level1, level2A, level2B, level3A, level3B);
 
         // Act: ResponseTestEvent will cause level32 publish an NaiveTestEvent.
         await publishingGAgent.PublishEventAsync(new ResponseTestEvent

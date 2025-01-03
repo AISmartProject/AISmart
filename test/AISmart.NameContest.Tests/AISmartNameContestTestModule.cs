@@ -4,6 +4,7 @@ using AISmart.Options;
 using AISmart.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
+using Volo.Abp.AuditLogging;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.EventBus;
 using Volo.Abp.Modularity;
@@ -15,8 +16,10 @@ namespace AISmart;
     typeof(AbpEventBusModule),
     typeof(AISmartOrleansTestBaseModule),
     typeof(AISmartGAgentTestAgentModule),
-    typeof(AISmartGAgentTestAgentModule)
-)]
+    typeof(AISmartGAgentTestAgentModule),
+    typeof(AbpAuditLoggingDomainModule)
+
+    )]
 public class AISmartNameContestTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

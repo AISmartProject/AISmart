@@ -1,5 +1,6 @@
 using AISmart.Agents;
 using AISmart.Dapr;
+using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgent.Core;
 
@@ -17,15 +18,20 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
+        Logger.LogInformation($"Published event {@event}.");
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         var eventId = Guid.NewGuid();
         switch (isTop)
         {
             case true:
+                Logger.LogInformation($"Event {@event} is the first time appeared to silo.");
                 // This event is the first time appeared to silo.
+                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+                break;
+            case false when _streamIdDictionary.IsNullOrEmpty():
                 await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
                 break;
             case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
@@ -48,18 +54,21 @@ public abstract partial class GAgentBase<TState, TEvent>
         await stream.OnNextAsync(eventWrapper);
     }
 
-    private async Task PublishEventDownwardsAsync<T>(T @event, Guid eventId) where T : EventBase
-    {
-        @event.CorrelationId ??= Guid.NewGuid();
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        @event.StreamId ??= streamOfThisGAgent;
-        await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-    }
-    
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        var count = handles.Count;
+        foreach (var handle in handles)
+        {
+            await handle.UnsubscribeAsync();
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
+        }
+
         await streamOfThisGAgent.OnNextAsync(eventWrapper);
     }
 
@@ -71,10 +80,11 @@ public abstract partial class GAgentBase<TState, TEvent>
             return;
         }
 
-        foreach (var stream in _subscribers.State
-                     .Select(subscriber => StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey()))
-                     .Select(streamId => StreamProvider.GetStream<EventWrapperBase>(streamId)))
+        foreach (var grainId in _subscribers.State)
         {
+            var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+            await gAgent.ActivateAsync();
+            var stream = GetStream(grainId.ToString());
             await stream.OnNextAsync(eventWrapper);
         }
     }

@@ -19,6 +19,8 @@ public class FirstTrafficState : StateBase
 
     [Id(8)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
     [Id(9)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
+    
+    [Id(10)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -30,9 +32,9 @@ public class FirstTrafficState : StateBase
         NamingContent = @event.Content;
     }
 
-    public void Apply(TrafficGrainCompleteGEvent gEvent)
+    public void Apply(TrafficGrainCompleteSEvent sEvent)
     {
-        CalledGrainIdList.Add(gEvent.CompleteGrainId);
+        CalledGrainIdList.Add(sEvent.CompleteGrainId);
         CurrentGrainId = Guid.Empty;
     }
 

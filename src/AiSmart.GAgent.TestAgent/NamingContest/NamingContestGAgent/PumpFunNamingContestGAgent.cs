@@ -47,22 +47,16 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         return Task.FromResult(
             "Represents an agent responsible for informing other agents when a PumpFun thread is published.");
     }
+    
 
-
-    [EventHandler]
-    public async Task HandleRequestAllSubscriptionsEventAsync(RequestAllSubscriptionsEvent @event)
+    [AllEventHandler]
+    public async Task HandleRequestAllEventAsync(EventWrapperBase @event)
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
-                               JsonConvert.SerializeObject(@event));
-    }
-
-    [EventHandler]
-    public async Task HandleRequestAllSubscriptionsEventAsync<T>(EventWrapper<T> @event) where T : EventBase
-    {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
+        
+        _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
                                JsonConvert.SerializeObject(@event));
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync((@event.Event as NameContentGEvent)!, State.CallBackUrl);
+            .SendMessageAsync(null, State.CallBackUrl);
     }
 }
 
