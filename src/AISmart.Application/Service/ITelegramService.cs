@@ -13,6 +13,6 @@ public interface ITelegramService
     Task SetNamingGroupAsync(string groupName);
     Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto);
     Task InitGroupListAsync();
-    Task StartFirstRoundTestAsync();
-    Task StartSecondRoundTestAsync();
+    Task StartFirstRoundTestAsync(string message);
+    Task StartSecondRoundTestAsync(string message);
 }
