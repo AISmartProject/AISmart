@@ -123,7 +123,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         await DispatchJudgeAgent();
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(HostSummaryCompleteGEvent @event)
     {
@@ -156,7 +156,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         await DispatchHostAgent();
     }
-    
+
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -246,7 +246,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
-            
+
             await PublishMostCharmingEventAsync();
             await DispatchHostAgent();
             return;
@@ -267,14 +267,12 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             GrainFactory.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
         var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
-        
+
         await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
         {
-            VoteMessage = new Dictionary<Guid, List<MicroAIMessage>>()
-            {
-                
-            },
-            Round = 1
+            AgentIdNameDictionary = State.CreativeList.ToDictionary(p => p.CreativeGrainId, p => p.CreativeName),
+            Round = 1,
+            VoteMessage = State.ChatHistory
         });
     }
 
@@ -293,7 +291,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
-        await PublishAsync(new HostSummaryGEvent(){ HostId = selectedId, History = State.ChatHistory });
+        await PublishAsync(new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)

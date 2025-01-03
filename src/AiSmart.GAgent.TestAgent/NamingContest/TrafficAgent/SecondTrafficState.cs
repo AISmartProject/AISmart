@@ -19,6 +19,7 @@ public class SecondTrafficState : StateBase
     [Id(10)] public string AgentDescription { get; set; }
     [Id(11)] public string Summary { get; set; }
     [Id(12)] public  int JudgeScoreCount { get; set; }
+    [Id(13)] public int Round { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -86,7 +87,7 @@ public class SecondTrafficState : StateBase
         DiscussionCount = @event.DiscussionCount;
     }
 
-    public void Apply(DiscussionCountReduce @event)
+    public void Apply(DiscussionCountReduceSEvent @event)
     {
         DiscussionCount -= 1;
     }
@@ -97,9 +98,13 @@ public class SecondTrafficState : StateBase
         AgentDescription = @event.Description;
     }
 
-    public void Apply(AddScoreJudgeCount @event)
+    public void Apply(AddScoreJudgeCountSEvent @event)
     {
         JudgeScoreCount += 1;
     }
 
+    public void Apply(SetRoundNumberSEvent @event)
+    {
+        Round = @event.RoundCount;
+    }
 }

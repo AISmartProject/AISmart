@@ -28,7 +28,7 @@ public static class NamingConstants
                                                     c. Highlight the advantages or disadvantages of a name suggested by a team member.
                                                     (2) There is a 30% probability of discussing one of the following:
                                                     a. Engage in casual conversation with other group members or reply to their messages.
-                                                    Please select one of the topics and directly output its content.
+                                                    Please select one of the topics and output its content in one sentence directly.
                                                     """;
 
     public static string TrafficSelectCreativePrompt = "Please select one of the more capable players from the above discussion to summarize the discussion. Only output the selected player's name without any additional information.";
@@ -50,10 +50,10 @@ public static class NamingConstants
                                              (1) A question about the conclusion.
                                              (2) A question about the connection between the conclusion and real-time events.
                                              (3) A question about the discussion process.
-                                             Please directly output your question without any additional information.
+                                             Please output your question in one sentence without any additional information, and please do not say similar things.
                                              """;
 
-    public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the question posed by the previous judge.";
+    public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the previous judge's question concisely.";
     
     public static string JudgeScorePrompt = """
                                             Please score the name chosen by this group based on the naming theme and the contestants' answers to the judges' questions. The score should be between 1-100, allowing one decimal place. Please output the score directly without any additional information.
