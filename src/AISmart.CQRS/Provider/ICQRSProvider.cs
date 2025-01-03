@@ -11,4 +11,7 @@ public interface ICQRSProvider : IEventDispatcher
     
     Task SendEventCommandAsync(EventBase eventBase);
 
+    Task<string> QueryGEventAsync(string index, string id);
+
+
 }

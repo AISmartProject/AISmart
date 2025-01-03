@@ -6,9 +6,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
 
+public interface ILogViewAdaptorTestGAgent
+{
+    
+}
+
 [GAgent]
 public class LogViewAdaptorTestGAgent
-    : GAgentBase<LogViewAdaptorTestGState, LogViewAdaptorTestGEvent>
+    : GAgentBase<LogViewAdaptorTestGState, LogViewAdaptorTestGEvent>, ILogViewAdaptorTestGAgent
 {
     public LogViewAdaptorTestGAgent(ILogger logger) : base(logger)
     {
@@ -25,7 +30,7 @@ public class LogViewAdaptorTestGAgent
         {
             State.Content = new Dictionary<Guid, LogViewAdaptorTestGEvent>();
         }
-        base.RaiseEvent(new LogViewAdaptorTestGEvent
+        RaiseEvent(new LogViewAdaptorTestGEvent
         {
             Greeting = eventData.Greeting
         });

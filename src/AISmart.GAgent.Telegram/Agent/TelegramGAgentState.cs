@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.GAgent.Telegram.Agent.GEvents;
 using Orleans;
 
-namespace AISmart.Agent;
+namespace AISmart.GAgent.Telegram.Agent;
 
 public class TelegramGAgentState : StateBase
 {

@@ -4,6 +4,7 @@ using AElf.Contracts.MultiToken;
 using AElf.Types;
 using AISmart.Provider;
 using Newtonsoft.Json;
+using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,24 +20,28 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
         _output = output;
     }
     
-    //https://developer.twitter.com/en/portal/products
-    //https://developer.twitter.com/apitools/api
-    [Fact]
-    public async Task GetLatestTwittersAsyncTest()
-    {
-        var twittersAsync = await _twitterProvider.GetLatestTwittersAsync("Test", "903565929719541760", "");
-        foreach (var twitter in twittersAsync)
-        {
-            _output.WriteLine("twitter: Id" + twitter.Id);
-            _output.WriteLine("twitter: Text" + twitter.Text);
-        }
-    }
-    
     [Fact]
     public async Task PostTwittersAsyncTest ()
     {
-        var twittersAsync = await _twitterProvider.PostTwitterAsync("Test", "twitter test");
-        _output.WriteLine("twitter: Id" + twittersAsync);
+        var accessToken = "";
+        var accessTokenSecret = "";
+        await _twitterProvider.PostTwitterAsync( "Today is Friday！", accessToken, accessTokenSecret);
     }
-
+    
+    [Fact]
+    public async Task ReplyAsyncAsyncTest ()
+    {
+        var tweetId = "1873625128661381262";
+        var accessToken = "";
+        var accessTokenSecret = "";
+        await _twitterProvider.ReplyAsync("Today is Friday！", tweetId, accessToken, accessTokenSecret);
+    }
+    
+    [Fact]
+    public async Task QueryRecentTwittersAsyncTest ()
+    {
+        var userName = "elonMusk";
+        var resp = await _twitterProvider.GetMentionsAsync(userName);
+        resp.Count.ShouldNotBe(0);
+    }
 }

@@ -11,6 +11,7 @@ using AISmart.GAgent.Core;
 using AISmart.Grains;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Orleans;
 using Orleans.Providers;
 
 namespace AISmart.Agent;
@@ -65,6 +66,7 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
         {
             RaiseEvent(new PumpFunSendMessageGEvent()
             {
+                Id = Guid.Parse(@event.ReplyId),
                 ReplyId = @event.ReplyId,
                 ReplyMessage = @event.ReplyMessage
             });
@@ -72,6 +74,9 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
             _logger.LogInformation("PumpFunSendMessageEvent2:" + JsonConvert.SerializeObject(@event));
             await GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId))
                 .SendMessageAsync(@event.ReplyId, @event.ReplyMessage);
+            _logger.LogInformation("PumpFunSendMessageEvent3,grainId:" + 
+                                   GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId)).GetGrainId());
+
         }
     }
     
@@ -86,21 +91,10 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, PumpFunMessageGEvent
         _logger.LogInformation("PumpFunGAgent SetPumpFunConfig2, chatId:" + chatId);
     }
 
-    public Task<PumpFunGAgentState> GetPumpFunGAgentState()
-    {
-        PumpFunGAgentState pumpFunGAgentState = new PumpFunGAgentState
-        {
-            Id = State.Id,
-            ChatId = State.ChatId
-        };
-        return Task.FromResult(pumpFunGAgentState);
-    }
 }
 
 public interface IPumpFunGAgent : IStateGAgent<PumpFunGAgentState>
 { 
     Task SetPumpFunConfig(string chatId);
-    
-    Task<PumpFunGAgentState> GetPumpFunGAgentState();
     
 }
