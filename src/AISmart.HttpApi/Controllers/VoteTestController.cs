@@ -58,7 +58,7 @@ public class VoteTestController : AISmartController
         }
         var input = new SingleVoteCharmingEvent()
         {
-            VoteMessage = dic,
+           // VoteMessage = dic,
             Round = 1
         };
         await grain.VoteAgentAsync(input);

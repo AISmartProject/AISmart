@@ -48,7 +48,9 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
         if (message.Content != null)
         {
             var namingReply = message.Content.Replace("\"","");
-            var winner = Guid.Parse(namingReply);
+            var agent = singleVoteCharmingEvent.AgentIdNameDictionary.FirstOrDefault(x => x.Value.Equals(namingReply));
+            var winner = agent.Key;
+
             await PublishEventAsync(new VoteCharmingCompleteEvent
             {
                 Winner = Guid.Parse(namingReply),

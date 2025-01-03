@@ -14,8 +14,9 @@ public class VoteCharmingEvent:EventBase
 [GenerateSerializer]
 public class SingleVoteCharmingEvent:EventBase
 {
-    [Id(0)] public Dictionary<Guid, List<MicroAIMessage>> VoteMessage { get; set; } = new();
-    [Id(1)] public int Round { get; set; }
+    [Id(0)] public Dictionary<Guid, string> AgentIdNameDictionary { get; set; } = new();
+    [Id(1)] public List<MicroAIMessage> VoteMessage { get; set; } = new();
+    [Id(2)] public int Round { get; set; }
 }
 
 [GenerateSerializer]

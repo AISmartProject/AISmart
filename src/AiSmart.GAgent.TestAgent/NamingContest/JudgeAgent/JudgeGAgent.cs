@@ -189,7 +189,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         if (message != null && !message.Content.IsNullOrEmpty())
         {
             var namingReply = message.Content.Replace("\"","");
-            var winner = Guid.Parse(namingReply);
+            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.Equals(namingReply));
+            var winner = agent.Key;
                 
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
