@@ -80,7 +80,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new AddChatHistorySEvent()
         {
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
-                AssembleMessageUtil.AssembleDiscussionSummary(@event.SummaryName, @event.SummaryName))
+                AssembleMessageUtil.AssembleDiscussionSummary(@event.SummaryName, @event.Reason))
         });
 
         await ConfirmEvents();
