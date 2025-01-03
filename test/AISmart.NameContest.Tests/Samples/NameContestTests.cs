@@ -293,7 +293,7 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
 
 
-            GroupDto groupDto = new GroupDto()
+            GroupStartDto groupStartDto = new GroupStartDto()
             {
                 GroupIdList = new List<string>()
                 {
@@ -301,7 +301,7 @@ namespace AISmart.Samples
                 }
             };
 
-            await _namingContestService.StartGroupAsync(groupDto);
+            await _namingContestService.StartGroupAsync(groupStartDto);
 
             await Task.Delay(1000 * 200);
         }
@@ -511,7 +511,7 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
 
 
-            GroupDto groupDto = new GroupDto()
+            GroupStartDto groupStartDto = new GroupStartDto()
             {
                 GroupIdList = new List<string>()
                 {
@@ -519,7 +519,7 @@ namespace AISmart.Samples
                 }
             };
 
-            await _namingContestService.StartGroupAsync(groupDto);
+            await _namingContestService.StartGroupAsync(groupStartDto);
 
             await Task.Delay(1000 * 60);
         }

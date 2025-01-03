@@ -32,7 +32,7 @@ public interface INamingContestService : ISingletonDependency
     Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     Task ClearAllAgentsAsync();
     Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
-    Task StartGroupAsync(GroupDto groupDto);
+    Task<GroupStartResponse> StartGroupAsync(GroupStartDto groupStartDto);
 }
 
 public class NamingContestService : INamingContestService
@@ -274,15 +274,33 @@ public class NamingContestService : INamingContestService
         return groupResponse;
     }
 
-    public async Task StartGroupAsync(GroupDto groupDto)
+    public async Task<GroupStartResponse> StartGroupAsync(GroupStartDto groupStartDto)
     {
-        foreach (var groupId in groupDto.GroupIdList)
+        GroupStartResponse groupStartResponse = new GroupStartResponse();
+        
+        foreach (var groupId in groupStartDto.GroupIdList)
+        {
+            await StartOneGroupAsync(groupId,groupStartResponse);
+        }
+
+        return groupStartResponse;
+    }
+
+    private async Task StartOneGroupAsync(string groupId,GroupStartResponse groupStartResponse)
+    {
+        try
         {
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
             await publishingAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
+            groupStartResponse.SuccessGroupIdList.Add(groupId);
+        }
+        catch (Exception e)
+        {
+            groupStartResponse.FailGroupIdList.Add(groupId);
+            _logger.LogError(e, "groupId:{groupId} StartOneGroupAsync error,",groupId);
         }
     }
 }

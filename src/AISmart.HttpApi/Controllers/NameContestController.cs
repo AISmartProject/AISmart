@@ -57,10 +57,10 @@ public class NameContestController: AISmartController
     
     [HttpPost]
     [Route("start")]
-    public async Task StartGroup([FromBody]GroupDto groupDto)
+    public async Task<GroupStartResponse> StartGroup([FromBody]GroupStartDto groupStartDto)
     {
         var headers = Request.Headers;
-        _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(groupDto));
-        await _namingContestService.StartGroupAsync(groupDto);
+        _logger.LogInformation("Receive update message from telegram.{message}",JsonConvert.SerializeObject(groupStartDto));
+        return await _namingContestService.StartGroupAsync(groupStartDto);
     }
 }

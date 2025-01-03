@@ -110,7 +110,14 @@ public class GroupResponse
 }
 
 
-public class GroupDto
+public class GroupStartDto
 {
     public List<string> GroupIdList { get; set; } = new List<string>();
+}
+
+public class GroupStartResponse
+{
+    public List<string> SuccessGroupIdList { get; set; } = new List<string>();
+    
+    public List<string> FailGroupIdList { get; set; } = new List<string>();
 }

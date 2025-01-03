@@ -9,6 +9,7 @@ using AISmart.Application.Grains;
 using AISmart.Events;
 using AISmart.GAgent.Autogen.EventSourcingEvent;
 using AISmart.GAgent.Core;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AISmart.Service;
@@ -55,12 +56,12 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         
         _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
                                JsonConvert.SerializeObject(@event));
-        var eventWrapper = @event as EventWrapper<NameContentGEvent>;
+        var eventWrapper = @event as EventWrapper<EventBase>;
 
         if (eventWrapper?.Event != null)
         {
             await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-                .SendMessageAsync(eventWrapper.Event, State.CallBackUrl);
+                .SendMessageAsync(eventWrapper.Event as NamingLogEvent, State.CallBackUrl);
         }
     }
 }
