@@ -67,7 +67,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             CompleteGrainId = @event.CreativeId,
         });
 
-        RaiseEvent(new DiscussionCountReduce());
+        RaiseEvent(new DiscussionCountReduceSEvent());
 
         await ConfirmEvents();
 
@@ -131,7 +131,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     [EventHandler]
     public async Task HandleEventAsync(JudgeScoreCompleteGEvent @event)
     {
-        RaiseEvent(new AddScoreJudgeCount());
+        RaiseEvent(new AddScoreJudgeCountSEvent());
         await ConfirmEvents();
 
         if (State.JudgeScoreCount == State.JudgeAgentList.Count)
@@ -317,6 +317,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     public async Task SetAskJudgeNumber(int judgeNum)
     {
         RaiseEvent(new SetAskingJudgeSEvent() { AskingJudgeCount = judgeNum });
+        await ConfirmEvents();
+    }
+
+    public async Task SetRoundNumber(int round)
+    {
+        RaiseEvent(new SetRoundNumberSEvent(){RoundCount = round});
         await ConfirmEvents();
     }
 }
