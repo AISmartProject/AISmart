@@ -36,6 +36,11 @@ public class NamingContestService : ApplicationService,INamingContestService
     private readonly ILogger<NamingContestService> _logger;
     private readonly NameContestOptions _nameContestOptions;
 
+    private const string AgentLabelContestant = "Contestant";
+    private const string AgentLabelJudge = "Judge";
+    private const string AgentLabelHost = "Host";
+
+
     public NamingContestService(
         IClusterClient clusterClient,
         ILogger<NamingContestService> logger,
@@ -52,8 +57,8 @@ public class NamingContestService : ApplicationService,INamingContestService
         
         var random = new Random();
 
-        AgentResponse agentResponse = new AgentResponse();
         AiSmartInitResponse aiSmartInitResponse = new AiSmartInitResponse();
+        
 
         if (contestAgentsDto.Network is not null )
         {
@@ -63,7 +68,7 @@ public class NamingContestService : ApplicationService,INamingContestService
                 AiSmartInitResponseDetail? newAgent;
                 switch (agent.Label)
                 {
-                    case "Contestant":
+                    case AgentLabelContestant:
                         agentId = Guid.NewGuid();
                         var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
                         await creativeAgent.SetAgent(agent.Name, agent.Bio);
@@ -104,47 +109,12 @@ public class NamingContestService : ApplicationService,INamingContestService
                 }
             }
         }
-        else
-        {
-            // foreach (var contestant in contestAgentsDto.ContestantAgentList)
-            // {
-            //     var agentId = Guid.NewGuid();
-            //     var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
-            //     await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
-            //
-            //     var newAgent = new AgentReponse()
-            //     {
-            //         AgentId = agentId.ToString(),
-            //         Name = contestant.Name
-            //     };
-            //     
-            //     // Add the new agent to the contestant list
-            //     agentResponse.ContestantAgentList.Add(newAgent);
-            // }
-            //
-            // foreach (var judge in contestAgentsDto.JudgeAgentList)
-            // {
-            //     var agentId = Guid.NewGuid();
-            //     var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
-            //
-            //     await judgeAgent.SetAgent(judge.Name, judge.Bio);
-            //
-            //     var newAgent = new AgentReponse()
-            //     {
-            //         AgentId = agentId.ToString(),
-            //         Name = judge.Name
-            //     };
-            //
-            //     // Add the new agent to the contestant list
-            //     agentResponse.JudgeAgentList.Add(newAgent);
-            // }
-        }
         
         await managerGAgent.InitAgentsAsync(new InitAgentMessageGEvent()
         {
-            CreativeAgentIdList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
-            JudgeAgentIdList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-            HostAgentIdList = agentResponse.HostAgentList.Select(agent => agent.AgentId).ToList(),
+            CreativeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
+            JudgeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
+            HostAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelHost).Select(agent => agent.AgentId).ToList(),
         });
 
         return aiSmartInitResponse;

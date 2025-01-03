@@ -9,7 +9,6 @@ public class CommonAgent
     public string Name { get; set; }
     public string Label { get; set; }
     public string Bio { get; set; }
-    // public List<Goal> Goals { get; set; }
 }
 
 
@@ -45,10 +44,7 @@ public class Goal
 
 public class ContestAgentsDto
 {
-    // public List<ContestantAgent>? ContestantAgentList { get; set; }
-    // public List<JudgeAgent> JudgeAgentList { get; set; }
-    // public List<HostAgent> HostAgentList { get; set; }
-    //
+    
     public List<CommonAgent> Network { get; set; }
 
 }
