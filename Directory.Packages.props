@@ -152,5 +152,7 @@
     <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageVersion Include="NEST" Version="7.17.5" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.7" />
+    <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+    <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
   </ItemGroup>
 </Project>
