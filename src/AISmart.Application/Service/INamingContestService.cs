@@ -39,9 +39,7 @@ public class NamingContestService : ApplicationService,INamingContestService
     private readonly ILogger<NamingContestService> _logger;
     private readonly NameContestOptions _nameContestOptions;
 
-    private const string AgentLabelContestant = "Contestant";
-    private const string AgentLabelJudge = "Judge";
-    private const string AgentLabelHost = "Host";
+
 
 
     public NamingContestService(
@@ -71,7 +69,7 @@ public class NamingContestService : ApplicationService,INamingContestService
                 AiSmartInitResponseDetail? newAgent;
                 switch (agent.Label)
                 {
-                    case AgentLabelContestant:
+                    case NamingContestConstant.AgentLabelContestant:
                         agentId = Guid.NewGuid();
                         var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
                         await creativeAgent.SetAgent(agent.Name, agent.Bio);
@@ -86,7 +84,7 @@ public class NamingContestService : ApplicationService,INamingContestService
                         aiSmartInitResponse.Details.Add(newAgent);
                         break;
 
-                    case "Judge":
+                    case NamingContestConstant.AgentLabelJudge:
                         agentId = Guid.NewGuid();
                         var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
         
@@ -103,7 +101,7 @@ public class NamingContestService : ApplicationService,INamingContestService
                         aiSmartInitResponse.Details.Add(newAgent);
                         break;
                     
-                    case "Host":
+                    case NamingContestConstant.AgentLabelHost:
                         break;
 
                     default:
@@ -114,9 +112,9 @@ public class NamingContestService : ApplicationService,INamingContestService
         
         await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
-            CreativeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-            JudgeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-            HostAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+            CreativeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
+            JudgeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
+            HostAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
         });
 
         return aiSmartInitResponse;
