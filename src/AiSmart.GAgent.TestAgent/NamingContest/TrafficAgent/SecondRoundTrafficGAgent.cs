@@ -308,6 +308,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         await ConfirmEvents();
     }
 
+    public async Task AddHostAgent(Guid judgeGrainId)
+    {
+        RaiseEvent(new AddHostSEvent() { HostGrainId = judgeGrainId });
+        await ConfirmEvents();
+    }
+
     public async Task SetAskJudgeNumber(int judgeNum)
     {
         RaiseEvent(new SetAskingJudgeSEvent() { AskingJudgeCount = judgeNum });
