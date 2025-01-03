@@ -18,6 +18,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Reference Include="AISmart.Application">
+        <HintPath>..\AISmart.HttpApi.Host\bin\Debug\net8.0\AISmart.Application.dll</HintPath>
+      </Reference>
       <Reference Include="AISmart.Application.Contracts">
         <HintPath>..\AISmart.CQRS\bin\Debug\net8.0\AISmart.Application.Contracts.dll</HintPath>
       </Reference>
