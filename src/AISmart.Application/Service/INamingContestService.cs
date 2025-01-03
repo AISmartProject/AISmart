@@ -23,10 +23,11 @@ using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.Application.Services;
+using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Service;
 
-public interface INamingContestService
+public interface INamingContestService : ISingletonDependency
 {
     Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     Task ClearAllAgentsAsync();
@@ -216,7 +217,7 @@ public class NamingContestService : INamingContestService
             {
                 var hostGAgent = _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId));
 
-                await trafficAgent.AddJudgeAgent(hostGAgent.GetPrimaryKey());
+                await trafficAgent.AddHostAgent(hostGAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(hostGAgent);
             }

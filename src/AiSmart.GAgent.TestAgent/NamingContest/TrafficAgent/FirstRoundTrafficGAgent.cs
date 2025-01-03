@@ -120,6 +120,39 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await DispatchJudgeAgent();
     }
     
+    [EventHandler]
+    public async Task HandleEventAsync(HostSummaryCompleteGEvent @event)
+    {
+        if (State.CurrentGrainId != @event.HostId)
+        {
+            Logger.LogError(
+                $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.HostId.ToString()}");
+            return;
+        }
+
+        // var creativeInfo = State.HostAgentList.FirstOrDefault(f => f.Naming == @event.VoteName);
+        // if (creativeInfo != null)
+        // {
+        //     var voteInfoStr = JsonConvert.SerializeObject(new JudgeVoteInfo()
+        //     {
+        //         AgentId = creativeInfo.CreativeGrainId, AgentName = creativeInfo.CreativeName,
+        //         Nameing = @event.VoteName, Reason = @event.Reason
+        //     });
+        //
+        //     await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.JudgeGrainId,
+        //         NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
+        // }
+        //
+        // base.RaiseEvent(new TrafficGrainCompleteSEvent()
+        // {
+        //     CompleteGrainId = @event.JudgeGrainId,
+        // });
+
+        await base.ConfirmEvents();
+
+        await DispatchHostAgent();
+    }
+    
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -209,6 +242,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
+            await DispatchHostAgent();
             return;
         }
 
@@ -280,6 +314,12 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     public async Task AddJudgeAgent(Guid judgeGrainId)
     {
         RaiseEvent(new AddJudgeSEvent() { JudgeGrainId = judgeGrainId });
+        await ConfirmEvents();
+    }
+
+    public async Task AddHostAgent(Guid judgeGrainId)
+    {
+        RaiseEvent(new AddHostSEvent() { HostGrainId = judgeGrainId });
         await ConfirmEvents();
     }
 }
