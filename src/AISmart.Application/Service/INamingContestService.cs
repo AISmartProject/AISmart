@@ -221,7 +221,7 @@ public class NamingContestService : INamingContestService
 
                 // await trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
 
-                await groupAgent.RegisterAsync(judgeAgent);
+                // await groupAgent.RegisterAsync(judgeAgent);
             }
 
             foreach (var agentId in network.HostList)
