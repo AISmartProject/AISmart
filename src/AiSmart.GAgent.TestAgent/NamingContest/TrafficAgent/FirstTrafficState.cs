@@ -79,6 +79,11 @@ public class FirstTrafficState : StateBase
     {
         this.JudgeAgentList.Add(@event.JudgeGrainId);
     }
+    
+    public void Apply(AddHostSEvent @event)
+    {
+        this.JudgeAgentList.Add(@event.HostGrainId);
+    }
 
     public void Apply(ClearCalledGrainsSEvent @event)
     {

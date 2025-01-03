@@ -23,10 +23,11 @@ using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.Application.Services;
+using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Service;
 
-public interface INamingContestService
+public interface INamingContestService : ISingletonDependency
 {
     Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     Task ClearAllAgentsAsync();
@@ -124,12 +125,23 @@ public class NamingContestService : INamingContestService
                 }
             }
         }
+
+        var creativeAgentIdList = aiSmartInitResponse.Details
+            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId)
+            .ToList();
+        var judgeAgentIdList = aiSmartInitResponse.Details
+            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId)
+            .ToList();
+        var hostAgentIdList = aiSmartInitResponse.Details
+            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId)
+            .ToList();
         
         await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
-            CreativeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-            JudgeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-            HostAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+            CreativeAgentIdList = creativeAgentIdList,
+            JudgeAgentIdList = judgeAgentIdList,
+            HostAgentIdList = hostAgentIdList
+            
         });
 
         return aiSmartInitResponse;
@@ -216,7 +228,7 @@ public class NamingContestService : INamingContestService
             {
                 var hostGAgent = _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId));
 
-                await trafficAgent.AddJudgeAgent(hostGAgent.GetPrimaryKey());
+                await trafficAgent.AddHostAgent(hostGAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(hostGAgent);
             }

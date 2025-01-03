@@ -231,11 +231,32 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
+                    
+                    new CommonAgent()
+                    {
+                        Name = "jamesHost",
+                        Label = "Host",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kobHost",
+                        Label = "Host",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
                 },
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            aiSmartInitResponse.Details.Count.ShouldBe(4);
+            aiSmartInitResponse.Details.Count.ShouldBe(6);
             aiSmartInitResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
             aiSmartInitResponse.Details[1].AgentName.ShouldBe("kob");
 
@@ -281,6 +302,8 @@ namespace AISmart.Samples
             };
 
             await _namingContestService.StartGroupAsync(groupDto);
+
+            await Task.Delay(1000 * 200);
         }
 
 
@@ -421,6 +444,26 @@ namespace AISmart.Samples
                     {
                         Name = "kobJudge",
                         Label = "Judge",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "jamesHost",
+                        Label = "Host",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kobHost",
+                        Label = "Host",
                         Bio = JsonSerializer.Serialize(new
                         {
                             Description =

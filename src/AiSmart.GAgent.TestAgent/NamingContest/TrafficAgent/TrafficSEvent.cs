@@ -84,6 +84,13 @@ public class AddJudgeSEvent : TrafficEventSourcingBase
     [Id(0)] public Guid JudgeGrainId { get; set; }
 }
 
+
+[GenerateSerializer]
+public class AddHostSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public Guid HostGrainId { get; set; }
+}
+
 [GenerateSerializer]
 public class ClearCalledGrainsSEvent : TrafficEventSourcingBase
 {
