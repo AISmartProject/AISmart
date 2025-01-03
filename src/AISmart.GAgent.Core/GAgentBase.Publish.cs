@@ -47,6 +47,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
+        await LoadSubscriptionAsync();
         var stream = GetStream(_subscription.State.ToString());
         await stream.OnNextAsync(eventWrapper);
     }
