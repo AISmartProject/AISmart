@@ -38,22 +38,17 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
 
     public async Task VoteAgentAsync(SingleVoteCharmingEvent singleVoteCharmingEvent)
     {
-        var historyMessage = "The theme of this naming contest is:" + JsonConvert.SerializeObject(@singleVoteCharmingEvent.VoteMessage);
-
-        var history = new List<MicroAIMessage>()
-        {
-            new MicroAIMessage(Role.User.ToString(), historyMessage),
-        };
-        var message  = await _aiAgentProvider.SendAsync(_agent, NamingConstants.VotePrompt,history);
+        var agentNames = string.Join(" and ", singleVoteCharmingEvent.AgentIdNameDictionary.Values);
+        var message  = await _aiAgentProvider.SendAsync(_agent, NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames),singleVoteCharmingEvent.VoteMessage);
         if (message.Content != null)
         {
-            var namingReply = message.Content.Replace("\"","");
-            var agent = singleVoteCharmingEvent.AgentIdNameDictionary.FirstOrDefault(x => x.Value.Equals(namingReply));
+            var namingReply = message.Content.Replace("\"","").ToLower();
+            var agent = singleVoteCharmingEvent.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
             var winner = agent.Key;
 
             await PublishEventAsync(new VoteCharmingCompleteEvent
             {
-                Winner = Guid.Parse(namingReply),
+                Winner = winner,
                 VoterId = this.GetPrimaryKey(),
                 Round = 1
             });

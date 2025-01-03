@@ -419,19 +419,14 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
-        var history = new List<MicroAIMessage>()
-        {
-            new MicroAIMessage(Role.User.ToString(),
-                $"The theme of this naming contest is: \"{JsonConvert.SerializeObject(@event.VoteMessage)}\""),
-        };
-
+        var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(NamingConstants.VotePrompt, history);
+            .SendAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), @event.VoteMessage);
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content.Replace("\"","");
-            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.Equals(namingReply));
+            var namingReply = message.Content.Replace("\"","").ToLower();
+            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
             var winner = agent.Key;
                 
             await PublishAsync(new VoteCharmingCompleteEvent()

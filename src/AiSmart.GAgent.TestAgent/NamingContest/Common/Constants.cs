@@ -59,7 +59,7 @@ public static class NamingConstants
                                             Please score the name chosen by this group based on the naming theme and the contestants' answers to the judges' questions. The score should be between 1-100, allowing one decimal place. Please output the score directly without any additional information.
                                             """;
         
-    public static string VotePrompt = "The below JSON contains each GUID with their names and associated conversations. Please select the GUID that is most appealing to you,Just return name";
+    public static string VotePrompt = "The following is the discussion about naming between user $AgentNames$. Please select the one that attracts you most and only return the user's name";
 
     public static string SummaryPrompt = "summary ";
 }
