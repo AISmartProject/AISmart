@@ -120,28 +120,6 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await DispatchJudgeAgent();
     }
     
-    [EventHandler]
-    public async Task HandleEventAsync(NamingLogEvent @event)
-    {
-        // if (State.CurrentGrainId != @event.GrainGuid)
-        // {
-        //     Logger.LogError(
-        //         $"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
-        //     return;
-        // }
-
-        base.RaiseEvent(new AddChatHistorySEvent()
-        {
-            ChatMessage = new MicroAIMessage(Role.User.ToString(),
-                AssembleMessageUtil.AssembleDebateContent(@event.AgentName, @event.Content))
-        });
-
-
-        await base.ConfirmEvents();
-
-        await DispatchHostAgent();
-    }
-
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
