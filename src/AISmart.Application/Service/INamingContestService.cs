@@ -214,8 +214,11 @@ public class NamingContestService : INamingContestService
 
                 await groupAgent.RegisterAsync(judgeAgent);
             }
+            
+            var scoreListExcludingJudgeList = network.ScoreList.Except(network.JudgeList);
 
-            foreach (var agentId in network.ScoreList)
+
+            foreach (var agentId in scoreListExcludingJudgeList)
             {
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
 

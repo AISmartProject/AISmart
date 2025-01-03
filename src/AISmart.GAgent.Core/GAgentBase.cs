@@ -50,7 +50,13 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             return;
         }
         await AddSubscriberAsync(gAgent.GetGrainId());
+        await gAgent.SubscribeToAsync(this);
         await OnRegisterAgentAsync(guid);
+    }
+
+    public Task SubscribeToAsync(IGAgent gAgent)
+    {
+        return SetSubscriptionAsync(gAgent.GetGrainId());
     }
 
     public async Task UnregisterAsync(IGAgent gAgent)
@@ -71,6 +77,12 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         }
 
         return handlingTypes.ToList();
+    }
+
+    public async Task<List<GrainId>> GetSubscribersAsync()
+    {
+        await LoadSubscribersAsync();
+        return _subscribers.State;
     }
 
     [EventHandler]
@@ -117,7 +129,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     [AllEventHandler]
     internal async Task ForwardEventAsync(EventWrapperBase eventWrapper)
     {
-        Logger.LogInformation($"Forwarding event {((EventWrapper<EventBase>)eventWrapper)} downwards.");
+        Logger.LogInformation(
+            $"{this.GetGrainId().ToString()} is forwarding event downwards: {JsonConvert.SerializeObject((EventWrapper<EventBase>)eventWrapper)}");
         await SendEventDownwardsAsync((EventWrapper<EventBase>)eventWrapper);
     }
 
@@ -134,17 +147,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     public Task<TState> GetStateAsync()
     {
         return Task.FromResult(State);
-    }
-
-    public async Task SubscribeAsync(IAsyncStream<EventWrapperBase> stream)
-    {
-        var streamId = stream.StreamId;
-        foreach (var observer in Observers.Keys)
-        {
-            var handle = await stream.SubscribeAsync(observer);
-            var handleId = handle.HandleId;
-            Observers[observer][streamId] = handleId;
-        }
     }
 
     public sealed override async Task OnActivateAsync(CancellationToken cancellationToken)

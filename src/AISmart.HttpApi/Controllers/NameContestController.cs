@@ -33,7 +33,7 @@ public class NameContestController: AISmartController
     public async Task<AiSmartInitResponse> InitAgents([FromBody]ContestAgentsDto contestAgentsDto)
     {
         var headers = Request.Headers;
-        _logger.LogInformation("Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
+        _logger.LogInformation("InitAgents Receive update message  .{message}",JsonConvert.SerializeObject(contestAgentsDto));
         return await _namingContestService.InitAgentsAsync(contestAgentsDto);
     }
     

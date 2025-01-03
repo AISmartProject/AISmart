@@ -1,6 +1,7 @@
-using AISmart.AuthServer.Middleware;
 using AISmart.Localization;
 using AISmart.MongoDB;
+using AISmart.OpenIddict;
+using AISmart.Options;
 using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
@@ -69,7 +70,7 @@ public class AISmartAuthServerModule : AbpModule
             });
             builder.AddValidation(options =>
             {
-                options.AddAudiences("AISmartAuthServer");
+                options.AddAudiences("AISmart");
                 options.UseLocalServer();
                 options.UseAspNetCore();
             });
@@ -78,7 +79,11 @@ public class AISmartAuthServerModule : AbpModule
         //add signature grant type
         PreConfigure<OpenIddictServerBuilder>(builder =>
         {
-            builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add("signature"); });
+            builder.Configure(openIddictServerOptions =>
+            {
+                openIddictServerOptions.GrantTypes.Add(GrantTypeConstants.LOGIN);
+                openIddictServerOptions.GrantTypes.Add(GrantTypeConstants.SIGNATURE);
+            });
         });
     }
 
@@ -88,14 +93,13 @@ public class AISmartAuthServerModule : AbpModule
 
         var configuration = context.Services.GetConfiguration();
         
-        context.Services.Configure<TimeRangeOption>(option =>
-        {
-            option.TimeRange = Convert.ToInt32(configuration["TimeRange"]);
-        });
+        context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
+        context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
 
-        Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
         {
-            options.Grants.Add("signature", new SignatureGrantHandler());
+            options.Grants.Add(GrantTypeConstants.LOGIN, new LoginGrantHandler());
+            options.Grants.Add(GrantTypeConstants.SIGNATURE, new SignatureGrantHandler());
         });
 
         Configure<AbpLocalizationOptions>(options =>
@@ -214,7 +218,6 @@ public class AISmartAuthServerModule : AbpModule
         app.UseStaticFiles();
         app.UseRouting();
         app.UseCors();
-        app.UseMiddleware<TimeTrackingStatisticsAuthMiddleware>();
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
 

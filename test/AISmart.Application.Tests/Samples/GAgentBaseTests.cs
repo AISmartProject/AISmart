@@ -61,7 +61,7 @@ public class GAgentBaseTests : AISmartApplicationTestBase
         groupState.RegisteredAgents.ShouldBe(2);
 
         var investorState = await investor1.GetStateAsync();
-        investorState.Content.Count.ShouldBePositive();
+        investorState.Content.Count.ShouldBe(2);
     }
     
     private async Task<bool> CheckState(IStateGAgent<InvestorTestGAgentState> investor1)
