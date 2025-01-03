@@ -10,6 +10,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
+using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.Agents;
@@ -141,6 +142,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             await PublishAsync(new JudgeAskingCompleteGEvent()
             {
                 JudgeGuid = this.GetPrimaryKey(),
+                JudgeName = State.AgentName,
                 Reply = reply,
             });
         }
@@ -174,6 +176,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
         }
     }
+
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
@@ -188,9 +191,9 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content.Replace("\"","");
+            var namingReply = message.Content.Replace("\"", "");
             var winner = Guid.Parse(namingReply);
-                
+
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
                 Winner = winner,
@@ -198,6 +201,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 Round = @event.Round
             });
         }
+
         await base.ConfirmEvents();
     }
 }
