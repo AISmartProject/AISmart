@@ -368,7 +368,7 @@ public class TelegramService : ApplicationService, ITelegramService
         }
     }
 
-    public async Task StartFirstRoundTestAsync()
+    public async Task StartFirstRoundTestAsync(string message)
     {
         var groupList = new List<IStateGAgent<GroupAgentState>>();
         var groupCount = 2;
@@ -404,11 +404,11 @@ public class TelegramService : ApplicationService, ITelegramService
         for (var i = 0; i < groupCount; i++)
         {
             var groupAgent = _firstStepPublishingList[i];
-            await groupAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
+            await groupAgent.PublishEventAsync(new GroupStartEvent() { Message = message });
         }
     }
 
-    public async Task StartSecondRoundTestAsync()
+    public async Task StartSecondRoundTestAsync(string message)
     {
         var groupCount = 2;
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
@@ -433,7 +433,6 @@ public class TelegramService : ApplicationService, ITelegramService
 
         var publishAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishAgent.RegisterAsync(groupAgent);
-
-        await publishAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
+        await publishAgent.PublishEventAsync(new GroupStartEvent() { Message = message });
     }
 }
