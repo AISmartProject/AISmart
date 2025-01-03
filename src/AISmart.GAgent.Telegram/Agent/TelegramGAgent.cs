@@ -7,6 +7,7 @@ using AISmart.GAgent.Telegram.Agent.GEvents;
 using AISmart.GAgent.Telegram.Grains;
 using AISmart.GEvents.Social;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Orleans.Providers;
 
 namespace AISmart.GAgent.Telegram.Agent;
@@ -49,20 +50,23 @@ public class TelegramGAgent : GAgentBase<TelegramGAgentState, MessageGEvent>, IT
     public async Task HandleEventAsync(ReceiveMessageEvent @event)
     {
         Logger.LogInformation("Telegram ReceiveMessageEvent " + @event.MessageId);
-        if (State.PendingMessages.TryGetValue(@event.MessageId, out _))
+        if (!@event.MessageId.IsNullOrEmpty())
         {
-            Logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
-            return;
-        }
+            if (State.PendingMessages.TryGetValue(@event.MessageId, out _))
+            {
+                Logger.LogDebug("Message reception repeated for Telegram Message ID: " + @event.MessageId);
+                return;
+            }
 
-        RaiseEvent(new ReceiveMessageGEvent
-        {
-            MessageId = @event.MessageId,
-            ChatId = @event.ChatId,
-            Message = @event.Message,
-            NeedReplyBotName = State.BotName
-        });
-        await ConfirmEvents();
+            RaiseEvent(new ReceiveMessageGEvent
+            {
+                MessageId = @event.MessageId,
+                ChatId = @event.ChatId,
+                Message = @event.Message,
+                NeedReplyBotName = State.BotName
+            });
+            await ConfirmEvents();
+        }
         await PublishAsync(new SocialEvent()
         {
             Content = @event.Message,
