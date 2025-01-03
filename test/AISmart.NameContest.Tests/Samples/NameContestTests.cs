@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AISmart.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
-
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Service;
 using Orleans;
 
@@ -241,6 +241,164 @@ namespace AISmart.Samples
 
             await _namingContestService.StartGroupAsync(groupDto);
             
+            
+        }
+        
+         
+        [Fact]
+        public async Task Init_Most_Charming_Network_Test()
+        {
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            {
+                Network = new List<CommonAgent>()
+                {
+                    new CommonAgent()
+                    {
+                        Name = "james",
+                        Label = "Contestant",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kob",
+                        Label = "Contestant",
+                    },
+                    
+                    new CommonAgent()
+                    {
+                        Name = "james",
+                        Label = "Judge",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kob",
+                        Label = "Judge",
+                    },
+                },
+                
+            };
+            AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            
+            aiSmartInitResponse.Details.Count.ShouldBe(4);
+            aiSmartInitResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            aiSmartInitResponse.Details[1].AgentName.ShouldBe("kob");
+
+
+            NetworksDto networksDto = new NetworksDto()
+            {
+                Networks = new List<Network>()
+                {
+                    new Network()
+                    {
+                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        Name = "FirstRound-1",
+                        CallbackAddress = "https://xxxx.com"
+                    }
+                }
+            };
+            GroupResponse groupResponse = await _namingContestService.InitNetworksAsync(networksDto);
+
+            groupResponse.GroupDetails.Count.ShouldBe(1);
+            groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
+            groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
+            
+            IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+            
+            // todo voteCharmingGAgent unit Test 
+        }
+        
+        
+        [Fact]
+        public async Task Most_Charming_Agent_Test()
+        {
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            {
+                Network = new List<CommonAgent>()
+                {
+                    new CommonAgent()
+                    {
+                        Name = "james",
+                        Label = "Contestant",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kob",
+                        Label = "Contestant",
+                    },
+                    
+                    new CommonAgent()
+                    {
+                        Name = "james",
+                        Label = "Judge",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
+                    },
+                    new CommonAgent()
+                    {
+                        Name = "kob",
+                        Label = "Judge",
+                    },
+                },
+                
+            };
+            AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            
+            aiSmartInitResponse.Details.Count.ShouldBe(4);
+            aiSmartInitResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            aiSmartInitResponse.Details[1].AgentName.ShouldBe("kob");
+
+
+            NetworksDto networksDto = new NetworksDto()
+            {
+                Networks = new List<Network>()
+                {
+                    new Network()
+                    {
+                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        Name = "FirstRound-1",
+                        CallbackAddress = "https://xxxx.com"
+                    }
+                }
+            };
+            GroupResponse groupResponse = await _namingContestService.InitNetworksAsync(networksDto);
+
+            groupResponse.GroupDetails.Count.ShouldBe(1);
+            groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
+            groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
+            
+
+            GroupDto groupDto = new GroupDto()
+            {
+                GroupIdList = new List<string>()
+                {
+                    groupResponse.GroupDetails.FirstOrDefault()!.GroupId
+                }
+            };
+
+            await _namingContestService.StartGroupAsync(groupDto);
             
         }
 
