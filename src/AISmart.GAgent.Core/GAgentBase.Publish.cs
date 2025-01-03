@@ -77,6 +77,8 @@ public abstract partial class GAgentBase<TState, TEvent>
             return;
         }
 
+        Logger.LogInformation($"{this.GetGrainId().ToString()} has {_subscribers.State.Count} subscribers.");
+
         foreach (var grainId in _subscribers.State)
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
