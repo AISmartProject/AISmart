@@ -1,7 +1,6 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
-using AISmart.Common;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
@@ -264,7 +263,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     private async Task PublishMostCharmingEventAsync()
     {
         IVoteCharmingGAgent voteCharmingGAgent =
-            GrainFactory.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId());
         var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
 

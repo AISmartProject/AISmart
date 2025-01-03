@@ -415,6 +415,7 @@ public class TelegramService : ApplicationService, ITelegramService
         var secondTraffic = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
         await secondTraffic.SetAgent("secondTraffic", "");
         await secondTraffic.SetAskJudgeNumber(2);
+        await secondTraffic.SetRoundNumber(2);
         
         await groupAgent.RegisterAsync(secondTraffic);
         for (var i = 0; i < groupCount; i++)
