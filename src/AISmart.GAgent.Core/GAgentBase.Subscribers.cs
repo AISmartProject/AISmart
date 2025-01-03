@@ -38,6 +38,15 @@ public abstract partial class GAgentBase<TState, TEvent>
         }
     }
 
+    private async Task LoadSubscriptionAsync()
+    {
+        if (_subscription.State.IsDefault)
+        {
+            await GrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscriptionStateName, this.GetGrainId(),
+                _subscription);
+        }
+    }
+
     private async Task SetSubscriptionAsync(GrainId grainId)
     {
         var storedSubscription = new GrainState<GrainId>();

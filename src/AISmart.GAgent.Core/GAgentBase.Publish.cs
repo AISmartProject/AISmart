@@ -24,6 +24,7 @@ public abstract partial class GAgentBase<TState, TEvent>
         @event.CorrelationId = _correlationId;
         Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
         var eventId = Guid.NewGuid();
+        await LoadSubscriptionAsync();
         if (_subscription.State.IsDefault)
         {
             Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
