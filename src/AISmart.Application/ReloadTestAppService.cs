@@ -14,7 +14,7 @@ public interface IReloadTestAppService
 {
     Task<Dictionary<string, Guid>> SetGroupAsync();
     Task<bool> PublishEventToGroupAsync(string groupGAgentGuid);
-    Task<Guid> CheckGroupMemberState(string groupMemberGuid);
+    Task<string> CheckGroupMemberState(string groupMemberGuid);
 }
 
 public class ReloadTestAppService : ApplicationService, IReloadTestAppService
@@ -67,11 +67,11 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         return true;
     }
 
-    public async Task<Guid> CheckGroupMemberState(string groupMemberGuid)
+    public async Task<string> CheckGroupMemberState(string groupMemberGuid)
     {
         var memberGuid = Guid.Parse(groupMemberGuid);
         var groupMember = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(memberGuid);
         var state = await groupMember.GetStateAsync();
-        return state.GroupManagerGuid;
+        return $"{state.GroupManagerGuid}, {state.CalledCount.ToString()}";
     }
 }
