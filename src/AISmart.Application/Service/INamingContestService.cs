@@ -10,6 +10,7 @@ using AISmart.Agents.Group;
 using AISmart.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.HostAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
@@ -102,6 +103,20 @@ public class NamingContestService : INamingContestService
                         break;
                     
                     case NamingContestConstant.AgentLabelHost:
+                        agentId = Guid.NewGuid();
+                        var hostAgent = _clusterClient.GetGrain<IHostGAgent>(agentId);
+        
+                        await hostAgent.SetAgent(agent.Name, agent.Bio);
+
+                        newAgent = new AiSmartInitResponseDetail()
+                        {
+                            AgentId = agentId.ToString(),
+                            AgentName = agent.Name,
+                            Label = agent.Label
+                        };
+
+                        // Add the new agent to the contestant list
+                        aiSmartInitResponse.Details.Add(newAgent);
                         break;
 
                     default:
@@ -137,7 +152,20 @@ public class NamingContestService : INamingContestService
             Guid groupAgentId = Guid.NewGuid();
 
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
-            var trafficAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
+            
+            
+            ITrafficGAgent trafficAgent;
+
+            if (network.Round == "1")
+            {
+                trafficAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.NewGuid());
+            }
+            else
+            {
+                trafficAgent = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
+
+            }
+
             var namingContestGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
 
 
@@ -179,19 +207,20 @@ public class NamingContestService : INamingContestService
             {
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
 
-                await trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
+                // await trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(judgeAgent);
             }
 
             foreach (var agentId in network.HostList)
             {
-                Console.WriteLine($"Host agentId: {agentId}");
+                var hostGAgent = _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId));
+
+                await trafficAgent.AddJudgeAgent(hostGAgent.GetPrimaryKey());
+
+                await groupAgent.RegisterAsync(hostGAgent);
             }
 
-            Console.WriteLine($"Callback Address: {network.CallbackAddress}");
-            Console.WriteLine($"Network Name: {network.Name}");
-            
             var groupDetail = new GroupDetail()
             {
                 GroupId = groupAgentId.ToString(),

@@ -9,7 +9,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Service;
 using Orleans;
-
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,12 +21,10 @@ namespace AISmart.Samples
         private readonly IClusterClient _clusterClient;
 
 
-
         public NameContestTests(ITestOutputHelper output)
         {
             _namingContestService = GetRequiredService<INamingContestService>();
             _clusterClient = GetRequiredService<IClusterClient>();
-
         }
 
         public async Task InitializeAsync()
@@ -67,7 +64,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "james",
@@ -89,14 +86,12 @@ namespace AISmart.Samples
                         }),
                     },
                 },
-                
             };
             AiSmartInitResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
             agentResponse.Details.Count.ShouldBe(4);
             agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
             agentResponse.Details[1].AgentName.ShouldBe("kob");
-
         }
 
         [Fact]
@@ -126,7 +121,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "james",
@@ -148,7 +143,6 @@ namespace AISmart.Samples
                         }),
                     },
                 },
-                
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
@@ -163,12 +157,21 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        ScoreList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        ConstentList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant)
+                            .Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        ScoreList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost)
+                            .Select(agent => agent.AgentId).ToList(),
                         // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
+                        Round = "1",
                         CallbackAddress = "https://xxxx.com"
                     }
                 }
@@ -178,8 +181,6 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.Count.ShouldBe(1);
             groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
-            
-            
         }
 
         [Fact]
@@ -209,7 +210,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "jamesJudge",
@@ -231,7 +232,6 @@ namespace AISmart.Samples
                         }),
                     },
                 },
-                
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
@@ -246,12 +246,21 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        ScoreList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        ConstentList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant)
+                            .Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        ScoreList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost)
+                            .Select(agent => agent.AgentId).ToList(),
                         // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
+                        Round = "1",
                         CallbackAddress = "https://xxxx.com"
                     }
                 }
@@ -261,7 +270,7 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.Count.ShouldBe(1);
             groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
-            
+
 
             GroupDto groupDto = new GroupDto()
             {
@@ -272,15 +281,13 @@ namespace AISmart.Samples
             };
 
             await _namingContestService.StartGroupAsync(groupDto);
-
-
         }
-        
-         
+
+
         [Fact]
         public async Task Init_Most_Charming_Network_Test()
         {
-             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
                 Network = new List<CommonAgent>()
                 {
@@ -304,7 +311,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "jamesJudge",
@@ -326,7 +333,6 @@ namespace AISmart.Samples
                         }),
                     },
                 },
-                
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
@@ -341,12 +347,21 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        ScoreList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        ConstentList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant)
+                            .Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        ScoreList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost)
+                            .Select(agent => agent.AgentId).ToList(),
                         // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
+                        Round = "1",
                         CallbackAddress = "https://xxxx.com"
                     }
                 }
@@ -356,17 +371,18 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.Count.ShouldBe(1);
             groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
-            
-            IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
-            
+
+            IVoteCharmingGAgent voteCharmingGAgent =
+                _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+
             // todo voteCharmingGAgent unit Test 
         }
-        
-        
+
+
         [Fact]
         public async Task Most_Charming_Agent_Test()
         {
-             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
+            ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
                 Network = new List<CommonAgent>()
                 {
@@ -390,7 +406,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "jamesJudge",
@@ -412,7 +428,6 @@ namespace AISmart.Samples
                         }),
                     },
                 },
-                
             };
             AiSmartInitResponse aiSmartInitResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
@@ -427,12 +442,21 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
-                        JudgeList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        ScoreList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
-                        HostList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId).ToList(),
+                        ConstentList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelContestant)
+                            .Select(agent => agent.AgentId).ToList(),
+                        JudgeList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        ScoreList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelJudge)
+                            .Select(agent => agent.AgentId).ToList(),
+                        HostList = aiSmartInitResponse.Details
+                            .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost)
+                            .Select(agent => agent.AgentId).ToList(),
                         // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
+                        Round = "1",
                         CallbackAddress = "https://xxxx.com"
                     }
                 }
@@ -442,7 +466,7 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.Count.ShouldBe(1);
             groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
-            
+
 
             GroupDto groupDto = new GroupDto()
             {
@@ -453,7 +477,6 @@ namespace AISmart.Samples
             };
 
             await _namingContestService.StartGroupAsync(groupDto);
-            
         }
 
 
@@ -462,7 +485,7 @@ namespace AISmart.Samples
         {
             var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Samples", "NA101-200.json");
 
-            var contestantAgentList =  LoadConfiguration(jsonFilePath);
+            var contestantAgentList = LoadConfiguration(jsonFilePath);
 
             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
@@ -487,8 +510,8 @@ namespace AISmart.Samples
             agentResponse.Details.Count.ShouldBe(4);
             agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
             agentResponse.Details[1].AgentName.ShouldBe("kob");
-            
-            
+
+
             var agentId = agentResponse.Details.FirstOrDefault()!.AgentId;
             var creativeGAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
             var state = creativeGAgent.GetAgentState();
