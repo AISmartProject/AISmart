@@ -2,12 +2,15 @@ using System.Buffers.Text;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.Common;
 using AISmart.Events;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
+using AISmart.Sender;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -108,7 +111,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new TrafficGrainCompleteSEvent() { CompleteGrainId = @event.JudgeGuid });
 
         await ConfirmEvents();
-        
+
         await DispatchCreativeToAnswer();
     }
 
@@ -138,6 +141,8 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
+            
+            await PublishMostCharmingEventAsync();
         }
     }
 
@@ -187,6 +192,21 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectCreative.CreativeGrainId });
 
         await ConfirmEvents();
+    }
+
+    private async Task PublishMostCharmingEventAsync()
+    {
+        IVoteCharmingGAgent voteCharmingGAgent =
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+        var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+
+        await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
+        {
+            AgentIdNameDictionary = State.CreativeList.ToDictionary(p => p.CreativeGrainId, p => p.CreativeName),
+            Round = State.Round,
+            VoteMessage = State.ChatHistory
+        });
     }
 
     private async Task<Guid> SelectCreativeToSummary()
@@ -322,7 +342,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
     public async Task SetRoundNumber(int round)
     {
-        RaiseEvent(new SetRoundNumberSEvent(){RoundCount = round});
+        RaiseEvent(new SetRoundNumberSEvent() { RoundCount = round });
         await ConfirmEvents();
     }
 }

@@ -50,7 +50,7 @@ public static class NamingConstants
                                              (1) A question about the conclusion.
                                              (2) A question about the connection between the conclusion and real-time events.
                                              (3) A question about the discussion process.
-                                             Please output your question in one sentence without any additional information.
+                                             Please output your question in one sentence without any additional information, and please do not say similar things.
                                              """;
 
     public static string CreativeAnswerQuestionPrompt = "Based on your group's conclusion, please answer the previous judge's question concisely.";
