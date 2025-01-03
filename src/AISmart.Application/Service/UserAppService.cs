@@ -23,17 +23,19 @@ public interface IUserAppService
 public class UserAppService : IdentityUserAppService, IUserAppService
 {
     private readonly IOpenIddictApplicationManager _applicationManager;
-
+    private readonly ILogger<UserAppService> _logger;
     public UserAppService(
         IdentityUserManager userManager,
         IIdentityUserRepository userRepository,
         IIdentityRoleRepository roleRepository,
         IOptions<IdentityOptions> identityOptions,
         IOpenIddictApplicationManager applicationManager,
+        ILogger<UserAppService> logger,
         IPermissionChecker permissionChecker)
         : base(userManager, userRepository, roleRepository, identityOptions, permissionChecker)
     {
         _applicationManager = applicationManager;
+        _logger = logger;
     }
 
 
@@ -72,7 +74,7 @@ public class UserAppService : IdentityUserAppService, IUserAppService
 
         if (CurrentUser.UserName != userName)
         {
-            Logger.LogInformation($"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
+            _logger.LogInformation($"[ResetPasswordAsync] CurrentUser.UserName:{CurrentUser.UserName} userName:{userName}");
             throw new UserFriendlyException("Can only reset your own password");
         }
 
