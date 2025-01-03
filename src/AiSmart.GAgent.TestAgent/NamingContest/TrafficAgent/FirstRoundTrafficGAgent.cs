@@ -1,11 +1,15 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.Common;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
+using AISmart.Sender;
 using AutoGen.Core;
+using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -242,6 +246,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
+            
+            await PublishMostCharmingEventAsync();
             await DispatchHostAgent();
             return;
         }
@@ -254,7 +260,24 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
     }
-    
+
+    private async Task PublishMostCharmingEventAsync()
+    {
+        IVoteCharmingGAgent voteCharmingGAgent =
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+        var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        
+        await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
+        {
+            VoteMessage = new Dictionary<Guid, List<MicroAIMessage>>()
+            {
+                
+            },
+            Round = 1
+        });
+    }
+
     private async Task DispatchHostAgent()
     {
         var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
