@@ -2,7 +2,7 @@ using Orleans;
 
 namespace AISmart.Agent.GEvents;
 [GenerateSerializer]
-public class PumpFunSendMessageGEvent : PumpFunMessageGEvent
+public class PumpFunSendMessageGEvent : Agents.GEventBase
 {
     [Id(1)] public string? ChatId { get; set; }
     [Id(2)] public string? ReplyId { get; set; }

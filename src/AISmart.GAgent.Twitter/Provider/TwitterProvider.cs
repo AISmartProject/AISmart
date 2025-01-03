@@ -84,6 +84,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
     public async Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret)
     {
         var url = "https://api.twitter.com/2/tweets";
+        _logger.LogInformation("PostTwitterAsync message: {msg}", message);
 
         accessToken = GetDecryptedData(accessToken);
         accessTokenSecret = GetDecryptedData(accessTokenSecret);

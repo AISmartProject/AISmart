@@ -19,7 +19,7 @@ public class Program
 
         try
         {
-            Log.Information("Starting HttpApi.Host.");
+            Log.Information("Starting HttpApi.Host..");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host
                 .UseOrleansClientConfiguration()

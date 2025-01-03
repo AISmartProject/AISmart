@@ -24,6 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Volo.Abp.AuditLogging.Domain" />
       <PackageReference Include="Volo.Abp.AutoMapper" />
       <PackageReference Include="Volo.Abp.Core" />
     </ItemGroup>

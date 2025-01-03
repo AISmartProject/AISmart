@@ -2,23 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using AISmart.Agents;
-using AISmart.Agents.Developer;
-using AISmart.Agents.Group;
-using AISmart.Agents.Investment;
-using AISmart.Agents.MarketLeader;
-using AISmart.Agents.X;
-using AISmart.Agents.X.Events;
+
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
-using AISmart.Sender;
+
 using AISmart.Service;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using Orleans;
-using Orleans.TestingHost.Utils;
+
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -54,47 +45,48 @@ namespace AISmart.Samples
         {
             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
-                ContestantAgentList = new List<ContestantAgent>()
+                Network = new List<CommonAgent>()
                 {
-                    new ContestantAgent()
+                    new CommonAgent()
                     {
                         Name = "james",
+                        Label = "Contestant",
                         Bio = JsonSerializer.Serialize(new
                         {
                             Description =
                                 "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    new ContestantAgent()
+                    new CommonAgent()
                     {
                         Name = "kob",
+                        Label = "Contestant",
                     },
-                },
-                JudgeAgentList = new List<JudgeAgent>()
-                {
-                    new JudgeAgent()
+                    
+                    new CommonAgent()
                     {
                         Name = "james",
+                        Label = "Judge",
+                        Bio = JsonSerializer.Serialize(new
+                        {
+                            Description =
+                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                        }),
                     },
-                    new JudgeAgent()
+                    new CommonAgent()
                     {
                         Name = "kob",
+                        Label = "Judge",
                     },
                 },
-                HostAgentList = new List<HostAgent>()
-                {
-                }
+                
             };
-            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            AiSmartInitResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            agentResponse.ContestantAgentList.Count.ShouldBe(2);
-            agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details.Count.ShouldBe(4);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
 
-
-            agentResponse.JudgeAgentList.Count.ShouldBe(2);
-            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
         }
 
         [Fact]
@@ -102,47 +94,47 @@ namespace AISmart.Samples
         {
             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
-                ContestantAgentList = new List<ContestantAgent>()
-                {
-                    new ContestantAgent()
-                    {
-                        Name = "james",
-                        Bio = JsonSerializer.Serialize(new
-                        {
-                            Description =
-                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
-                        }),
-                    },
-                    new ContestantAgent()
-                    {
-                        Name = "kob",
-                    },
-                },
-                JudgeAgentList = new List<JudgeAgent>()
-                {
-                    new JudgeAgent()
-                    {
-                        Name = "james",
-                    },
-                    new JudgeAgent()
-                    {
-                        Name = "kob",
-                    },
-                },
-                HostAgentList = new List<HostAgent>()
-                {
-                }
+                // ContestantAgentList = new List<ContestantAgent>()
+                // {
+                //     new ContestantAgent()
+                //     {
+                //         Name = "james",
+                //         Bio = JsonSerializer.Serialize(new
+                //         {
+                //             Description =
+                //                 "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                //         }),
+                //     },
+                //     new ContestantAgent()
+                //     {
+                //         Name = "kob",
+                //     },
+                // },
+                // JudgeAgentList = new List<JudgeAgent>()
+                // {
+                //     new JudgeAgent()
+                //     {
+                //         Name = "james",
+                //     },
+                //     new JudgeAgent()
+                //     {
+                //         Name = "kob",
+                //     },
+                // },
+                // HostAgentList = new List<HostAgent>()
+                // {
+                // }
             };
-            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            AiSmartInitResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            agentResponse.ContestantAgentList.Count.ShouldBe(2);
-            agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details.Count.ShouldBe(4);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
 
 
-            agentResponse.JudgeAgentList.Count.ShouldBe(2);
-            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details.Count.ShouldBe(2);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
 
 
             NetworksDto networksDto = new NetworksDto()
@@ -151,10 +143,10 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
-                        JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-                        ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-                        HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        // ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        // JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        // ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
                         CallbackAddress = "https://xxxx.com"
                     }
@@ -165,6 +157,8 @@ namespace AISmart.Samples
             groupResponse.GroupDetails.Count.ShouldBe(1);
             groupResponse.GroupDetails.FirstOrDefault()!.Name.ShouldBe("FirstRound-1");
             groupResponse.GroupDetails.FirstOrDefault()!.GroupId.ShouldNotBeNull();
+            
+            
         }
 
         [Fact]
@@ -172,47 +166,47 @@ namespace AISmart.Samples
         {
             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
-                ContestantAgentList = new List<ContestantAgent>()
-                {
-                    new ContestantAgent()
-                    {
-                        Name = "james",
-                        Bio = JsonSerializer.Serialize(new
-                        {
-                            Description =
-                                "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
-                        }),
-                    },
-                    new ContestantAgent()
-                    {
-                        Name = "kob",
-                    },
-                },
-                JudgeAgentList = new List<JudgeAgent>()
-                {
-                    new JudgeAgent()
-                    {
-                        Name = "james",
-                    },
-                    new JudgeAgent()
-                    {
-                        Name = "kob",
-                    },
-                },
-                HostAgentList = new List<HostAgent>()
-                {
-                }
+                // ContestantAgentList = new List<ContestantAgent>()
+                // {
+                //     new ContestantAgent()
+                //     {
+                //         Name = "james",
+                //         Bio = JsonSerializer.Serialize(new
+                //         {
+                //             Description =
+                //                 "James is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
+                //         }),
+                //     },
+                //     new ContestantAgent()
+                //     {
+                //         Name = "kob",
+                //     },
+                // },
+                // JudgeAgentList = new List<JudgeAgent>()
+                // {
+                //     new JudgeAgent()
+                //     {
+                //         Name = "james",
+                //     },
+                //     new JudgeAgent()
+                //     {
+                //         Name = "kob",
+                //     },
+                // },
+                // HostAgentList = new List<HostAgent>()
+                // {
+                // }
             };
-            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            AiSmartInitResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            agentResponse.ContestantAgentList.Count.ShouldBe(2);
-            agentResponse.ContestantAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.ContestantAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details.Count.ShouldBe(4);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
 
 
-            agentResponse.JudgeAgentList.Count.ShouldBe(2);
-            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details.Count.ShouldBe(2);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
 
 
             NetworksDto networksDto = new NetworksDto()
@@ -221,10 +215,10 @@ namespace AISmart.Samples
                 {
                     new Network()
                     {
-                        ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
-                        JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-                        ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-                        HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        // ConstentList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
+                        // JudgeList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        // ScoreList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
+                        // HostList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
                         Name = "FirstRound-1",
                         CallbackAddress = "https://xxxx.com"
                     }
@@ -257,35 +251,36 @@ namespace AISmart.Samples
 
             ContestAgentsDto contestAgentsDto = new ContestAgentsDto()
             {
-                ContestantAgentList = contestantAgentList,
-                JudgeAgentList = new List<JudgeAgent>()
-                {
-                    new JudgeAgent()
-                    {
-                        Name = "james",
-                    },
-                    new JudgeAgent()
-                    {
-                        Name = "kob",
-                    },
-                },
-                HostAgentList = new List<HostAgent>()
-                {
-                }
+                // ContestantAgentList = contestantAgentList,
+                // JudgeAgentList = new List<JudgeAgent>()
+                // {
+                //     new JudgeAgent()
+                //     {
+                //         Name = "james",
+                //     },
+                //     new JudgeAgent()
+                //     {
+                //         Name = "kob",
+                //     },
+                // },
+                // HostAgentList = new List<HostAgent>()
+                // {
+                // }
             };
-            AgentResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
+            AiSmartInitResponse agentResponse = await _namingContestService.InitAgentsAsync(contestAgentsDto);
 
-            agentResponse.ContestantAgentList.Count.ShouldBe(contestantAgentList!.Count);
+            agentResponse.Details.Count.ShouldBe(4);
+            agentResponse.Details.FirstOrDefault()!.AgentName.ShouldBe("james");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
             
-            var agentId = agentResponse.ContestantAgentList.FirstOrDefault()!.AgentId;
+            
+            var agentId = agentResponse.Details.FirstOrDefault()!.AgentId;
             var creativeGAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
             var state = creativeGAgent.GetAgentState();
             state.Result.AgentResponsibility.ShouldBe(contestantAgentList.FirstOrDefault()!.Bio);
             state.Result.AgentName.ShouldBe(contestantAgentList.FirstOrDefault()!.Name);
 
-            agentResponse.JudgeAgentList.Count.ShouldBe(2);
-            agentResponse.JudgeAgentList.FirstOrDefault()!.Name.ShouldBe("james");
-            agentResponse.JudgeAgentList[1].Name.ShouldBe("kob");
+            agentResponse.Details[1].AgentName.ShouldBe("kob");
         }
 
 

@@ -27,7 +27,7 @@ namespace AISmart.Service;
 
 public interface INamingContestService
 {
-    Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
+    Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     Task ClearAllAgentsAsync();
     Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
     Task StartGroupAsync(GroupDto groupDto);
@@ -39,6 +39,11 @@ public class NamingContestService : ApplicationService,INamingContestService
     private readonly ILogger<NamingContestService> _logger;
     private readonly NameContestOptions _nameContestOptions;
 
+    private const string AgentLabelContestant = "Contestant";
+    private const string AgentLabelJudge = "Judge";
+    private const string AgentLabelHost = "Host";
+
+
     public NamingContestService(
         IClusterClient clusterClient,
         ILogger<NamingContestService> logger,
@@ -49,56 +54,72 @@ public class NamingContestService : ApplicationService,INamingContestService
         _nameContestOptions = nameContestOptions.Value;
     }
 
-    public async Task<AgentResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
+    public async Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
         IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
         
         var random = new Random();
 
-        AgentResponse agentResponse = new AgentResponse();
-
-        foreach (var contestant in contestAgentsDto.ContestantAgentList)
-        {
-            var agentId = Guid.NewGuid();
-            var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
-            await creativeAgent.SetAgent(contestant.Name, contestant.Bio);
-            
-            var newAgent = new AgentReponse()
-            {
-                AgentId = agentId.ToString(),
-                Name = contestant.Name
-            };
-
-            // Add the new agent to the contestant list
-            agentResponse.ContestantAgentList.Add(newAgent);
-        }
-
-        foreach (var judge in contestAgentsDto.JudgeAgentList)
-        {
-            var agentId = Guid.NewGuid();
-            var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+        AiSmartInitResponse aiSmartInitResponse = new AiSmartInitResponse();
         
-            await judgeAgent.SetAgent(judge.Name, judge.Bio);
 
-            var newAgent = new AgentReponse()
+        if (contestAgentsDto.Network is not null )
+        {
+            foreach (var agent in contestAgentsDto.Network)
             {
-                AgentId = agentId.ToString(),
-                Name = judge.Name
-            };
-
-            // Add the new agent to the contestant list
-            agentResponse.JudgeAgentList.Add(newAgent);
+                Guid agentId;
+                AiSmartInitResponseDetail? newAgent;
+                switch (agent.Label)
+                {
+                    case AgentLabelContestant:
+                        agentId = Guid.NewGuid();
+                        var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
+                        await creativeAgent.SetAgent(agent.Name, agent.Bio);
             
-        }
+                        newAgent = new AiSmartInitResponseDetail()
+                        {
+                            AgentId = agentId.ToString(),
+                            AgentName = agent.Name,
+                            Label = agent.Label
+                        };
+                        // Add the new agent to the contestant list
+                        aiSmartInitResponse.Details.Add(newAgent);
+                        break;
 
+                    case "Judge":
+                        agentId = Guid.NewGuid();
+                        var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
+        
+                        await judgeAgent.SetAgent(agent.Name, agent.Bio);
+
+                        newAgent = new AiSmartInitResponseDetail()
+                        {
+                            AgentId = agentId.ToString(),
+                            AgentName = agent.Name,
+                            Label = agent.Label
+                        };
+
+                        // Add the new agent to the contestant list
+                        aiSmartInitResponse.Details.Add(newAgent);
+                        break;
+                    
+                    case "Host":
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+        
         await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
-            CreativeAgentIdList = agentResponse.ContestantAgentList.Select(agent => agent.AgentId).ToList(),
-            JudgeAgentIdList = agentResponse.JudgeAgentList.Select(agent => agent.AgentId).ToList(),
-            HostAgentIdList = agentResponse.HostAgentList.Select(agent => agent.AgentId).ToList(),
+            CreativeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelContestant).Select(agent => agent.AgentId).ToList(),
+            JudgeAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelJudge).Select(agent => agent.AgentId).ToList(),
+            HostAgentIdList = aiSmartInitResponse.Details.FindAll(agent => agent.Label == AgentLabelHost).Select(agent => agent.AgentId).ToList(),
         });
 
-        return agentResponse;
+        return aiSmartInitResponse;
     }
 
     public async Task ClearAllAgentsAsync()
@@ -144,7 +165,7 @@ public class NamingContestService : ApplicationService,INamingContestService
 
                 MicroAIGAgentState microAigAgentState = await creativeAgent.GetAgentState();
                 
-                _ = trafficAgent.AddCreativeAgent(microAigAgentState.AgentName,creativeAgent.GetPrimaryKey());
+                _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(),creativeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(creativeAgent);
             }
