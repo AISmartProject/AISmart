@@ -62,7 +62,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
 
         await PublishAsync(new SingleVoteCharmingEvent
         {
-            VoteMessage = @event.VoteMessage,
+            //VoteMessage = @event.VoteMessage,
             Round = @event.Round
         });
         base.RaiseEvent(new VoteCharmingGEvent

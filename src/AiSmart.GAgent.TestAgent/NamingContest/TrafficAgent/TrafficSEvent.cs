@@ -122,13 +122,19 @@ public class SetDiscussionSEvent : TrafficEventSourcingBase
 }
 
 [GenerateSerializer]
-public class DiscussionCountReduce : TrafficEventSourcingBase
+public class DiscussionCountReduceSEvent : TrafficEventSourcingBase
 {
     
 }
 
 [GenerateSerializer]
-public class AddScoreJudgeCount : TrafficEventSourcingBase
+public class AddScoreJudgeCountSEvent : TrafficEventSourcingBase
 {
     
+}
+
+[GenerateSerializer]
+public class SetRoundNumberSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public int RoundCount { get; set; }
 }

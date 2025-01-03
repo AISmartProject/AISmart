@@ -5,6 +5,7 @@ using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Google.Cloud.AIPlatform.V1;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
@@ -413,6 +415,32 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     public Task<string> GetCreativeName()
     {
         return Task.FromResult(State.AgentName);
+    }
+    [EventHandler]
+    public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
+    {
+        var history = new List<MicroAIMessage>()
+        {
+            new MicroAIMessage(Role.User.ToString(),
+                $"The theme of this naming contest is: \"{JsonConvert.SerializeObject(@event.VoteMessage)}\""),
+        };
+
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+            .SendAsync(NamingConstants.VotePrompt, history);
+
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            var namingReply = message.Content.Replace("\"","");
+            var winner = Guid.Parse(namingReply);
+                
+            await PublishAsync(new VoteCharmingCompleteEvent()
+            {
+                Winner = winner,
+                VoterId = this.GetPrimaryKey(),
+                Round = @event.Round
+            });
+        }
+        await base.ConfirmEvents();
     }
 }
 

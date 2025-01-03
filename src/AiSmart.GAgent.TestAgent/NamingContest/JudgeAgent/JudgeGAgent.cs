@@ -7,12 +7,15 @@ using AISmart.Events;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.Agents;
 using Nest;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
@@ -170,5 +173,31 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 
             await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
         }
+    }
+    [EventHandler]
+    public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
+    {
+        var history = new List<MicroAIMessage>()
+        {
+            new MicroAIMessage(Role.User.ToString(),
+                $"The theme of this naming contest is: \"{JsonConvert.SerializeObject(@event.VoteMessage)}\""),
+        };
+
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+            .SendAsync(NamingConstants.VotePrompt, history);
+
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            var namingReply = message.Content.Replace("\"","");
+            var winner = Guid.Parse(namingReply);
+                
+            await PublishAsync(new VoteCharmingCompleteEvent()
+            {
+                Winner = winner,
+                VoterId = this.GetPrimaryKey(),
+                Round = @event.Round
+            });
+        }
+        await base.ConfirmEvents();
     }
 }
