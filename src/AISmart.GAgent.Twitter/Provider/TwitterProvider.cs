@@ -21,6 +21,10 @@ public interface ITwitterProvider
     public Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret);
     public Task ReplyAsync(string message, string tweetId, string accessToken, string accessTokenSecret);
     public Task<List<Tweet>> GetMentionsAsync(string userName);
+    public Task<string> GetUserName(string accessToken, string accessTokenSecret);
+    public Task LikeAsync(string tweetId, string userId, string accessToken, string accessTokenSecret);
+    public Task QuoteTweetAsync(string tweetId, string message, string accessToken, string accessTokenSecret);
+    public Task RetweetAsync(string tweetId, string message, string accessToken, string accessTokenSecret);
 }
 
 
@@ -84,6 +88,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
     public async Task PostTwitterAsync(string message, string accessToken, string accessTokenSecret)
     {
         var url = "https://api.twitter.com/2/tweets";
+        _logger.LogInformation("PostTwitterAsync message: {msg}", message);
 
         accessToken = GetDecryptedData(accessToken);
         accessTokenSecret = GetDecryptedData(accessTokenSecret);
@@ -231,5 +236,101 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         return authHeader;
     }
     
+    public async Task LikeAsync(string tweetId, string userId, string accessToken, string accessTokenSecret)
+    {
+        var url = $"https://api.twitter.com/2/users/{userId}/likes";
+        _logger.LogInformation("LikeAsync tweetId: {tweetId}, userId: {userId}", tweetId, userId);
+
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
+
+        var jsonBody = JsonConvert.SerializeObject(new { tweet_id = tweetId });
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        };
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseData = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("LikeAsync Response: {resp}", responseData);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("LikeAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+    }
+    
+    public async Task QuoteTweetAsync(string tweetId, string message, string accessToken, string accessTokenSecret)
+    {
+        var url = "https://api.twitter.com/2/tweets";
+        _logger.LogInformation("QuoteTweetAsync message: {msg}, quote_tweet: {tweetId}", message, tweetId);
+
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
+
+        var jsonBody = JsonConvert.SerializeObject(
+            new { text = message, quote_tweet_id = tweetId});
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        };
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseData = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("QuoteTweetAsync Response: {resp}", responseData);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("QuoteTweetAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+    }
+    
+    public async Task RetweetAsync(string tweetId, string userId, string accessToken, string accessTokenSecret)
+    {
+        var url = $"https://api.twitter.com/2/users/{userId}/retweets";
+        _logger.LogInformation("RetweetAsync tweetId: {tweetId}, userId: {userId}", tweetId, userId);
+
+        accessToken = GetDecryptedData(accessToken);
+        accessTokenSecret = GetDecryptedData(accessTokenSecret);
+        string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
+
+        var jsonBody = JsonConvert.SerializeObject(new { tweet_id = tweetId });
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+        };
+
+        requestMessage.Headers.TryAddWithoutValidation("Authorization", authHeader);
+        requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        try
+        {
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
+            response.EnsureSuccessStatusCode();
+            var responseData = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("RetweetAsync Response: {resp}", responseData);
+        }
+        catch (HttpRequestException e)
+        {
+            _logger.LogError("RetweetAsync Error: {err}, code: {code}", e.Message, e.StatusCode);
+        }
+    }
 }
 
