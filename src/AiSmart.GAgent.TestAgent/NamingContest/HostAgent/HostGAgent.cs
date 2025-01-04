@@ -31,8 +31,9 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
         var summaryReply = string.Empty;
         try
         {
+            
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(NamingConstants.SummaryPrompt, State.RecentMessages.ToList());
+                .SendAsync(NamingConstants.SummaryPrompt, @event.History);
 
             if (response != null && !response.Content.IsNullOrEmpty())
             {
