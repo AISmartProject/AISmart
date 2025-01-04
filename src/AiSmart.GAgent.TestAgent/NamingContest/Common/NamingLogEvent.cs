@@ -45,6 +45,7 @@ public enum NamingContestStepEnum
     Complete = 13,
     HosSummaryStart = 14,
     HostSummary = 15,
+    HostSummaryComplete = 16,
 }
 
 [GenerateSerializer]
@@ -53,4 +54,5 @@ public enum NamingRoleType
     None = 0,
     Contestant = 1,
     Judge = 2,
+    Host = 3,
 }

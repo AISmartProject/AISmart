@@ -8,5 +8,5 @@ namespace AISmart.Provider;
 
 public interface INameContestProvider
 {
-    public Task SendMessageAsync(NamingLogEvent? namingLogEvent,string callBackUrl);
+    public Task SendMessageAsync(Guid groupId,NamingLogEvent? namingLogEvent,string callBackUrl);
 }

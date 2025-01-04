@@ -59,7 +59,7 @@ namespace AISmart.Samples
 
             var namingLogEvent = new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty);
 
-            await _namingContestGrain.SendMessageAsync(namingLogEvent as NamingLogEvent,"https://xxx.com");
+            await _namingContestGrain.SendMessageAsync(Guid.NewGuid(),namingLogEvent as NamingLogEvent,"https://xxx.com");
         }
     }
 }

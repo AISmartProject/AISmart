@@ -61,5 +61,5 @@ public static class NamingConstants
         
     public static string VotePrompt = "The following is the discussion about naming between user $AgentNames$. Please select the one that attracts you most and only return the user's name";
 
-    public static string SummaryPrompt = "summary ";
+    public static string SummaryPrompt = " summarize the contestant's performance.";
 }

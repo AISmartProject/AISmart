@@ -175,8 +175,8 @@ public class NamingContestService : INamingContestService
             else
             {
                 trafficAgent = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
-                // ((ISecondTrafficGAgent) trafficAgent).SetAskJudgeNumber()
-                // ((ISecondTrafficGAgent) trafficAgent).Set()
+                _ =  ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(20);
+                _ = ((ISecondTrafficGAgent)trafficAgent).SetRoundNumber(Convert.ToInt32(network.Round));
 
             }
 
@@ -194,7 +194,8 @@ public class NamingContestService : INamingContestService
                 CreativeAgentIdList = network.ConstentList,
                 JudgeAgentIdList = network.JudgeList,
                 ScoreAgentIdList = network.ScoreList,
-                HostAgentIdList = network.HostList
+                HostAgentIdList = network.HostList,
+                GroupId = groupAgent.GetPrimaryKey()
 
             });
 
