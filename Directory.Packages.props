@@ -151,5 +151,8 @@
     <PackageVersion Include="MediatR" Version="11.1.0" />
     <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageVersion Include="NEST" Version="7.17.5" />
+
+    <PackageVersion Include="GraphQL.Client" Version="6.1.0" />
+    <PackageVersion Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
   </ItemGroup>
 </Project>
