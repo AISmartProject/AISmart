@@ -47,11 +47,8 @@ public class PumpFunGAgent : GAgentBase<PumpFunGAgentState, Agents.GEventBase>, 
             
             RaiseEvent(pumpFunSendMessageGEvent);
             await ConfirmEvents();
-            _logger.LogInformation("PumpFunSendMessageEvent2:" + JsonConvert.SerializeObject(@pumpFunSendMessageGEvent));
             await GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId))
                 .SendMessageAsync(@event.ReplyId, @event.ReplyMessage);
-            _logger.LogInformation("PumpFunSendMessageEvent3,grainId:" + 
-                                   GrainFactory.GetGrain<IPumpFunGrain>(Guid.Parse(@event.ReplyId)).GetGrainId());
 
         }
     }

@@ -39,13 +39,10 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         _logger.LogInformation("ReceiveMessagesAsync agentId:" + inputDto.AgentId);
         if (inputDto is { RequestMessage: not null, AgentId: not null })
         {
-            _logger.LogInformation("ReceiveMessagesAsync2 agentId:" + inputDto.AgentId);
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(inputDto.AgentId));
             await groupAgent.ActivateAsync();
-            _logger.LogInformation("ReceiveMessagesAsync3 agentId:" + inputDto.AgentId);
             
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-            _logger.LogInformation("ReceiveMessagesAsync4, publishingAgent:{groupAgentId}", JsonConvert.SerializeObject(publishingAgent));
             await publishingAgent.RegisterAsync(groupAgent);
             
             await  publishingAgent.PublishEventAsync(new PumpFunReceiveMessageEvent
@@ -64,14 +61,11 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         
         var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(groupAgentId);
         
-        _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}", chatId, pumpFunGAgent.GetGrainId());
         await pumpFunGAgent.SetPumpFunConfig(chatId);
 
         var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(groupAgentId);
         await pumpFunChatAgent.SetAgent(chatId, bio);
         await groupAgent.RegisterAsync(pumpFunChatAgent);
-        
-        _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}", chatId);
         
         await groupAgent.RegisterAsync(pumpFunGAgent);
 
@@ -83,13 +77,11 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         _logger.LogInformation("SearchAnswerAsync, replyId:{replyId}", replyId);
         // get PumpFunGAgentState
         var eventResult = await _cqrsService.QueryGEventAsync<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>("pumpfunsendmessagegeventindex", replyId);
-        _logger.LogInformation("SearchAnswerAsync, eventResult:{eventResult}", JsonConvert.SerializeObject(eventResult));
         PumFunResponseDto answer = new PumFunResponseDto
         {
             ReplyId = eventResult.ReplyId,
             ReplyMessage = eventResult.ReplyMessage
         };
-        _logger.LogInformation("SearchAnswerAsync3, replyId:{answer}", JsonConvert.SerializeObject(answer));
         return await Task.FromResult(answer);
     }
 }

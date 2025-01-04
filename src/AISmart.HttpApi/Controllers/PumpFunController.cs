@@ -27,7 +27,7 @@ public class PumpFunController : AISmartController
         _pumpFunChatService = pumpFunChatService;
     }
 
-    // [Authorize]
+    [Authorize]
     [HttpPost]
     [Route("setGroup")]
     public async Task<string> SetGroupsAsync(PumpFunSetGroupInputDto pumpFunSetGroupInputDto)
@@ -39,11 +39,10 @@ public class PumpFunController : AISmartController
 
     [HttpPost]
     [Route("chat")]
-    // [Authorize]
+    [Authorize]
     public Task<PumpFunOutputDto> Chat([FromBody] PumpFunInputDto inputDto)
     {
         var replyId = Guid.NewGuid().ToString();
-        _logger.LogInformation("PumpFunController chat, UserIdentityName:{UserIdentityName}", User.Identity.Name);
         _logger.LogInformation("PumpFunController chat, inputDto:{inputDto}", JsonConvert.SerializeObject(inputDto));
 
         inputDto.ReplyId = replyId;
@@ -57,7 +56,7 @@ public class PumpFunController : AISmartController
     }
 
 
-    // [Authorize]
+    [Authorize]
     [HttpGet("search")]
     public Task<PumFunResponseDto> SearchByReplyId(string replyId)
     {
