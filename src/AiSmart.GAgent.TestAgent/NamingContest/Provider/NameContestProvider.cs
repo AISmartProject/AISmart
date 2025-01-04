@@ -52,7 +52,12 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
             
             var response = await client.PostAsync(callBackUrl, new StringContent(updatedJson, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}",namingLogEvent.StreamId, response);
+            if (namingLogEvent != null)
+            {
+                _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}", namingLogEvent.EventId,
+                    response);
+            }
+
             var responseBody = await response.Content.ReadAsStringAsync();
             _logger.LogInformation(responseBody);
         }
