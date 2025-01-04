@@ -110,6 +110,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(NamedCompleteGEvent @event)
     {
+        if (@event.GrainGuid == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -122,6 +127,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
+        if (@event.GrainGuid == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -227,6 +237,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(DiscussionCompleteGEvent @event)
     {
+        if (@event.CreativeId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         if (@event.DiscussionReply.IsNullOrEmpty())
         {
             return;
@@ -281,7 +296,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             });
 
             await PublishAsync(new CreativeSummaryCompleteGEvent()
-                { SummaryName = summary.Name, Reason = summary.Reason });
+                { SummaryName = summary.Name, Reason = summary.Reason, GraindId = this.GetPrimaryKey() });
 
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DiscussionSummary, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, JsonSerializer.Serialize(summary)));
@@ -293,6 +308,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(CreativeSummaryCompleteGEvent @event)
     {
+        if (@event.GraindId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -361,6 +381,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(CreativeAnswerCompleteGEvent @event)
     {
+        if (@event.CreativeId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         if (@event.CreativeName.IsNullOrWhiteSpace())
         {
             return;

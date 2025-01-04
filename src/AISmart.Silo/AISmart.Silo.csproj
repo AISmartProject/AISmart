@@ -24,6 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AISmart.Application\AISmart.Application.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.AElf\AISmart.GAgent.AElf.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Autogen\AISmart.GAgent.Autogen.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
