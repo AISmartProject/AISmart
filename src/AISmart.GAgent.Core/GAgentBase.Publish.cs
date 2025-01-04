@@ -24,8 +24,7 @@ public abstract partial class GAgentBase<TState, TEvent>
         @event.CorrelationId = _correlationId;
         Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
         var eventId = Guid.NewGuid();
-        await LoadSubscriptionAsync();
-        if (_subscription.State.IsDefault)
+        if (State.Subscription.IsDefault)
         {
             Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
             // This event is the first time appeared to silo.
@@ -47,8 +46,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        await LoadSubscriptionAsync();
-        var stream = GetStream(_subscription.State.ToString());
+        var stream = GetStream(State.Subscription.ToString());
         await stream.OnNextAsync(eventWrapper);
     }
 
@@ -73,15 +71,14 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventDownwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        await LoadSubscribersAsync();
-        if (_subscribers.State.IsNullOrEmpty())
+        if (State.Subscribers.IsNullOrEmpty())
         {
             return;
         }
 
-        Logger.LogInformation($"{this.GetGrainId().ToString()} has {_subscribers.State.Count} subscribers.");
+        Logger.LogInformation($"{this.GetGrainId().ToString()} has {State.Subscribers.Count} subscribers.");
 
-        foreach (var grainId in _subscribers.State)
+        foreach (var grainId in State.Subscribers)
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
             await gAgent.ActivateAsync();

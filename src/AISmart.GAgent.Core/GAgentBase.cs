@@ -81,14 +81,12 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     public async Task<List<GrainId>> GetSubscribersAsync()
     {
-        await LoadSubscribersAsync();
-        return _subscribers.State;
+        return State.Subscribers;
     }
 
     public async Task<GrainId> GetSubscriptionAsync()
     {
-        await LoadSubscriptionAsync();
-        return _subscription.State;
+        return State.Subscription;
     }
 
     [EventHandler]
@@ -100,9 +98,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task<SubscribedEventListEvent> GetGroupSubscribedEventListEvent()
     {
-        await LoadSubscribersAsync();
-
-        var gAgentList = _subscribers.State.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
+        var gAgentList = State.Subscribers.Select(grainId => GrainFactory.GetGrain<IGAgent>(grainId)).ToList();
 
         if (gAgentList.IsNullOrEmpty())
         {
@@ -197,8 +193,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        _stateSaveTimer?.Dispose();
-        await SaveSubscriberAsync(cancellationToken);
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 
@@ -223,8 +217,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         //TODO:  need optimize use kafka,ensure Es written successfully
         await EventDispatcher.PublishAsync(State, this.GetGrainId().ToString());
     }
-    
-    protected sealed override async void RaiseEvent<TEvent>(TEvent @event)
+
+    protected sealed override async void RaiseEvent<TRaisingEvent>(TRaisingEvent @event)
     {
         Logger.LogInformation("base raiseEvent info:{info}", JsonConvert.SerializeObject(@event));
         base.RaiseEvent(@event);
