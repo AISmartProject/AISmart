@@ -15,4 +15,6 @@ public interface ITelegramService
     Task SetNamingGroupAsync(string groupName);
     Task UnRegisterBotAsync(UnRegisterTelegramDto unRegisterTelegramDto);
     Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName);
+
+    Task SendMessageToAllGroup(string message);
 }

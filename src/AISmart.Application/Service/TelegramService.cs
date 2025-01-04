@@ -52,6 +52,8 @@ public class TelegramService : ApplicationService, ITelegramService
     private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
         new Dictionary<string, ILoadTestGAgentCount>();
 
+    private static Dictionary<string, IPublishingGAgent> _publishingList = new Dictionary<string, IPublishingGAgent>();
+
     public TelegramService(IOptions<TelegramTestOptions> telegramTestOptions, IOptions<TelegramOptions> telegramOption,
         IClusterClient clusterClient,
         ILogger<TelegramService> logger)
@@ -305,6 +307,7 @@ public class TelegramService : ApplicationService, ITelegramService
         var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
         await publishingAgent.RegisterAsync(groupAgent);
+        _publishingList.Add(groupName, publishingAgent);
     }
 
     private void RecordLoadTest(string groupName, ILoadTestGAgentCount agent)
@@ -358,5 +361,15 @@ public class TelegramService : ApplicationService, ITelegramService
             Duration = agentInfo.EndTimestamp - agentInfo.StartTimestamp,
             Message = $"Successfully retrieved agent count for group: {groupName}"
         };
+    }
+
+    public Task SendMessageToAllGroup(string message)
+    {
+        foreach (var item in _publishingList)
+        {
+            item.Value.PublishEventAsync(new GroupStartEvent() { Message = message });
+        }
+
+        return Task.CompletedTask;
     }
 }
