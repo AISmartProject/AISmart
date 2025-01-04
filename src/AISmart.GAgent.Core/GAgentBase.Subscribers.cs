@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
@@ -19,6 +21,12 @@ public abstract partial class GAgentBase<TState, TEvent>
     {
         await LoadSubscribersAsync();
         _subscribers.State ??= [];
+        if (_subscribers.State.Contains(grainId))
+        {
+            Logger.LogError($"Cannot add duplicate subscriber {grainId}.");
+            return;
+        }
+
         _subscribers.State.Add(grainId);
         await SaveSubscriberAsync(CancellationToken.None);
     }
