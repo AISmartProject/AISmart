@@ -113,7 +113,8 @@ public class CreativeSummaryGEvent : EventBase
 public class CreativeSummaryCompleteGEvent : EventBase
 {
     [Id(0)] public string SummaryName { get; set; }
-    [Id(1)] public string Reason { get; set; }
+    [Id(1)] public  Guid GraindId { get; set; }
+    [Id(2)] public string Reason { get; set; }
 }
 
 [GenerateSerializer]
