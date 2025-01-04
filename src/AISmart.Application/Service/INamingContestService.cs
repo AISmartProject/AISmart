@@ -262,16 +262,21 @@ public class NamingContestService : INamingContestService
             }, groupAgentId.ToString());
         }
         
-        
-        IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
+        var round = networksDto.Networks.FirstOrDefault()!.Round;
+        var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(round));
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
-
-        var round = networksDto.Networks.FirstOrDefault()!.Round;
+        var managerAgentState = await managerGAgent.GetManagerAgentStateAsync();
+        if(!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
+        {
+            totalBatches = NamingConstants.DefaultTotalTotalBatches;
+        }
         await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
         {
-            GrainGuidList = groupResponse.GroupDetails.Select(g=>Guid.Parse(g.GroupId)).ToList(),
-            Round = Convert.ToInt32(round)
+            CreativeGuidList = managerAgentState.CreativeAgentIdList.Select(Guid.Parse).ToList(),
+            JudgeGuidList = managerAgentState.JudgeAgentIdList.Select(Guid.Parse).ToList(),
+            Round = Convert.ToInt32(round),
+            TotalBatches = totalBatches
         });
         
         return groupResponse;

@@ -15,5 +15,5 @@ public class InitVoteCharmingGEvent:GEventBase
     [Id(1)] public int TotalBatches { get; set; }
     
     [Id(2)] public int Round { get; set; }
-   
+    [Id(3)] public Dictionary<Guid, string> GrainGuidTypeDictionary { get; set; }
 }
