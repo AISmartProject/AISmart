@@ -4,14 +4,17 @@ using AISmart.Authors;
 using AISmart.Dapr;
 using AISmart.Dto;
 using AISmart.GAgent.Telegram.Dtos;
+using AiSmart.GAgent.TestAgent.LoadTestAgent;
 using AISmart.Provider;
 using AISmart.Service;
 using Asp.Versioning;
 using Dapr;
+using Google.Type;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Volo.Abp;
+using DateTime = System.DateTime;
 
 namespace AISmart.Controllers;
 
@@ -60,6 +63,12 @@ public class TelegramController : AISmartController
     {
         await _microAiService.ReceiveMessagesAsync(message, groupName);
     }
+    
+    [HttpGet("LoadTestMessageCount")]
+    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
+    {
+        return await _telegramService.GetLoadTestMessageCount(groupName);
+    }
 
     [HttpPost("registerBot")]
     public async Task RegisterBotAsync([FromBody] RegisterTelegramDto registerTelegramDto)
@@ -77,6 +86,12 @@ public class TelegramController : AISmartController
     public async Task UnRegisterBotAsync([FromBody] UnRegisterTelegramDto unRegisterTelegramDto)
     {
         await _telegramService.UnRegisterBotAsync(unRegisterTelegramDto);
+    }
+
+    [HttpPost("sendMessageToAllGroup")]
+    public async Task SendMessageToAllGroup(string message)
+    {
+        await _telegramService.SendMessageToAllGroup(message);
     }
 
     [HttpPost("initNamingGroup")]

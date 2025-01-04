@@ -34,7 +34,7 @@ public static class OrleansClientExtension
                 })
                 .Configure<ClientMessagingOptions>(options =>
                 {
-                    options.ResponseTimeout = TimeSpan.FromMinutes(60);
+                    options.ResponseTimeout = TimeSpan.FromMinutes(5);
                 })
                 .AddMemoryStreams("AISmart");
         });

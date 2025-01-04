@@ -82,8 +82,8 @@ public static class OrleansHostExtension
                     })
                     .Configure<SiloMessagingOptions>(options =>
                     {
-                        options.ResponseTimeout = TimeSpan.FromMinutes(60);
-                        options.SystemResponseTimeout = TimeSpan.FromMinutes(60);
+                        options.ResponseTimeout = TimeSpan.FromMinutes(5);
+                        options.SystemResponseTimeout = TimeSpan.FromMinutes(5);
                     })
                     .AddMongoDBGrainStorage("PubSubStore", options =>
                     {
