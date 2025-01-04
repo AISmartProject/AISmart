@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AISmart.Dto;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AISmart.Provider;
@@ -20,7 +21,7 @@ public class NamingContestGrain : Grain<NamingContestState>, INamingContestGrain
         _nameContestProvider = nameContestProvider;
     }
 
-    public async Task SendMessageAsync(NameContentGEvent nameContentGEvent,string callBackUrl)
+    public async Task SendMessageAsync(NamingLogEvent? nameContentGEvent,string callBackUrl)
     {
         
         if (nameContentGEvent != null)

@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using AISmart.Dto;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Options;
 using AISmart.PumpFun;
@@ -27,11 +28,11 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
         _logger = logger;
     }
     
-    public async Task SendMessageAsync(NameContentGEvent nameContentGEvent,string callBackUrl)
+    public async Task SendMessageAsync(NamingLogEvent? namingLogEvent,string callBackUrl)
     {
         
         // Serialize the request object to JSON
-        var json = JsonConvert.SerializeObject(nameContentGEvent, new JsonSerializerSettings
+        var json = JsonConvert.SerializeObject(namingLogEvent, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore
         });
@@ -43,7 +44,7 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
             
             var response = await client.PostAsync(callBackUrl, new StringContent(json, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
-            _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}",nameContentGEvent.EventId, response);
+            _logger.LogDebug("NameContestProvider send message end  {replyId} : {response}",namingLogEvent.StreamId, response);
             var responseBody = await response.Content.ReadAsStringAsync();
             _logger.LogInformation(responseBody);
         }

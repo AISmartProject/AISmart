@@ -10,7 +10,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
-using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.Agents;
@@ -142,7 +141,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             await PublishAsync(new JudgeAskingCompleteGEvent()
             {
                 JudgeGuid = this.GetPrimaryKey(),
-                JudgeName = State.AgentName,
                 Reply = reply,
             });
         }
@@ -176,24 +174,18 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
         }
     }
-
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
-        var history = new List<MicroAIMessage>()
-        {
-            new MicroAIMessage(Role.User.ToString(),
-                $"The theme of this naming contest is: \"{JsonConvert.SerializeObject(@event.VoteMessage)}\""),
-        };
-
+        var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(NamingConstants.VotePrompt, history);
+            .SendAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), @event.VoteMessage);
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content.Replace("\"", "");
-            var winner = Guid.Parse(namingReply);
-
+            var namingReply = message.Content.Replace("\"","").ToLower();
+            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+            var winner = agent.Key;
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
                 Winner = winner,
@@ -201,7 +193,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 Round = @event.Round
             });
         }
-
         await base.ConfirmEvents();
     }
 }
