@@ -45,8 +45,6 @@ public class LoadTestGAgent : GAgentBase<LoadTestAgentState, LoadTestGEvent>, IL
                 break;
             case NamingContestStepEnum.JudgeAsking:
                 break;
-            case NamingContestStepEnum.JudgeRating:
-                break;
             case NamingContestStepEnum.Complete:
                 State.EndTimestamp = DateTime.UtcNow;
                 RaiseEvent(new LoadTestAddNumberEvent());
