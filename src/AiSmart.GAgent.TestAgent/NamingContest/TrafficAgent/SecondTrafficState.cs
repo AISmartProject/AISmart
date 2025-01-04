@@ -20,6 +20,9 @@ public class SecondTrafficState : StateBase
     [Id(11)] public string Summary { get; set; }
     [Id(12)] public  int JudgeScoreCount { get; set; }
     [Id(13)] public int Round { get; set; }
+    
+    [Id(14)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
+
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -56,6 +59,11 @@ public class SecondTrafficState : StateBase
     public void Apply(AddJudgeSEvent @event)
     {
         this.JudgeAgentList.Add(@event.JudgeGrainId);
+    }
+    
+    public void Apply(AddHostSEvent @event)
+    {
+        this.JudgeAgentList.Add(@event.HostGrainId);
     }
 
     public void Apply(ClearCalledGrainsSEvent @event)
