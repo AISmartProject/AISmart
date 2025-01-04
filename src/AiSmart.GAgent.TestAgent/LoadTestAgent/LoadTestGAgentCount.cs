@@ -1,8 +1,8 @@
 using AISmart.Agents;
 
-namespace AISmart.Application.Grains.Agents.LoadTestAgent;
+namespace AiSmart.GAgent.TestAgent.LoadTestAgent;
 
 public interface ILoadTestGAgentCount : IGAgent
 {
-    Task<(int Number, DateTime LastEventTimestamp)> GetLoadTestGAgentCount();
+    Task<(int Number, DateTime StartTimestamp, DateTime EndTimestamp)> GetLoadTestGAgentInfo();
 }

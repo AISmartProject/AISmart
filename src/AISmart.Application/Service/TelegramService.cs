@@ -9,12 +9,10 @@ using AISmart.Agents.Developer;
 using AISmart.Agents.Group;
 using AISmart.Agents.ImplementationAgent.Events;
 using AISmart.Agents.Investment;
-using AISmart.Agents.LoadTestAgent;
 using AISmart.Agents.MarketLeader;
 using AISmart.Agents.MarketLeader.Events;
 using AISmart.Application.Grains.Agents.Developer;
 using AISmart.Application.Grains.Agents.Investment;
-using AISmart.Application.Grains.Agents.LoadTestAgent;
 using AISmart.Application.Grains.Agents.MarketLeader;
 using AISmart.Common;
 using AISmart.Events;
@@ -25,6 +23,7 @@ using AISmart.GAgent.Telegram.Dtos;
 using AISmart.GAgent.Telegram.Options;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
+using AiSmart.GAgent.TestAgent.LoadTestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
@@ -335,13 +334,14 @@ public class TelegramService : ApplicationService, ITelegramService
             };
         }
 
-        (int Count, DateTime? LastEventTime) agentCount;
+        (int Number, DateTime StartTimestamp, DateTime EndTimestamp) agentInfo;
         try
         {
-            agentCount = await agent.GetLoadTestGAgentCount();
+            agentInfo = await agent.GetLoadTestGAgentInfo();
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while retrieving the agent count.");
             return new LoadTestMessageCountResult
             {
                 Success = false,
@@ -352,7 +352,11 @@ public class TelegramService : ApplicationService, ITelegramService
         return new LoadTestMessageCountResult
         {
             Success = true,
-            AgentCount = agentCount
+            AgentCount = agentInfo.Number,
+            StartTime = agentInfo.StartTimestamp,
+            EndTime = agentInfo.EndTimestamp,
+            Duration = agentInfo.EndTimestamp - agentInfo.StartTimestamp,
+            Message = $"Successfully retrieved agent count for group: {groupName}"
         };
     }
 }

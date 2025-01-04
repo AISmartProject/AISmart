@@ -1,6 +1,6 @@
-using AISmart.Agents.LoadTestAgent;
 
-namespace AISmart.Application.Grains.Agents.LoadTestAgent;
+
+namespace AiSmart.GAgent.TestAgent.LoadTestAgent;
 
 [GenerateSerializer]
 public class LoadTestAddNumberEvent : LoadTestGEvent

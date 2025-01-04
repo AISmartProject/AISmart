@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using AISmart.Agents.LoadTestAgent;
 using AISmart.GAgent.Telegram.Dtos;
+using AiSmart.GAgent.TestAgent.LoadTestAgent;
 using Microsoft.Extensions.Primitives;
 
 namespace AISmart.Service;

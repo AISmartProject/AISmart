@@ -1,10 +1,10 @@
 using System.IO;
 using System.Threading.Tasks;
-using AISmart.Agents.LoadTestAgent;
 using AISmart.Authors;
 using AISmart.Dapr;
 using AISmart.Dto;
 using AISmart.GAgent.Telegram.Dtos;
+using AiSmart.GAgent.TestAgent.LoadTestAgent;
 using AISmart.Provider;
 using AISmart.Service;
 using Asp.Versioning;
