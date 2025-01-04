@@ -175,6 +175,8 @@ public class NamingContestService : INamingContestService
             else
             {
                 trafficAgent = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
+                _ =  ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(20);
+                _ = ((ISecondTrafficGAgent)trafficAgent).SetRoundNumber(Convert.ToInt32(network.Round));
 
             }
 
@@ -192,7 +194,8 @@ public class NamingContestService : INamingContestService
                 CreativeAgentIdList = network.ConstentList,
                 JudgeAgentIdList = network.JudgeList,
                 ScoreAgentIdList = network.ScoreList,
-                HostAgentIdList = network.HostList
+                HostAgentIdList = network.HostList,
+                GroupId = groupAgent.GetPrimaryKey()
 
             });
 
@@ -294,7 +297,7 @@ public class NamingContestService : INamingContestService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
-            await publishingAgent.PublishEventAsync(new GroupStartEvent() { Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
+            await publishingAgent.PublishEventAsync(new GroupStartEvent() { MessageId = Guid.NewGuid().ToString(),Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
             groupStartResponse.SuccessGroupIdList.Add(groupId);
         }
         catch (Exception e)

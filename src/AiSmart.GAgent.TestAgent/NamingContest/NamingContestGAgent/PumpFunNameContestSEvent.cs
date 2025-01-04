@@ -29,5 +29,7 @@ public class IniNetWorkMessagePumpFunSEvent : PumpFunNameContestSEvent
     [Id(5)] public string Name { get; set; }
     
     [Id(6)] public string Round { get; set; }
+    
+    [Id(7)] public Guid GroupId { get; set; }
  
 }

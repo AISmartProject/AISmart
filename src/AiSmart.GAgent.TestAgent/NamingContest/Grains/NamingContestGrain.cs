@@ -14,19 +14,19 @@ namespace AISmart.Agent.Grains;
 [StorageProvider(ProviderName = "PubSubStore")]
 public class NamingContestGrain : Grain<NamingContestState>, INamingContestGrain
 {
-    public readonly INameContestProvider _nameContestProvider;
+    private readonly INameContestProvider _nameContestProvider;
     
     public NamingContestGrain(INameContestProvider nameContestProvider) 
     {
         _nameContestProvider = nameContestProvider;
     }
 
-    public async Task SendMessageAsync(NamingLogEvent? nameContentGEvent,string callBackUrl)
+    public async Task SendMessageAsync(Guid groupId,NamingLogEvent? nameContentGEvent,string callBackUrl)
     {
         
         if (nameContentGEvent != null)
         {
-            await _nameContestProvider.SendMessageAsync(nameContentGEvent,callBackUrl);
+            await _nameContestProvider.SendMessageAsync(groupId,nameContentGEvent,callBackUrl);
         }
     }
 }

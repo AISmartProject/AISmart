@@ -133,23 +133,10 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        // var creativeInfo = State.HostAgentList.FirstOrDefault(f => f.Naming == @event.VoteName);
-        // if (creativeInfo != null)
-        // {
-        //     var voteInfoStr = JsonConvert.SerializeObject(new JudgeVoteInfo()
-        //     {
-        //         AgentId = creativeInfo.CreativeGrainId, AgentName = creativeInfo.CreativeName,
-        //         Nameing = @event.VoteName, Reason = @event.Reason
-        //     });
-        //
-        //     await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.JudgeGrainId,
-        //         NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
-        // }
-        //
-        // base.RaiseEvent(new TrafficGrainCompleteSEvent()
-        // {
-        //     CompleteGrainId = @event.JudgeGrainId,
-        // });
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
+        {
+            CompleteGrainId = @event.HostId,
+        });
 
         await base.ConfirmEvents();
 
@@ -280,7 +267,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
         if (hostAgentList.Count == 0)
         {
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummary, Guid.Empty));
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummaryComplete, Guid.Empty));
             return;
         }
 

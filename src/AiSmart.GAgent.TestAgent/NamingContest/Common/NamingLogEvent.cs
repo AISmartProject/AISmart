@@ -8,12 +8,13 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.Common;
 [GenerateSerializer]
 public class NamingLogEvent : EventBase
 {
-   [Id(0)] public NamingContestStepEnum Step { get; set; }
-   [Id(1)] public NamingRoleType RoleType { get; set; }
-   [Id(2)] public Guid AgentId { get; set; } = Guid.Empty;
-   [Id(3)] public string AgentName { get; set; }
-   [Id(4)] public string Content { get; set; }
-   [Id(5)] public long Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); 
+    [Id(0)] public Guid EventId = Guid.NewGuid();
+    [Id(1)] public NamingContestStepEnum Step { get; set; }
+    [Id(2)] public NamingRoleType RoleType { get; set; }
+    [Id(3)] public Guid AgentId { get; set; } = Guid.Empty;
+    [Id(4)] public string AgentName { get; set; }
+    [Id(5)] public string Content { get; set; }
+    [Id(6)] public long Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     public NamingLogEvent(NamingContestStepEnum step, Guid agentId, NamingRoleType roleType = NamingRoleType.None,
         string agentName = "", string content = "")
@@ -38,13 +39,14 @@ public enum NamingContestStepEnum
     DiscussionSummary = 6,
     JudgeVoteStart = 7,
     JudgeVote = 8,
-    JudgeStartScore= 9,
+    JudgeStartScore = 9,
     JudgeScore = 10,
     JudgeStartAsking = 11,
     JudgeAsking = 12,
     Complete = 13,
     HosSummaryStart = 14,
     HostSummary = 15,
+    HostSummaryComplete = 16,
 }
 
 [GenerateSerializer]
@@ -53,4 +55,5 @@ public enum NamingRoleType
     None = 0,
     Contestant = 1,
     Judge = 2,
+    Host = 3,
 }
