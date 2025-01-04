@@ -66,11 +66,11 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         }
     }
     
-    [AllEventHandler]
+    [EventHandler]
     public async Task HandleRequestEventAsync(VoteCharmingCompleteEvent @event)
     {
         
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
+        _logger.LogInformation("NamingContestGAgent HandleRequestEventAsync VoteCharmingCompleteEvent:" +
                                JsonConvert.SerializeObject(@event));
 
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
