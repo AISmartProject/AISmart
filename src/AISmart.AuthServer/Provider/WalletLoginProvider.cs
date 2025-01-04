@@ -25,9 +25,6 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private readonly ChainOptions _chainOptions;
     
     private const string GetHolderInfoMethodName = "GetHolderInfo";
-    private const string PortKeyAppId = "PortKey";
-    private const string NightElfAppId = "NightElf";
-    private const string CrossChainContractName = "AElf.ContractNames.CrossChain";
 
     public WalletLoginProvider(ILogger<WalletLoginProvider> logger,
         IOptionsMonitor<SignatureGrantOptions> signatureOptions, IOptionsMonitor<ChainOptions> chainOptions)
@@ -37,8 +34,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         _chainOptions = chainOptions.CurrentValue;
     }
 
-    public List<string> CheckParams(string publicKeyVal, string signatureVal, string chainId, string address,
-        string timestamp)
+    public List<string> CheckParams(string publicKeyVal, string signatureVal, string chainId, 
+        string plainText)
     {
         var errors = new List<string>();
         if (string.IsNullOrWhiteSpace(publicKeyVal))
@@ -51,29 +48,27 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             errors.Add("invalid parameter signature.");
         }
 
-        if (string.IsNullOrWhiteSpace(address))
-        {
-            errors.Add("invalid parameter address.");
-        }
-
         if (string.IsNullOrWhiteSpace(chainId))
         {
             errors.Add("invalid parameter chain_id.");
         }
 
-        if (string.IsNullOrWhiteSpace(timestamp))
+        if (string.IsNullOrWhiteSpace(plainText))
         {
-            errors.Add("invalid parameter timestamp.");
+            errors.Add("invalid parameter plainText.");
         }
 
         return errors;
     }
 
     public async Task<string> VerifySignatureAndParseWalletAddressAsync(string publicKeyVal, string signatureVal,
-        string timestampVal, string caHash, string address, string chainId)
+        string plainText, string caHash,  string chainId)
     {
+        var rawText = Encoding.UTF8.GetString(ByteArrayHelper.HexStringToByteArray(plainText));
+        _logger.LogInformation("rawText:{rawText}", rawText);
+        var timestampVal = rawText.TrimEnd().Substring(rawText.LastIndexOf("Nonce:") + 6);
         var timestamp = long.Parse(timestampVal);
-
+        _logger.LogInformation("timestamp:{timestamp}", timestamp);
         //Validate timestamp validity period
         if (IsTimeStampOutRange(timestamp, out int timeRange))
         {
@@ -82,12 +77,12 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         }
 
         //Validate public key and signature
-        var signAddress = VerifySignature(address, timestampVal, signatureVal, publicKeyVal);
+        var signAddress = VerifySignature(plainText, signatureVal, publicKeyVal);
 
         //If EOA wallet, signAddress is the wallet address; if CA wallet, signAddress is the manager address.
         _logger.LogInformation(
-            "[VerifySignature] signatureVal:{1}, address:{2}, signAddress:{3}, caHash:{4}, chainId:{5}, timestamp:{6}",
-            signatureVal, address, signAddress, caHash, chainId, timestamp);
+            "[VerifySignature] signatureVal:{signatureVal}, signAddress:{signAddress}, caHash:{caHash}, chainId:{chainId}, timestamp:{timestamp}",
+            signatureVal, signAddress, caHash, chainId, timestamp);
 
         if (!string.IsNullOrWhiteSpace(caHash))
         {
@@ -96,8 +91,8 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             if (!managerCheck.HasValue || !managerCheck.Value)
             {
                 _logger.LogError(
-                    "[VerifySignature] Manager validation failed. caHash:{0}, address:{1}, chainId:{2}",
-                    caHash, address, chainId);
+                    "[VerifySignature] Manager validation failed. caHash:{caHash}, address:{signAddress}, chainId:{chainId}",
+                    caHash, signAddress, chainId);
                 throw new UserFriendlyException("Manager validation failed.");
             }
 
@@ -112,42 +107,21 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
             var caAddress = addressInfos[0].Address;
             return caAddress;
         }
-        else
-        {
-            //If NightElf wallet connect
-            if (address != signAddress)
-            {
-                throw new UserFriendlyException("Invalid address or signature.");
-            }
-
-            return signAddress;
-        }
+        return signAddress;
     }
 
-    private string VerifySignature(string address, string timestampVal, string signatureVal,string publicKeyVal)
+    private string VerifySignature( string plainText, string signatureVal,string publicKeyVal)
     {
         var signature = ByteArrayHelper.HexStringToByteArray(signatureVal);
-        
-        //Portkey discover wallet signature
-        if (!RecoverPublicKey(address, timestampVal, signature, out var managerPublicKey))
+        var hash = Encoding.UTF8.GetBytes(plainText).ComputeHash();
+        var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
+        if (!CryptoHelper.VerifySignature(signature, hash, publicKey))
         {
             throw new UserFriendlyException("Signature validation failed new.");
-        }
-
-        //EOA/PortkeyAA wallet signature
-        if (!RecoverPublicKeyOld(address, timestampVal, signature, out var managerPublicKeyOld))
-        {
-            throw new UserFriendlyException("Signature validation failed old.");
-        }
-        
-        if (!(managerPublicKey.ToHex() == publicKeyVal || managerPublicKeyOld.ToHex() == publicKeyVal))
-        {
-            throw new UserFriendlyException("Invalid publicKey or signature.");
         }
         
         //Since it is not possible to determine whether the CA wallet manager address is in managerPublicKey or in managerPublicKeyOld
         //therefore, the accurate manager address is obtained from publicKeyVal.
-        var publicKey = ByteArrayHelper.HexStringToByteArray(publicKeyVal);
         var signAddress = Address.FromPublicKey(publicKey).ToBase58();
         return signAddress;
     }
@@ -178,25 +152,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
         return false;
     }
 
-    private bool RecoverPublicKey(string address, string timestampVal, byte[] signature, out byte[] managerPublicKey)
-    {
-        var newSignText = """
-                          signature: 
-                          """ + string.Join("-", address, timestampVal);
-        _logger.LogInformation("newSignText:{newSignText}", newSignText);
-        return CryptoHelper.RecoverPublicKey(signature,
-            HashHelper.ComputeFrom(Encoding.UTF8.GetBytes(newSignText).ToHex()).ToByteArray(),
-            out managerPublicKey);
-    }
-
-    private bool RecoverPublicKeyOld(string address, string timestampVal, byte[] signature, out byte[] managerPublicKeyOld)
-    {
-        var oldSignText = string.Join("-", address, timestampVal);
-        _logger.LogInformation("oldSignText:{oldSignText}", oldSignText);
-        return CryptoHelper.RecoverPublicKey(signature,
-            HashHelper.ComputeFrom(string.Join("-", address, timestampVal)).ToByteArray(),
-            out managerPublicKeyOld);
-    }
+   
     
     private async Task<bool?> CheckManagerAddressAsync(string chainId, string caHash, string manager)
     {
