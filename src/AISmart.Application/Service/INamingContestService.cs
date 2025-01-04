@@ -266,6 +266,19 @@ public class NamingContestService : INamingContestService
         IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.StringToGuid("AI-Most-Charming-Naming-Contest"));
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        
+        var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
+
+
+        await pumpFunMostCharmingGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
+        {
+            CallBackUrl = _nameContestOptions.MostCharmingCallback,
+            GroupId = voteCharmingGAgent.GetPrimaryKey()
+
+        });
+
+        await pumpFunMostCharmingGAgent.RegisterAsync(voteCharmingGAgent);
+        
 
         var round = networksDto.Networks.FirstOrDefault()!.Round;
         await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
