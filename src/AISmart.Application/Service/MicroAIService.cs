@@ -10,6 +10,7 @@ using AISmart.Events;
 using AISmart.GAgent.Autogen;
 using AISmart.GAgent.Telegram.Agent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.Voter;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
@@ -35,7 +36,7 @@ public class MicroAIService : ApplicationService, IMicroAIService
     {
         var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
-        await publishingAgent.PublishEventAsync(new ReceiveMessageEvent()
+        await publishingAgent.PublishEventAsync(new GroupStartEvent() 
         {
             Message = message
         });

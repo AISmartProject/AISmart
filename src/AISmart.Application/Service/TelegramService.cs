@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.NamingContestTelegram;
@@ -22,6 +23,7 @@ using AISmart.GAgent.Telegram.Dtos;
 using AISmart.GAgent.Telegram.Options;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.ConclusionAgent;
+using AiSmart.GAgent.TestAgent.LoadTestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
@@ -46,6 +48,11 @@ public class TelegramService : ApplicationService, ITelegramService
     private readonly ILogger<TelegramService> _logger;
     private readonly TelegramTestOptions _telegramTestOptions;
     private readonly TelegramOptions _telegramOptions;
+
+    private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
+        new Dictionary<string, ILoadTestGAgentCount>();
+
+    private static Dictionary<string, IPublishingGAgent> _publishingList = new Dictionary<string, IPublishingGAgent>();
 
     public TelegramService(IOptions<TelegramTestOptions> telegramTestOptions, IOptions<TelegramOptions> telegramOption,
         IClusterClient clusterClient,
@@ -283,9 +290,16 @@ public class TelegramService : ApplicationService, ITelegramService
         await telegramAgent.RegisterTelegramAsync(_telegramTestOptions.BotName, encryptToken);
         await groupAgent.RegisterAsync(telegramAgent);
 
-        var namingTelegram = _clusterClient.GetGrain<INamingContestTelegramGAgent>(Guid.NewGuid());
-        await namingTelegram.SetAgent("namingTelegram","You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
-        await groupAgent.RegisterAsync(namingTelegram);
+        // var namingTelegram = _clusterClient.GetGrain<INamingContestTelegramGAgent>(Guid.NewGuid());
+        // await namingTelegram.SetAgent("namingTelegram","You need to determine whether the user's input is a question about naming. If it is, please return 'True'; otherwise, return 'False'.");
+        // await groupAgent.RegisterAsync(namingTelegram);
+
+        var loadTestGAgent = _clusterClient.GetGrain<ILoadTestGAgentCount>(Guid.NewGuid());
+        await groupAgent.RegisterAsync(loadTestGAgent);
+        RecordLoadTest(groupName, loadTestGAgent);
+        _logger.LogInformation("Current LoadTestRecords: {LoadTestRecords}",
+            string.Join(", ", _loadTestRecords.Select(kv => $"{kv.Key}: {kv.Value}")));
+
         //
         // var rankingAgent = _clusterClient.GetGrain<IRankingGAgent>(Guid.NewGuid());
         // await groupAgent.RegisterAsync(rankingAgent);
@@ -293,5 +307,69 @@ public class TelegramService : ApplicationService, ITelegramService
         var publishId = GuidUtil.StringToGuid(groupName);
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(publishId);
         await publishingAgent.RegisterAsync(groupAgent);
+        _publishingList.Add(groupName, publishingAgent);
+    }
+
+    private void RecordLoadTest(string groupName, ILoadTestGAgentCount agent)
+    {
+        _logger.LogInformation($"Recording load test for group: {groupName}");
+        _loadTestRecords[groupName] = agent;
+    }
+
+    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
+    {
+        if (string.IsNullOrEmpty(groupName))
+        {
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = "Group name cannot be null or empty."
+            };
+        }
+
+        if (!_loadTestRecords.TryGetValue(groupName, out var agent) || agent == null)
+        {
+            _logger.LogInformation($"No agent found for group: {groupName}");
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = $"No agent found for group: {groupName}"
+            };
+        }
+
+        (int Number, DateTime StartTimestamp, DateTime EndTimestamp) agentInfo;
+        try
+        {
+            agentInfo = await agent.GetLoadTestGAgentInfo();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while retrieving the agent count.");
+            return new LoadTestMessageCountResult
+            {
+                Success = false,
+                Message = "An error occurred while retrieving the agent count."
+            };
+        }
+
+        return new LoadTestMessageCountResult
+        {
+            Success = true,
+            AgentCount = agentInfo.Number,
+            StartTime = agentInfo.StartTimestamp,
+            EndTime = agentInfo.EndTimestamp,
+            Duration = agentInfo.EndTimestamp - agentInfo.StartTimestamp,
+            Message = $"Successfully retrieved agent count for group: {groupName}"
+        };
+    }
+
+    public Task SendMessageToAllGroup(string message)
+    {
+        foreach (var item in _publishingList)
+        {
+            item.Value.PublishEventAsync(new GroupStartEvent() { Message = message });
+        }
+
+        return Task.CompletedTask;
     }
 }
