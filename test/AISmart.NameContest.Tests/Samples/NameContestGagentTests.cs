@@ -11,6 +11,7 @@ using AISmart.Agents.Investment;
 using AISmart.Agents.MarketLeader;
 using AISmart.Agents.X;
 using AISmart.Agents.X.Events;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AISmart.Provider;
@@ -56,9 +57,9 @@ namespace AISmart.Samples
         public async Task InitAgents_Test()
         {
 
-            var namedCompleteGEvent = new NamedCompleteGEvent();
+            var namingLogEvent = new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty);
 
-            await _namingContestGrain.SendMessageAsync(namedCompleteGEvent as NameContentGEvent,"https://xxx.com");
+            await _namingContestGrain.SendMessageAsync(Guid.NewGuid(),namingLogEvent as NamingLogEvent,"https://xxx.com");
         }
     }
 }

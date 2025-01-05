@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AElf.OpenTelemetry;
 using AutoResponseWrapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,12 +14,14 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Microsoft.OpenApi.Models;
 using AISmart.Application.Grains;
 using AISmart.Domain.Grains;
-using AISmart.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Validation.AspNetCore;
+using StackExchange.Redis;
 using Volo.Abp;
-using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.Bundling;
@@ -29,9 +29,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
-using Volo.Abp.Security.Claims;
 using Volo.Abp.Swashbuckle;
-using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
 
 namespace AISmart;
@@ -49,19 +47,15 @@ namespace AISmart;
 )]
 public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrainsModule
 {
+    
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
-        PreConfigure<OpenIddictBuilder>(builder =>
+        PreConfigure<IdentityBuilder>(builder =>
         {
-            builder.AddValidation(options =>
-            {
-                options.AddAudiences("AISmartAuthServer");
-                options.UseLocalServer();
-                options.UseAspNetCore();
-            });
+            builder.AddDefaultTokenProviders();
         });
     }
-
+    
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
@@ -75,6 +69,8 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         ConfigureCors(context, configuration);
         ConfigureAutoResponseWrapper(context);
         ConfigureSwaggerServices(context, configuration);
+        ConfigureRedis(context, configuration, hostingEnvironment);
+
         //context.Services.AddDaprClient();
         
         context.Services.AddMvc(options =>
@@ -87,15 +83,6 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
     {
         context.Services.AddAutoResponseWrapper();
     }
-
-    private void ConfigureAuthentication(ServiceConfigurationContext context)
-    {
-        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
-        context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
-        {
-            options.IsDynamicClaimsEnabled = true;
-        });
-    }
     
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
@@ -104,9 +91,29 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             {
                 options.Authority = configuration["AuthServer:Authority"];
                 options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
-                options.Audience = "AISmartAuthServer";
+                options.Audience = "AISmart";
             });
+        context.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("OnlyAdminAccess", policy =>
+                policy.RequireRole("admin"));
+        });
     }
+    
+    private void ConfigureRedis(
+        ServiceConfigurationContext context,
+        IConfiguration configuration,
+        IWebHostEnvironment hostingEnvironment)
+    {
+        if (!hostingEnvironment.IsDevelopment())
+        {
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            context.Services
+                .AddDataProtection()
+                .PersistKeysToStackExchangeRedis(redis, "AISmartAuthServer-Protection-Keys");
+        }
+    }
+
 
     private void ConfigureBundles()
     {
@@ -121,19 +128,6 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             );
         });
     }
-
-    private void ConfigureUrls(IConfiguration configuration)
-    {
-        Configure<AppUrlOptions>(options =>
-        {
-            options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
-            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"]?.Split(',') ?? Array.Empty<string>());
-
-            options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
-            options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
-        });
-    }
-
     private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
@@ -168,18 +162,33 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        context.Services.AddAbpSwaggerGenWithOAuth(
-            configuration["AuthServer:Authority"]!,
-            new Dictionary<string, string>
-            {
-                    {"AISmart", "AISmart API"}
-            },
-            options =>
+        context.Services.AddAbpSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "AISmart API", Version = "v1" });
+                // options.DocumentFilter<HideApisFilter>();
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
-            });
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Scheme = "bearer",
+                    Description = "Specify the authorization token.",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                        },
+                        new string[] { }
+                    }
+                });
+            }
+        );
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
@@ -212,8 +221,6 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             app.UseDeveloperExceptionPage();
         }
 
-        app.UseMiddleware<TimeTrackingStatisticsMiddleware>();
-
         app.UseAbpRequestLocalization();
 
         if (!env.IsDevelopment())
@@ -227,7 +234,6 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         app.UseCors();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseAbpOpenIddictValidation();
 
         app.UseUnitOfWork();
         app.UseDynamicClaims();

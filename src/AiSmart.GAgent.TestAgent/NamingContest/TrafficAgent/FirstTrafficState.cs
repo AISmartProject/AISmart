@@ -17,8 +17,10 @@ public class FirstTrafficState : StateBase
     [Id(7)] public List<Guid> DebateList { get; set; }
     [Id(8)] public NamingContestStepEnum NamingStep { get; set; }
 
-    [Id(8)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
-    [Id(9)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
+    [Id(9)] public List<Guid> JudgeAgentList { get; set; } = new List<Guid>();
+    [Id(10)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
+    
+    [Id(11)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -76,6 +78,11 @@ public class FirstTrafficState : StateBase
     public void Apply(AddJudgeSEvent @event)
     {
         this.JudgeAgentList.Add(@event.JudgeGrainId);
+    }
+    
+    public void Apply(AddHostSEvent @event)
+    {
+        this.HostAgentList.Add(@event.HostGrainId);
     }
 
     public void Apply(ClearCalledGrainsSEvent @event)

@@ -1,11 +1,23 @@
+using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AISmart.GAgents.Tests.TestEvents;
 using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgents.Tests.TestGAgents;
 
+public interface IInvestorTestGAgent: IGAgent
+{
+    
+}
+
+[GenerateSerializer]
+public class InvestorTestGAgentState : NaiveTestGAgentState
+{
+    
+}
+
 [GAgent]
-public class InvestorTestGAgent : GAgentBase<NaiveTestGAgentState, NaiveTestGEvent>
+public class InvestorTestGAgent : GAgentBase<InvestorTestGAgentState, NaiveTestGEvent>, IInvestorTestGAgent
 {
     public InvestorTestGAgent(ILogger<InvestorTestGAgent> logger) : base(logger)
     {

@@ -122,7 +122,7 @@ public class ElasticIndexingService : IIndexingService
         }
         else
         {
-            _logger.LogError("Index created gevent successfully. {indexName}", indexName);
+            _logger.LogInformation("Index created gevent successfully. {indexName}", indexName);
         }
     }
 
@@ -146,7 +146,7 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogInformation("{indexName} save Error, indexing document error:{error}: " ,indexName, response.ServerError);
+            _logger.LogError("{indexName} save Error, indexing document error:{error}: " ,indexName, response.ServerError);
         }
         else
         {
@@ -169,7 +169,7 @@ public class ElasticIndexingService : IIndexingService
         }
         catch (Exception e)
         {
-            _logger.LogInformation("{indexName} ,id:{id}QueryEventIndexAsync fail.", indexName,id);
+            _logger.LogError("{indexName} ,id:{id}QueryEventIndexAsync fail.", indexName,id);
             throw e;
         }
         

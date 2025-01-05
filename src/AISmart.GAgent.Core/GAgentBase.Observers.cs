@@ -28,19 +28,13 @@ public abstract partial class GAgentBase<TState, TEvent>
                 var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                var streamIdValue = item.GetType()
-                    .GetProperty(nameof(EventWrapper<EventBase>.StreamId))?
-                    .GetValue(item);
-                var streamId = (StreamId)streamIdValue!;
-
-                _correlationId = eventType.CorrelationId;
-                if (_correlationId != null)
-                {
-                    _streamIdDictionary.TryAdd(_correlationId.Value, streamId);
-                }
-
-                var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-                eventType.StreamId = streamIdOfThisGAgent;
+                _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
+                    ?.GetValue(item);
+                // if (_correlationId != null &&
+                //     StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString()) != streamId)
+                // {
+                //     //_streamIdDictionary.TryAdd(_correlationId.Value, streamId);
+                // }
 
                 if (parameter.ParameterType == eventType.GetType())
                 {
@@ -52,7 +46,10 @@ public abstract partial class GAgentBase<TState, TEvent>
                     try
                     {
                         var invokeParameter =
-                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId());
+                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId())
+                            {
+                                CorrelationId = _correlationId
+                            };
                         var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
                         await (Task)result!;
                     }
@@ -135,7 +132,6 @@ public abstract partial class GAgentBase<TState, TEvent>
                 {
                     var eventResult = await (dynamic)method.Invoke(this, [eventType])!;
                     _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamId);
-                    eventResult.StreamId = streamId;
                     eventResult.CorrelationId = _correlationId;
                     var eventWrapper =
                         new EventWrapper<EventBase>(eventResult, eventId, this.GetGrainId());

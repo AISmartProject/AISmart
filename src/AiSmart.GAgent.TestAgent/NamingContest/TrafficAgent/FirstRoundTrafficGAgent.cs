@@ -4,8 +4,11 @@ using AISmart.Agents;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
+using AISmart.Sender;
 using AutoGen.Core;
+using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -120,6 +123,26 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await DispatchJudgeAgent();
     }
 
+    [EventHandler]
+    public async Task HandleEventAsync(HostSummaryCompleteGEvent @event)
+    {
+        if (State.CurrentGrainId != @event.HostId)
+        {
+            Logger.LogError(
+                $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.HostId.ToString()}");
+            return;
+        }
+
+        base.RaiseEvent(new TrafficGrainCompleteSEvent()
+        {
+            CompleteGrainId = @event.HostId,
+        });
+
+        await base.ConfirmEvents();
+
+        await DispatchHostAgent();
+    }
+
     public Task<MicroAIGAgentState> GetStateAsync()
     {
         throw new NotImplementedException();
@@ -208,6 +231,10 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         if (creativeList.Count == 0)
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
+            await PublishAsync(new NamingContestComplete());
+
+            await PublishMostCharmingEventAsync();
+            await DispatchHostAgent();
             return;
         }
 
@@ -218,6 +245,39 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
+    }
+
+    private async Task PublishMostCharmingEventAsync()
+    {
+        IVoteCharmingGAgent voteCharmingGAgent =
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(NamingConstants.FirstRound));
+        var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+
+        await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
+        {
+            AgentIdNameDictionary = State.CreativeList.ToDictionary(p => p.CreativeGrainId, p => p.CreativeName),
+            Round = 1,
+            VoteMessage = State.ChatHistory
+        });
+    }
+
+    private async Task DispatchHostAgent()
+    {
+        var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
+        if (hostAgentList.Count == 0)
+        {
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummaryComplete, Guid.Empty));
+            return;
+        }
+
+        var random = new Random();
+        var index = random.Next(0, hostAgentList.Count);
+        var selectedId = hostAgentList[index];
+        RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
+        await base.ConfirmEvents();
+
+        await PublishAsync(new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)
@@ -261,6 +321,12 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     public async Task AddJudgeAgent(Guid judgeGrainId)
     {
         RaiseEvent(new AddJudgeSEvent() { JudgeGrainId = judgeGrainId });
+        await ConfirmEvents();
+    }
+
+    public async Task AddHostAgent(Guid judgeGrainId)
+    {
+        RaiseEvent(new AddHostSEvent() { HostGrainId = judgeGrainId });
         await ConfirmEvents();
     }
 }

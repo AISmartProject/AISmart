@@ -16,21 +16,33 @@ public class ManagerAgentState: StateBase
     [Id(2)] public List<string> HostAgentIdList { get; set; } = new List<string>();
     
     
-    [Id(3)] public Dictionary<string, IniNetWorkMessageGEvent> NetworkDictionary { get; set; } = new Dictionary<string, IniNetWorkMessageGEvent>();
+    [Id(3)] public Dictionary<string, InitNetWorkMessageSEvent> NetworkDictionary { get; set; } = new Dictionary<string, InitNetWorkMessageSEvent>();
 
     
     
 
-    public void Apply(InitAgentMessageGEvent initAgentMessageGEvent)
+    public void Apply(InitAgentMessageSEvent initAgentMessageSEvent)
     {
-        CreativeAgentIdList.AddRange(initAgentMessageGEvent.CreativeAgentIdList);
-        JudgeAgentIdList.AddRange(initAgentMessageGEvent.JudgeAgentIdList);
-        HostAgentIdList.AddRange(initAgentMessageGEvent.HostAgentIdList);
+        CreativeAgentIdList.AddRange(initAgentMessageSEvent.CreativeAgentIdList);
+        JudgeAgentIdList.AddRange(initAgentMessageSEvent.JudgeAgentIdList);
+        HostAgentIdList.AddRange(initAgentMessageSEvent.HostAgentIdList);
     }
     
-    public void Apply(IniNetWorkMessageGEvent iniNetWorkMessageGEvent)
+    public void Apply(InitNetWorkMessageSEvent initNetWorkMessageSEvent)
     {
-        NetworkDictionary[iniNetWorkMessageGEvent.GroupAgentId] = iniNetWorkMessageGEvent;
+        NetworkDictionary[initNetWorkMessageSEvent.GroupAgentId] = initNetWorkMessageSEvent;
+    }
+    
+    public void Apply(ClearAllAgentMessageSEvent initNetWorkMessageSEvent)
+    {
+        CreativeAgentIdList.Clear();
+        JudgeAgentIdList.Clear();
+        HostAgentIdList.Clear();
+    }
+    
+    public void Apply(ClearAllNetWorkMessageSEvent initNetWorkMessageSEvent)
+    {
+        NetworkDictionary = new Dictionary<string, InitNetWorkMessageSEvent>();
     }
     
     

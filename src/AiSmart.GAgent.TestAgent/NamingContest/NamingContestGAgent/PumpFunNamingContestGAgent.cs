@@ -9,7 +9,9 @@ using AISmart.Application.Grains;
 using AISmart.Events;
 using AISmart.GAgent.Autogen.EventSourcingEvent;
 using AISmart.GAgent.Core;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AISmart.Service;
 using Microsoft.Extensions.Logging;
@@ -21,8 +23,7 @@ namespace AISmart.Agent;
 [Description("Handle NamingContest")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestGEvent>,
-    IPumpFunNamingContestGAgent
+public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestSEvent>, IPumpFunNamingContestGAgent
 {
     private readonly ILogger<PumpFunPumpFunNamingContestGAgent> _logger;
 
@@ -36,9 +37,9 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         throw new NotImplementedException();
     }
 
-    public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent)
+    public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent)
     {
-        RaiseEvent(iniNetWorkMessageGEvent);
+        RaiseEvent(iniNetWorkMessageSEvent);
         base.ConfirmEvents();
         return Task.CompletedTask;
     }
@@ -48,26 +49,37 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         return Task.FromResult(
             "Represents an agent responsible for informing other agents when a PumpFun thread is published.");
     }
+    
 
-
-    [EventHandler]
-    public async Task HandleRequestAllSubscriptionsEventAsync(RequestAllSubscriptionsEvent @event)
+    [AllEventHandler]
+    public async Task HandleRequestAllEventAsync(EventWrapperBase @event)
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
+        
+        _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
                                JsonConvert.SerializeObject(@event));
+        var eventWrapper = @event as EventWrapper<EventBase>;
+
+        if (eventWrapper?.Event != null)
+        {
+            await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
+                .SendMessageAsync(State.groupId,eventWrapper.Event as NamingLogEvent, State.CallBackUrl);
+        }
     }
-
+    
     [EventHandler]
-    public async Task HandleRequestAllSubscriptionsEventAsync<T>(EventWrapper<T> @event) where T : EventBase
+    public async Task HandleRequestEventAsync(VoteCharmingCompleteEvent @event)
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllSubscriptionsEventAsync :" +
+        
+        _logger.LogInformation("NamingContestGAgent HandleRequestEventAsync VoteCharmingCompleteEvent:" +
                                JsonConvert.SerializeObject(@event));
+
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync((@event.Event as NameContentGEvent)!, State.CallBackUrl);
+            .SendMessageAsync(State.groupId,@event, State.CallBackUrl);
     }
 }
 
 public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
-{
-    Task InitGroupInfoAsync(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent);
+{ 
+    Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent);
+ 
 }

@@ -6,14 +6,14 @@ namespace AISmart.Agent.GEvents;
 
 
 [GenerateSerializer]
-public abstract class PumpFunNameContestGEvent:Agents.GEventBase
+public abstract class PumpFunNameContestSEvent:Agents.GEventBase
 {
    
 }
 
 
 [GenerateSerializer]
-public class IniNetWorkMessagePumpFunGEvent : PumpFunNameContestGEvent
+public class IniNetWorkMessagePumpFunSEvent : PumpFunNameContestSEvent
 {
     [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
     
@@ -29,5 +29,7 @@ public class IniNetWorkMessagePumpFunGEvent : PumpFunNameContestGEvent
     [Id(5)] public string Name { get; set; }
     
     [Id(6)] public string Round { get; set; }
+    
+    [Id(7)] public Guid GroupId { get; set; }
  
 }

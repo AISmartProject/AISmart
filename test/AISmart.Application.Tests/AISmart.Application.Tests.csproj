@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\src\AISmart.GAgent.Config\AISmart.GAgent.Config.csproj" />
     <ProjectReference Include="..\..\src\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
     <ProjectReference Include="..\AISmart.Domain.Tests\AISmart.Domain.Tests.csproj" />
+    <ProjectReference Include="..\AISmart.GAgents.Tests\AISmart.GAgents.Tests.csproj" />
     <ProjectReference Include="..\AISmart.Orleans.TestBase\AISmart.Orleans.TestBase.csproj" />
   </ItemGroup>
 

@@ -41,7 +41,7 @@
     <PackageVersion Include="Volo.Abp.BackgroundJobs.Domain" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.BackgroundJobs.Domain.Shared" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.BackgroundJobs.MongoDB" Version="$(AbpVersion)" />
-    <PackageVersion Include="Volo.Abp.Caching.StackExchangeRedis" Version="$(AbpVersion)" />
+    <PackageVersion Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.2.0" />
     <PackageVersion Include="Volo.Abp.Core" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Dapr" Version="$(AbpVersion)" />
     <PackageVersion Include="Volo.Abp.Ddd.Domain" Version="$(AbpVersion)" />
@@ -151,5 +151,8 @@
     <PackageVersion Include="MediatR" Version="11.1.0" />
     <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageVersion Include="NEST" Version="7.17.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.7" />
+    <PackageVersion Include="GraphQL.Client" Version="6.1.0" />
+    <PackageVersion Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
   </ItemGroup>
 </Project>

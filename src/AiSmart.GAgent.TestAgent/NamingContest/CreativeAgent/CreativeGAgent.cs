@@ -7,12 +7,15 @@ using AISmart.CQRS.Provider;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
+using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
@@ -114,6 +117,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(NamedCompleteGEvent @event)
     {
+        if (@event.GrainGuid == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -126,6 +134,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
+        if (@event.GrainGuid == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -231,6 +244,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(DiscussionCompleteGEvent @event)
     {
+        if (@event.CreativeId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         if (@event.DiscussionReply.IsNullOrEmpty())
         {
             return;
@@ -285,7 +303,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             });
 
             await PublishAsync(new CreativeSummaryCompleteGEvent()
-                { SummaryName = summary.Name, Reason = summary.Reason });
+                { SummaryName = summary.Name, Reason = summary.Reason, GraindId = this.GetPrimaryKey() });
 
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DiscussionSummary, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, JsonSerializer.Serialize(summary)));
@@ -297,6 +315,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(CreativeSummaryCompleteGEvent @event)
     {
+        if (@event.GraindId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -304,6 +327,82 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         });
 
         await base.ConfirmEvents();
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeAskingCompleteGEvent @event)
+    {
+        if (@event.Reply.IsNullOrEmpty())
+        {
+            return;
+        }
+
+        RaiseEvent(new AddHistoryChatSEvent()
+        {
+            Message = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleJudgeAsking(@event.JudgeName, @event.Reply))
+        });
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeAnswerQuestionGEvent @event)
+    {
+        if (@event.CreativeId != this.GetPrimaryKey())
+        {
+            return;
+        }
+        
+        var answer = string.Empty;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(NamingConstants.CreativeAnswerQuestionPrompt, State.RecentMessages.ToList());
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                answer = response.Content.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("[Creative] CreativeSummaryGEvent error");
+        }
+        finally
+        {
+            if (!answer.IsNullOrWhiteSpace())
+            {
+                RaiseEvent(new AddHistoryChatSEvent()
+                {
+                    Message = new MicroAIMessage(Role.User.ToString(),
+                        AssembleMessageUtil.AssembleCreativeAnswer(State.AgentName, answer))
+                });
+                
+                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                    NamingRoleType.Contestant, State.AgentName, answer));
+            }
+
+            await PublishAsync(new CreativeAnswerCompleteGEvent()
+                { CreativeId = this.GetPrimaryKey(), CreativeName = State.AgentName, Answer = answer });
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(CreativeAnswerCompleteGEvent @event)
+    {
+        if (@event.CreativeId == this.GetPrimaryKey())
+        {
+            return;
+        }
+        
+        if (@event.CreativeName.IsNullOrWhiteSpace())
+        {
+            return;
+        }
+
+        RaiseEvent(new AddHistoryChatSEvent()
+        {
+            Message = new MicroAIMessage(Role.User.ToString(),
+                AssembleMessageUtil.AssembleCreativeAnswer(@event.CreativeName, @event.Answer))
+        });
     }
 
     public Task<MicroAIGAgentState> GetStateAsync()
@@ -369,6 +468,28 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             Ctime = DateTime.UtcNow
         };
         await _cqrsProvider.SendLogCommandAsync(command);
+    }
+    [EventHandler]
+    public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
+    {
+        var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+            .SendAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), @event.VoteMessage);
+
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            var namingReply = message.Content.Replace("\"","").ToLower();
+            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+            var winner = agent.Key;
+                
+            await PublishAsync(new VoteCharmingCompleteEvent()
+            {
+                Winner = winner,
+                VoterId = this.GetPrimaryKey(),
+                Round = @event.Round
+            });
+        }
+        await base.ConfirmEvents();
     }
 }
 

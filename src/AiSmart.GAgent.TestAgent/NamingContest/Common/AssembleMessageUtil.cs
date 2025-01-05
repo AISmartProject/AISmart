@@ -47,4 +47,14 @@ public static class AssembleMessageUtil
                 {reason}
                 """;
     }
+
+    public static string AssembleJudgeAsking(string judgeName, string question)
+    {
+        return $"Judge {judgeName}'s question is: {question}";
+    }
+
+    public static string AssembleCreativeAnswer(string agentName, string replay)
+    {
+        return $"Team member {agentName}'s answer to the above question is:{replay}";
+    }
 }

@@ -1,5 +1,7 @@
 using AISmart.Agents;
 using AISmart.Dapr;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AISmart.GAgent.Core;
 
@@ -20,18 +22,19 @@ public abstract partial class GAgentBase<TState, TEvent>
         var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        @event.StreamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
         var eventId = Guid.NewGuid();
-        switch (isTop)
+        await LoadSubscriptionAsync();
+        if (_subscription.State.IsDefault)
         {
-            case true:
-                // This event is the first time appeared to silo.
-                await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-                break;
-            case false when _streamIdDictionary.TryGetValue(_correlationId!.Value, out var streamIdValue):
-                @event.StreamId = streamIdValue;
-                await PublishEventUpwardsAsync(@event, eventId);
-                break;
+            Logger.LogInformation($"Event {@event} is the first time appeared to silo: {JsonConvert.SerializeObject(@event)}");
+            // This event is the first time appeared to silo.
+            await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
+        }
+        else
+        {
+            Logger.LogInformation($"{this.GetGrainId().ToString()} is publishing event upwards: {JsonConvert.SerializeObject(@event)}");
+            await PublishEventUpwardsAsync(@event, eventId);
         }
 
         return eventId;
@@ -44,22 +47,27 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task SendEventUpwardsAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var stream = StreamProvider.GetStream<EventWrapperBase>(eventWrapper.StreamId!.Value);
+        await LoadSubscriptionAsync();
+        var stream = GetStream(_subscription.State.ToString());
         await stream.OnNextAsync(eventWrapper);
     }
 
-    private async Task PublishEventDownwardsAsync<T>(T @event, Guid eventId) where T : EventBase
-    {
-        @event.CorrelationId ??= Guid.NewGuid();
-        var streamOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        @event.StreamId ??= streamOfThisGAgent;
-        await SendEventDownwardsAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
-    }
-    
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
-        var streamIdOfThisGAgent = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
-        var streamOfThisGAgent = StreamProvider.GetStream<EventWrapperBase>(streamIdOfThisGAgent);
+        Logger.LogInformation(
+            $"{this.GetGrainId().ToString()} is sending event to self: {JsonConvert.SerializeObject(eventWrapper)}");
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        foreach (var handle in handles)
+        {
+            await handle.UnsubscribeAsync();
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
+        }
+
         await streamOfThisGAgent.OnNextAsync(eventWrapper);
     }
 
@@ -71,10 +79,13 @@ public abstract partial class GAgentBase<TState, TEvent>
             return;
         }
 
-        foreach (var stream in _subscribers.State
-                     .Select(subscriber => StreamId.Create(CommonConstants.StreamNamespace, subscriber.GetGuidKey()))
-                     .Select(streamId => StreamProvider.GetStream<EventWrapperBase>(streamId)))
+        Logger.LogInformation($"{this.GetGrainId().ToString()} has {_subscribers.State.Count} subscribers.");
+
+        foreach (var grainId in _subscribers.State)
         {
+            var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+            await gAgent.ActivateAsync();
+            var stream = GetStream(grainId.ToString());
             await stream.OnNextAsync(eventWrapper);
         }
     }

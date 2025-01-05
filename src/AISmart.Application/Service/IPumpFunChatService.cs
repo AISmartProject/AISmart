@@ -7,8 +7,8 @@ namespace AISmart.Service;
 public interface IPumpFunChatService
 {
     public Task ReceiveMessagesAsync(PumpFunInputDto inputDto);
-    
-    public Task<string> SetGroupsAsync(string chatId);
+
+    public Task<string> SetGroupsAsync(string chatId, string bio);
 
     public Task<PumFunResponseDto> SearchAnswerAsync(string replyId);
 }

@@ -1,3 +1,4 @@
+using AISmart.Application.Grains.Agents.Group;
 using AISmart.GAgents.Tests.TestEvents;
 using AISmart.GAgents.Tests.TestGAgents;
 using Shouldly;
@@ -14,6 +15,8 @@ public class PublishingTests : GAgentTestKitBase
         var eventHandlerTestGAgent = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
         var groupGAgent = await CreateGroupGAgentAsync(eventHandlerTestGAgent);
         var publishingGAgent = await CreatePublishingGAgentAsync(groupGAgent);
+
+        AddProbesByGrainId(publishingGAgent, groupGAgent, eventHandlerTestGAgent);
 
         // Act.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
@@ -44,6 +47,8 @@ public class PublishingTests : GAgentTestKitBase
         var level1 = await CreateGroupGAgentAsync(level2A, level2B);
         var publishingGAgent = await CreatePublishingGAgentAsync(level1);
 
+        AddProbesByGrainId(publishingGAgent, level1, level2A, level2B, level3A, level3B);
+
         // Act.
         await publishingGAgent.PublishEventAsync(new NaiveTestEvent
         {
@@ -73,6 +78,43 @@ public class PublishingTests : GAgentTestKitBase
         await level2A.RegisterAsync(level3B);
         var level1 = await CreateGroupGAgentAsync(level2A, level2B);
         var publishingGAgent = await CreatePublishingGAgentAsync(level1);
+
+        AddProbesByGrainId(publishingGAgent, level1, level2A, level2B, level3A, level3B);
+
+        // Act: ResponseTestEvent will cause level32 publish an NaiveTestEvent.
+        await publishingGAgent.PublishEventAsync(new ResponseTestEvent
+        {
+            Greeting = "Hello world"
+        });
+
+        // Assert: level31 and level21 should receive the response event, then has 1 + 3 content stored.
+        var state3A = await level3A.GetStateAsync();
+        state3A.Content.Count.ShouldBe(4);
+        var state2A = await level2A.GetStateAsync();
+        state2A.Content.Count.ShouldBe(4);
+
+        // Assert: level22 should not receive the response event, then has 1 content stored (due to [AllEventHandler]).
+        var state2B = await level2B.GetStateAsync();
+        state2B.Content.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task RegisterSameGuidTest()
+    {
+        var guid = Guid.NewGuid();
+        // Arrange.
+        var level3A = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(guid);
+        var level3B = await Silo.CreateGrainAsync<EventHandlerWithResponseTestGAgent>(guid);
+        var level2A = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
+        var level2B = await Silo.CreateGrainAsync<EventHandlerTestGAgent>(Guid.NewGuid());
+        await level2A.RegisterAsync(level3A);
+        await level2A.RegisterAsync(level3B);
+        var level1 = await Silo.CreateGrainAsync<GroupGAgent>(guid);
+        await level1.RegisterAsync(level2A);
+        await level1.RegisterAsync(level2B);
+        var publishingGAgent = await CreatePublishingGAgentAsync(level1);
+
+        AddProbesByGrainId(publishingGAgent, level1, level2A, level2B, level3A, level3B);
 
         // Act: ResponseTestEvent will cause level32 publish an NaiveTestEvent.
         await publishingGAgent.PublishEventAsync(new ResponseTestEvent

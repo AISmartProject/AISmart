@@ -12,10 +12,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Async" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" />
+    <PackageReference Include="StackExchange.Redis" />
     <PackageReference Include="Volo.Abp.Autofac" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" />
     <PackageReference Include="Volo.Abp.Swashbuckle" />

@@ -1,3 +1,4 @@
+using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 
@@ -82,6 +83,25 @@ public class DiscussionCompleteGEvent : EventBase
     [Id(2)] public string DiscussionReply { get; set; }
 }
 
+
+[GenerateSerializer]
+public class HostSummaryGEvent : EventBase
+{
+    [Id(0)] public Guid HostId { get; set; }
+    
+    [Id(1)] public List<MicroAIMessage> History { get; set; } = new List<MicroAIMessage>();
+    
+    
+}
+
+[GenerateSerializer]
+public class HostSummaryCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid HostId { get; set; }
+    [Id(1)] public string HostName { get; set; }
+    [Id(2)] public string SummaryReply { get; set; }
+}
+
 [GenerateSerializer]
 public class CreativeSummaryGEvent : EventBase
 {
@@ -93,5 +113,54 @@ public class CreativeSummaryGEvent : EventBase
 public class CreativeSummaryCompleteGEvent : EventBase
 {
     [Id(0)] public string SummaryName { get; set; }
-    [Id(1)] public string Reason { get; set; }
+    [Id(1)] public  Guid GraindId { get; set; }
+    [Id(2)] public string Reason { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeAskingGEvent : EventBase
+{
+    [Id(0)] public Guid JudgeGuid { get; set; }
+
+    [Id(1)] public List<MicroAIMessage> History { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeAskingCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid JudgeGuid { get; set; }
+    [Id(1)] public string JudgeName { get; set; }
+    [Id(2)] public string Reply { get; set; }
+}
+
+[GenerateSerializer]
+public class CreativeAnswerQuestionGEvent : EventBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+}
+
+[GenerateSerializer]
+public class CreativeAnswerCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid CreativeId { get; set; }
+    [Id(1)] public string CreativeName { get; set; }
+    [Id(2)] public string Answer { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeScoreGEvent : EventBase
+{
+    [Id(0)] public  List<MicroAIMessage> History { get; set; }
+}
+
+[GenerateSerializer]
+public class JudgeScoreCompleteGEvent : EventBase
+{
+    [Id(0)] public Guid JudgeGrainId { get; set; }
+}
+
+[GenerateSerializer]
+public class NamingContestComplete : EventBase
+{
+    
 }

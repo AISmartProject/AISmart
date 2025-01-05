@@ -1,9 +1,11 @@
-using AISmart.AuthServer.Middleware;
 using AISmart.Localization;
 using AISmart.MongoDB;
+using AISmart.OpenIddict;
+using AISmart.Options;
 using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
+using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
@@ -17,6 +19,7 @@ using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Localization;
@@ -32,6 +35,7 @@ namespace AISmart.AuthServer;
 
 [DependsOn(
     typeof(AbpAutofacModule),
+    typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpAccountApplicationModule),
     typeof(AbpAccountHttpApiModule),
@@ -66,7 +70,7 @@ public class AISmartAuthServerModule : AbpModule
             });
             builder.AddValidation(options =>
             {
-                options.AddAudiences("AISmartAuthServer");
+                options.AddAudiences("AISmart");
                 options.UseLocalServer();
                 options.UseAspNetCore();
             });
@@ -75,22 +79,27 @@ public class AISmartAuthServerModule : AbpModule
         //add signature grant type
         PreConfigure<OpenIddictServerBuilder>(builder =>
         {
-            builder.Configure(openIddictServerOptions => { openIddictServerOptions.GrantTypes.Add("signature"); });
+            builder.Configure(openIddictServerOptions =>
+            {
+                openIddictServerOptions.GrantTypes.Add(GrantTypeConstants.LOGIN);
+                openIddictServerOptions.GrantTypes.Add(GrantTypeConstants.SIGNATURE);
+            });
         });
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var hostingEnvironment = context.Services.GetHostingEnvironment();
+
         var configuration = context.Services.GetConfiguration();
         
-        context.Services.Configure<TimeRangeOption>(option =>
-        {
-            option.TimeRange = Convert.ToInt32(configuration["TimeRange"]);
-        });
+        context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
+        context.Services.Configure<ChainOptions>(configuration.GetSection("Chains"));
 
-        Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        context.Services.Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
         {
-            options.Grants.Add("signature", new SignatureGrantHandler());
+            options.Grants.Add(GrantTypeConstants.LOGIN, new LoginGrantHandler());
+            options.Grants.Add(GrantTypeConstants.SIGNATURE, new SignatureGrantHandler());
         });
 
         Configure<AbpLocalizationOptions>(options =>
@@ -160,7 +169,14 @@ public class AISmartAuthServerModule : AbpModule
         });
 
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("AISmartAuthServer");
-
+        
+        if (!hostingEnvironment.IsDevelopment())
+        {
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            dataProtectionBuilder.PersistKeysToStackExchangeRedis(redis, "AISmartAuthServer-Protection-Keys");
+        }
+        
+        
         context.Services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
@@ -202,7 +218,6 @@ public class AISmartAuthServerModule : AbpModule
         app.UseStaticFiles();
         app.UseRouting();
         app.UseCors();
-        app.UseMiddleware<TimeTrackingStatisticsAuthMiddleware>();
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
 

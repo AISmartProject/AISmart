@@ -17,10 +17,4 @@
       <PackageReference Include="Volo.Abp.Core" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Reference Include="AISmart.Application.Contracts">
-        <HintPath>..\AISmart.CQRS\bin\Debug\net8.0\AISmart.Application.Contracts.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
 </Project>
