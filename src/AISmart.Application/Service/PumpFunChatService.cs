@@ -62,16 +62,18 @@ public class PumpFunChatService :  ApplicationService, IPumpFunChatService
         Guid groupAgentId = GuidUtil.StringToGuid(chatId);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
         
-        var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(Guid.NewGuid());
-        
-        _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}", chatId, pumpFunGAgent.GetGrainId());
+        var pumpFunGAgent = _clusterClient.GetGrain<IPumpFunGAgent>(groupAgentId);
+
+        _logger.LogInformation("SetGroupsAsync2, chatId:{chatId}, grainId:{grainId}, groupAgentId: {groupAgentId}, pumpFunGAgent GrianId:{pumpFunGAgentGrrainId}",
+            chatId, pumpFunGAgent.GetGrainId(), groupAgentId.ToString(), pumpFunGAgent.GetGrainId().ToString());
         await pumpFunGAgent.SetPumpFunConfig(chatId);
 
-        var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(Guid.NewGuid());
+        var pumpFunChatAgent = _clusterClient.GetGrain<IPumpFunChatGrain>(groupAgentId);
         await pumpFunChatAgent.SetAgent(chatId, bio);
         await groupAgent.RegisterAsync(pumpFunChatAgent);
-        
-        _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}", chatId);
+
+        _logger.LogInformation("SetGroupsAsync3, chatId:{chatId}, pumpFunChatAgent GrainId: {pumpFunChatAgentGrainId}",
+            chatId, pumpFunChatAgent.GetGrainId().ToString());
         
         await groupAgent.RegisterAsync(pumpFunGAgent);
 

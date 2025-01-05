@@ -44,4 +44,42 @@ public class TwitterGAgentTest : AISmartApplicationTestBase
         var resp = await _twitterProvider.GetMentionsAsync(userName);
         resp.Count.ShouldNotBe(0);
     }
+    
+    [Fact]
+    public async Task GetUserNameAsyncTest ()
+    {
+        var accessToken = "";
+        var accessTokenSecret = "";
+        var resp = await _twitterProvider.GetUserName(accessToken, accessTokenSecret);
+        resp.ShouldNotBeNull();
+    }
+    
+    [Fact]
+    public async Task LikeTweetAsyncTest ()
+    {
+        var accessToken = "";
+        var accessTokenSecret = "";
+        var userId = "773374682";
+        var tweetId = "1875073080164569187";
+        await _twitterProvider.LikeAsync(tweetId, userId, accessToken, accessTokenSecret);
+    }
+    
+    [Fact]
+    public async Task RetweetAsyncTest ()
+    {
+        var accessToken = "";
+        var accessTokenSecret = "";
+        var userId = "773374682";
+        var tweetId = "1875088621944107473";
+        await _twitterProvider.RetweetAsync(tweetId, userId, accessToken, accessTokenSecret);
+    }
+    
+    [Fact]
+    public async Task QuoteTweetAsyncTest ()
+    {
+        var accessToken = "773374682-WheXJ5CvSI6LIcHRAG4Q2KVrGryaVVKUQ4x4xMuK";
+        var accessTokenSecret = "I16LrqCsjskj0kVSkPxRAlThmbF6FdyMCiJGQI2tohcII";
+        var tweetId = "1875073080164569187";
+        await _twitterProvider.QuoteTweetAsync(tweetId, "Sounds interesting!", accessToken, accessTokenSecret);
+    }
 }

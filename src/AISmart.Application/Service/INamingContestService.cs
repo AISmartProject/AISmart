@@ -266,6 +266,19 @@ public class NamingContestService : INamingContestService
         var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(round));
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        
+        var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
+
+
+        await pumpFunMostCharmingGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
+        {
+            CallBackUrl = _nameContestOptions.MostCharmingCallback,
+            GroupId = voteCharmingGAgent.GetPrimaryKey()
+
+        });
+
+        await pumpFunMostCharmingGAgent.RegisterAsync(voteCharmingGAgent);
+        
         var managerAgentState = await managerGAgent.GetManagerAgentStateAsync();
         if(!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
         {
@@ -279,6 +292,7 @@ public class NamingContestService : INamingContestService
             TotalBatches = totalBatches
         });
         
+
         return groupResponse;
     }
 

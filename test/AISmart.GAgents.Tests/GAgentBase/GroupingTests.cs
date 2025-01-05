@@ -209,4 +209,32 @@ public class GroupingTests : GAgentTestKitBase
         var newLineCount = investorState.Content.Last().Count(c => c == '\n');
         newLineCount.ShouldBe(2);
     }
+
+    [Fact(DisplayName = "Cannot register itself.")]
+    public async Task RegisterSelfTest()
+    {
+        var guid = Guid.NewGuid();
+        var gAgent = await Silo.CreateGrainAsync<NaiveTestGAgent>(guid);
+        await gAgent.RegisterAsync(gAgent);
+        var subscribers = new GrainState<List<GrainId>>();
+        await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
+            gAgent.GetGrainId(),
+            subscribers);
+        subscribers.State.Count.ShouldBe(0);
+    }
+
+    [Fact(DisplayName = "Cannot register dup GrainId.")]
+    public async Task RegisterSameGrainTest()
+    {
+        var guid = Guid.NewGuid();
+        var gAgent = await Silo.CreateGrainAsync<NaiveTestGAgent>(guid);
+        await gAgent.RegisterAsync(gAgent);
+        var groupGAgent = await CreateGroupGAgentAsync(gAgent, gAgent);
+        
+        var subscribers = new GrainState<List<GrainId>>();
+        await Silo.TestGrainStorage.ReadStateAsync(AISmartGAgentConstants.SubscribersStateName,
+            groupGAgent.GetGrainId(),
+            subscribers);
+        subscribers.State.Count.ShouldBe(1);
+    }
 }
