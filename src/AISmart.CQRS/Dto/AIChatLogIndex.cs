@@ -1,5 +1,5 @@
+using System;
 using Nest;
-using DateTime = Google.Type.DateTime;
 using IRequest = MediatR.IRequest;
 
 namespace AISmart.CQRS.Dto;

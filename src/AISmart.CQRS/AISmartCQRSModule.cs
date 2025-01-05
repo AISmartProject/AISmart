@@ -19,6 +19,7 @@ public class AISmartCQRSModule : AbpModule
        public override void ConfigureServices(ServiceConfigurationContext context)
         {
             Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AISmartCQRSModule>(); });
+            context.Services.AddAutoMapper(typeof(AISmartCQRSAutoMapperProfile).Assembly);
 
             context.Services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
             context.Services.AddMediatR(typeof(GetStateQueryHandler).Assembly);

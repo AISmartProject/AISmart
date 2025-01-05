@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using AISmart;
 using AISmart.Agent.Grains;
 using AISmart.Application.Grains;
 using AISmart.CQRS;
@@ -63,6 +64,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
             hostBuilder.ConfigureServices(services =>
             {
                 services.AddAutoMapper(typeof(AIApplicationGrainsModule).Assembly);
+                services.AddAutoMapper(typeof(AISmartCQRSAutoMapperProfile).Assembly);
                 var mock = new Mock<ILocalEventBus>();
                 services.AddSingleton(typeof(ILocalEventBus), mock.Object);
 

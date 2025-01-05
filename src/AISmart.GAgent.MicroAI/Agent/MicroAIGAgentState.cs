@@ -13,6 +13,7 @@ public class MicroAIGAgentState: StateBase
     [Id(1)]  public  string AgentName { get; set; }
     [Id(2)]  public  string AgentResponsibility{ get; set; }
     [Id(3)] public Queue<MicroAIMessage> RecentMessages = new Queue<MicroAIMessage>();
+    [Id(4)] public Guid GroupId { get; set; }
 
     public void Apply(AISetAgentMessageGEvent aiSetAgentMessageGEvent)
     {
