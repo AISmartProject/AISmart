@@ -316,7 +316,7 @@ public class NamingContestService : INamingContestService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
-            await publishingAgent.PublishEventAsync(new GroupStartEvent() { MessageId = Guid.NewGuid().ToString(),Message = "为一款主打年轻人市场的便携式智能翻译器起名字." });
+            await publishingAgent.PublishEventAsync(new GroupStartEvent() { MessageId = Guid.NewGuid().ToString(),Message = "Name a portable smart translator targeting the youth market." });
             groupStartResponse.SuccessGroupIdList.Add(groupId);
         }
         catch (Exception e)
