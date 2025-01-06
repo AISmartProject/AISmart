@@ -250,10 +250,22 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     private async Task PublishMostCharmingEventAsync()
     {
         IVoteCharmingGAgent voteCharmingGAgent =
-            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId());
-        var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(NamingConstants.FirstRound));
 
+        GrainId grainId = await voteCharmingGAgent.GetSubscriptionAsync();
+
+        IPublishingGAgent publishingAgent;
+
+        if (grainId != null && grainId.ToString().StartsWith("publishinggagent"))
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(grainId);
+        }
+        else
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        }
+        
         await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
         {
             AgentIdNameDictionary = State.CreativeList.ToDictionary(p => p.CreativeGrainId, p => p.CreativeName),

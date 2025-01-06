@@ -11,6 +11,7 @@ using AISmart.GAgent.Autogen.EventSourcingEvent;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AISmart.Service;
 using Microsoft.Extensions.Logging;
@@ -63,6 +64,17 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
             await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
                 .SendMessageAsync(State.groupId,eventWrapper.Event as NamingLogEvent, State.CallBackUrl);
         }
+    }
+    
+    [EventHandler]
+    public async Task HandleRequestEventAsync(VoteCharmingCompleteEvent @event)
+    {
+        
+        _logger.LogInformation("NamingContestGAgent HandleRequestEventAsync VoteCharmingCompleteEvent:" +
+                               JsonConvert.SerializeObject(@event));
+
+        await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
+            .SendMessageAsync(State.groupId,@event, State.CallBackUrl);
     }
 }
 

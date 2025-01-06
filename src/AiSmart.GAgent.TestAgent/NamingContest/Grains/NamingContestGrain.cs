@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AISmart.Dto;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AISmart.Provider;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,14 @@ public class NamingContestGrain : Grain<NamingContestState>, INamingContestGrain
     public async Task SendMessageAsync(Guid groupId,NamingLogEvent? nameContentGEvent,string callBackUrl)
     {
         
+        if (nameContentGEvent != null)
+        {
+            await _nameContestProvider.SendMessageAsync(groupId,nameContentGEvent,callBackUrl);
+        }
+    }
+
+    public async Task SendMessageAsync(Guid groupId, VoteCharmingCompleteEvent? nameContentGEvent, string callBackUrl)
+    {
         if (nameContentGEvent != null)
         {
             await _nameContestProvider.SendMessageAsync(groupId,nameContentGEvent,callBackUrl);

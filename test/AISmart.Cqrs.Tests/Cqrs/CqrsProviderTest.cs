@@ -1,4 +1,3 @@
-using AISmart.Agent;
 using AISmart.Agent.Events;
 using AISmart.CQRS;
 using AISmart.CQRS.Dto;
@@ -8,7 +7,6 @@ using AISmart.GAgent.Core;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,6 +39,8 @@ public class CqrsProviderTest : AISmartApplicationTestBase
         services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
         services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
         services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
+        services.AddMediatR(typeof(SaveLogCommandHandler).Assembly);
+        services.AddMediatR(typeof(GetLogQueryHandler).Assembly);
 
         services.AddSingleton<IEventDispatcher,CQRSProvider>();
         services.AddSingleton<ICQRSProvider,CQRSProvider>();

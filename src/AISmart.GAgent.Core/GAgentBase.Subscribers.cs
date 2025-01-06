@@ -5,7 +5,7 @@ namespace AISmart.GAgent.Core;
 public abstract partial class GAgentBase<TState, TEvent>
 {
     private readonly IGrainState<List<GrainId>> _subscribers = new GrainState<List<GrainId>>();
-    private readonly IGrainState<GrainId> _subscription = new GrainState<GrainId>();
+    private IGrainState<GrainId> _subscription = new GrainState<GrainId>();
     private IDisposable? _stateSaveTimer;
 
     private async Task LoadSubscribersAsync()
@@ -66,7 +66,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 storedSubscription);
         }
 
-        _subscription.State = grainId;
+        // _subscription.State = grainId;
+        _subscription = new GrainState<GrainId>(grainId); 
         await GrainStorage.WriteStateAsync(AISmartGAgentConstants.SubscriptionStateName, this.GetGrainId(),
             _subscription);
     }

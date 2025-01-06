@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
+using AISmart.CQRS.Dto;
+using AISmart.CQRS.Provider;
 using AISmart.Events;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
@@ -21,8 +23,11 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 {
-    public JudgeGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
+    private readonly ICQRSProvider _cqrsProvider;
+
+    public JudgeGAgent(ILogger<MicroAIGAgent> logger,ICQRSProvider cqrsProvider) : base(logger)
     {
+        _cqrsProvider = cqrsProvider;
     }
 
     [EventHandler]
@@ -95,6 +100,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                     VoteName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey(),
                     JudgeName = State.AgentName
                 });
+                SaveAIChatLogAsync(NamingConstants.JudgeVotePrompt, response.Content);
+
             }
         }
         catch (Exception ex)
@@ -124,6 +131,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 reply = response.Content;
+                SaveAIChatLogAsync(NamingConstants.JudgeAskingPrompt, response.Content);
+
             }
         }
         catch (Exception e)
@@ -157,6 +166,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 defaultScore = response.Content;
+                SaveAIChatLogAsync(NamingConstants.JudgeScorePrompt, response.Content);
+
             }
         }
         catch (Exception e)
@@ -192,7 +203,26 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
+            SaveAIChatLogAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), message.Content);
+
         }
         await base.ConfirmEvents();
+    }
+    private async Task SaveAIChatLogAsync(string request, string response)
+    {
+        var groupId= await this.GetSubscriptionAsync();
+
+        var command = new SaveLogCommand
+        {
+            GroupId = groupId.ToString(),
+            AgentId = this.GetPrimaryKey().ToString(),
+            AgentName = State.AgentName,
+            AgentResponsibility = State.AgentResponsibility,
+            RoleType = NamingRoleType.Judge.ToString(),
+            Request = request,
+            Response = response,
+            Ctime = DateTime.UtcNow
+        };
+        await _cqrsProvider.SendLogCommandAsync(command);
     }
 }

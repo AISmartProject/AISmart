@@ -9,4 +9,6 @@ public interface ICreativeGAgent:IMicroAIGAgent
     Task<string> GetCreativeNaming();
 
     Task<string> GetCreativeName();
+    
+
 }

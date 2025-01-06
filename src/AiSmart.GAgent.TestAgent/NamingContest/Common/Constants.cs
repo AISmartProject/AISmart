@@ -62,4 +62,14 @@ public static class NamingConstants
     public static string VotePrompt = "The following is the discussion about naming between user $AgentNames$. Please select the one that attracts you most and only return the user's name";
 
     public static string SummaryPrompt = " summarize the contestant's performance.";
+    
+    public const string AgentPrefixCreative = "creativegagent";
+    public const string AgentPrefixJudge = "judgegagent";
+    public const string FirstRound = "1";
+    public const string SecondRound = "2";
+    public const string ThirdRound = "3";
+    public static Dictionary<string, int> RoundTotalBatchesMap = new Dictionary<string, int> { { "1", 50 }, { "2", 20 }, { "3", 6 } };
+    public const int DefaultTotalTotalBatches = 20;
+
+
 }

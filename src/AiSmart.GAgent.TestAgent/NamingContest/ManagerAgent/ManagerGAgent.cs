@@ -47,4 +47,9 @@ public class ManagerGAgent : GAgentBase<ManagerAgentState, ManagerSEvent>, IMana
         RaiseEvent(new ClearAllNetWorkMessageSEvent());
         await base.ConfirmEvents();
     }
+    
+    public async Task<ManagerAgentState> GetManagerAgentStateAsync()
+    {
+        return State;
+    }
 }
