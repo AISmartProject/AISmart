@@ -1,11 +1,8 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Provider;
-using AISmart.Events;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
@@ -13,10 +10,6 @@ using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel.Agents;
-using Nest;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
@@ -124,14 +117,15 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         }
 
         var reply = string.Empty;
+        var prompt = NamingConstants.JudgeAskingPrompt;
         try
         {
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(NamingConstants.JudgeAskingPrompt, @event.History);
+                .SendAsync(prompt, @event.History);
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 reply = response.Content;
-                SaveAIChatLogAsync(NamingConstants.JudgeAskingPrompt, response.Content);
+                SaveAIChatLogAsync(prompt, response.Content);
 
             }
         }
@@ -143,8 +137,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         {
             if (!reply.IsNullOrWhiteSpace())
             {
-                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
-                    NamingRoleType.Judge, State.AgentName, reply));
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, reply, prompt));
             }
 
             await PublishAsync(new JudgeAskingCompleteGEvent()
@@ -159,10 +153,11 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
     public async Task HandleEventAsync(JudgeScoreGEvent @event)
     {
         var defaultScore = "84.3";
+        var prompt = NamingConstants.JudgeScorePrompt;
         try
         {
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(NamingConstants.JudgeScorePrompt, @event.History);
+                .SendAsync(prompt, @event.History);
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 defaultScore = response.Content;
@@ -178,8 +173,8 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         {
             if (!defaultScore.IsNullOrWhiteSpace())
             {
-                await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeScore, this.GetPrimaryKey(),
-                    NamingRoleType.Judge, State.AgentName, defaultScore));
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeScore, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, defaultScore, prompt));
             }
 
             await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
@@ -189,8 +184,9 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
         var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
+        var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), @event.VoteMessage);
+            .SendAsync(prompt, @event.VoteMessage);
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
@@ -203,7 +199,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
-            SaveAIChatLogAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), message.Content);
+            SaveAIChatLogAsync(prompt, message.Content);
 
         }
         await base.ConfirmEvents();

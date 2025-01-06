@@ -34,11 +34,12 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
         }
 
         var summaryReply = string.Empty;
+        var prompt = NamingConstants.SummaryPrompt;
         try
         {
             
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(NamingConstants.SummaryPrompt, @event.History);
+                .SendAsync(prompt, @event.History);
 
             if (response != null && !response.Content.IsNullOrEmpty())
             {
@@ -60,9 +61,9 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
                 SummaryReply = summaryReply,
                 HostName = State.AgentName,
             });
-
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.HostSummary, this.GetPrimaryKey(),
-                NamingRoleType.Host, State.AgentName, summaryReply));
+            
+            await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.HostSummary, this.GetPrimaryKey(),
+                NamingRoleType.Host, State.AgentName, summaryReply, prompt));
 
             RaiseEvent(new AddHistoryChatSEvent()
             {
