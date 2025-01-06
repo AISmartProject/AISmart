@@ -461,9 +461,10 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
     private async Task SaveAIChatLogAsync(string request, string response)
     {
+        var groupId= await this.GetSubscriptionAsync();
         var command = new SaveLogCommand
         {
-            GroupId = State.GroupId.ToString(),
+            GroupId = groupId.ToString(),
             AgentId = this.GetPrimaryKey().ToString(),
             AgentName = State.AgentName,
             AgentResponsibility = State.AgentResponsibility,
@@ -493,7 +494,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
-            SaveAIChatLogAsync(NamingConstants.CreativeAnswerQuestionPrompt, message.Content);
+            SaveAIChatLogAsync(NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames), message.Content);
         }
         await base.ConfirmEvents();
     }

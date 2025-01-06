@@ -69,7 +69,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         }
         else
         {
-            var averageBatchSize = State.VoterIds.Count / State.TotalBatches;
+            var averageBatchSize = Math.Max(1, State.VoterIds.Count / State.TotalBatches); 
             var minBatchSize = Math.Max(1, (int)(averageBatchSize * 0.6)); 
             var maxBatchSize = Math.Min(State.VoterIds.Count, (int)(averageBatchSize * 1.5)); 
             var random = new Random();

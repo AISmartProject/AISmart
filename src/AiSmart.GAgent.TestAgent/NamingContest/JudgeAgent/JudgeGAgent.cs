@@ -210,9 +210,11 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
     }
     private async Task SaveAIChatLogAsync(string request, string response)
     {
+        var groupId= await this.GetSubscriptionAsync();
+
         var command = new SaveLogCommand
         {
-            GroupId = State.GroupId.ToString(),
+            GroupId = groupId.ToString(),
             AgentId = this.GetPrimaryKey().ToString(),
             AgentName = State.AgentName,
             AgentResponsibility = State.AgentResponsibility,
