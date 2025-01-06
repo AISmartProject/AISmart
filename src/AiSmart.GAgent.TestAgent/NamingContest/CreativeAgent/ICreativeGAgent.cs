@@ -10,6 +10,5 @@ public interface ICreativeGAgent:IMicroAIGAgent
 
     Task<string> GetCreativeName();
     
-    Task SetGroupIdAsync(Guid guid);
 
 }

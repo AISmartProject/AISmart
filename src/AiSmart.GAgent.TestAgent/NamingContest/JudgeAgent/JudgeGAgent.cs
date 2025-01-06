@@ -223,8 +223,4 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         };
         await _cqrsProvider.SendLogCommandAsync(command);
     }
-    public async Task SetGroupIdAsync(Guid guid)
-    {
-        State.GroupId = guid;
-    }
 }

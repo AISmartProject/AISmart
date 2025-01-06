@@ -456,11 +456,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         return Task.FromResult(State.AgentName);
     }
 
-    public async Task SetGroupIdAsync(Guid guid)
-    {
-        State.GroupId = guid;
-    }
-
     private async Task SaveAIChatLogAsync(string request, string response)
     {
         var command = new SaveLogCommand
