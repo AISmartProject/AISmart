@@ -21,6 +21,7 @@
         <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.MicroAI\AISmart.GAgent.MicroAI.csproj" />
         <ProjectReference Include="..\AISmart.SimpleRag\AISmart.SimpleRag.csproj" />
+        <ProjectReference Include="..\AISmart.GAgent.AtomicAgent\AISmart.GAgent.AtomicAgent.csproj" />
     </ItemGroup>
 
     <ItemGroup>

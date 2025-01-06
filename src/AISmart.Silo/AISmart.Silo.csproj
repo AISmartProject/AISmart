@@ -37,7 +37,7 @@
         <ProjectReference Include="..\AISmart.GAgent.Telegram\AISmart.GAgent.Telegram.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
         <ProjectReference Include="..\AISmart.GAgent.MicroAI\AISmart.GAgent.MicroAI.csproj" />
-     
+        <ProjectReference Include="..\AISmart.GAgent.AtomicAgent\AISmart.GAgent.AtomicAgent.csproj" />
 
     </ItemGroup>
 

@@ -2,6 +2,7 @@
 using AiSmart.GAgent.SocialAgent;
 using AISmart.GAgent.Telegram;
 using AISmart.CQRS;
+using AISmart.GAgent.AtomicAgent;
 using AiSmart.GAgent.TestAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AISmart.Options;
@@ -32,6 +33,7 @@ namespace AISmart;
     typeof(AISmartGAgentMicroAIModule),
     typeof(AISmartGAgentTestAgentModule),
     typeof(AISmartGAgentSocialGAgentModule),
+    typeof(AISmartGAgentAtomicAgentModule),
     typeof(AISmartCQRSModule)
 
 )]
