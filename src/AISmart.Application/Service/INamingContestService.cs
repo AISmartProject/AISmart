@@ -277,7 +277,7 @@ public class NamingContestService : INamingContestService
 
         });
 
-        await pumpFunMostCharmingGAgent.RegisterAsync(voteCharmingGAgent);
+        await voteCharmingGAgent.RegisterAsync(pumpFunMostCharmingGAgent);
         
 
         var round = networksDto.Networks.FirstOrDefault()!.Round;
