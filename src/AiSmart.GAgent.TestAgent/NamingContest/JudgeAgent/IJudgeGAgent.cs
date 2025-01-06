@@ -4,5 +4,5 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public interface IJudgeGAgent:IMicroAIGAgent
 {
-    Task SetGroupId(Guid guid);
+    Task SetGroupIdAsync(Guid guid);
 }

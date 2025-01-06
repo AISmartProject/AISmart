@@ -5,6 +5,6 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.HostAgent;
 
 public interface IHostGAgent:IMicroAIGAgent
 {
-    Task SetGroupId(Guid guid);
+    Task SetGroupIdAsync(Guid guid);
 
 }

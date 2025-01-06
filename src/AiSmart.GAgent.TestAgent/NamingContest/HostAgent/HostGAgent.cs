@@ -133,7 +133,7 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
         };
         await _cqrsProvider.SendLogCommandAsync(command);
     }
-    public async Task SetGroupId(Guid guid)
+    public async Task SetGroupIdAsync(Guid guid)
     {
         State.GroupId = guid;
     }

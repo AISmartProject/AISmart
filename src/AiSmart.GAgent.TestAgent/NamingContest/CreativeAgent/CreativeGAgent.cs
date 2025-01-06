@@ -456,7 +456,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         return Task.FromResult(State.AgentName);
     }
 
-    public async Task SetGroupId(Guid guid)
+    public async Task SetGroupIdAsync(Guid guid)
     {
         State.GroupId = guid;
     }
