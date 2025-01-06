@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AISmart.Agent;
 using AISmart.Common;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
+using AISmart.Sender;
 using AISmart.Service;
 using Orleans;
 using Shouldly;
@@ -566,6 +569,18 @@ namespace AISmart.Samples
             agentResponse.Details[1].AgentName.ShouldBe("kob");
         }
 
+
+        [Fact]
+        public async Task Init_VoteCharmingGAgento_Test()
+        {
+            var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId("1"));
+            var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        
+            var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
+
+            await pumpFunMostCharmingGAgent.RegisterAsync(voteCharmingGAgent);
+        }
 
         private static List<ContestantAgent>? LoadConfiguration(string jsonFilePath)
         {
