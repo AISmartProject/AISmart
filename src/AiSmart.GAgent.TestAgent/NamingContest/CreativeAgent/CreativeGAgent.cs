@@ -68,6 +68,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(TrafficInformCreativeGEvent @event)
     {
+        GrainId grainId= await this.GetSubscriptionAsync();
+        
+        
         if (@event.CreativeGrainId != this.GetPrimaryKey())
         {
             return;
