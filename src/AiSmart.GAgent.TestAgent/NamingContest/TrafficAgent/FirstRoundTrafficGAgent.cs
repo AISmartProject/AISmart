@@ -256,7 +256,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
         IPublishingGAgent publishingAgent;
 
-        if (grainId != null && grainId.ToString().StartsWith("publishgagent"))
+        if (grainId.ToString()?.StartsWith("publishgagent") == true)
         {
             publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(grainId);
         }
