@@ -5,9 +5,9 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.Common;
 
 public static class Helper
 {
-    public static Guid GetVoteCharmingGrainId()
+    public static Guid GetVoteCharmingGrainId(string round)
     {
-        return ConvertStringToGuid("AI-Most-Charming-Naming-Contest");
+        return ConvertStringToGuid(string.Concat("AI-Most-Charming-Naming-Contest","-",round));
     }
     
     private static Guid ConvertStringToGuid(string input)

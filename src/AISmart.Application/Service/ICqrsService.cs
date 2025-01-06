@@ -11,5 +11,6 @@ public interface ICqrsService
     Task SendEventCommandAsync(EventBase eventBase);
 
     Task<K> QueryGEventAsync<T,K>(string index, string id) where T : GEventBase;
-
+    
+    Task<ChatLogPageResultDto> QueryChatLogListAsync(GetLogQuery command);
 }

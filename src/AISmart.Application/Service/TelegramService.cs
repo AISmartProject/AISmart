@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agent.NamingContestTelegram;
 using AISmart.Agents;
@@ -24,6 +25,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AiSmart.GAgent.TestAgent.NLPAgent;
 using AiSmart.GAgent.TestAgent.Voter;
 using AISmart.Sender;
@@ -311,8 +313,8 @@ public class TelegramService : ApplicationService, ITelegramService
 
     public async Task InitGroupListAsync()
     {
-        var creativeCount = 4;
-        var judgeCount = 6;
+        var creativeCount = 2;
+        var judgeCount = 1;
         List<Tuple<string, string>> creativeDescriptions = new List<Tuple<String, string>>()
         {
             new Tuple<string, string>("Emma Carter",
@@ -371,7 +373,7 @@ public class TelegramService : ApplicationService, ITelegramService
     public async Task StartFirstRoundTestAsync(string message)
     {
         var groupList = new List<IStateGAgent<GroupAgentState>>();
-        var groupCount = 2;
+        var groupCount = 1;
         for (var i = 0; i < groupCount; i++)
         {
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
@@ -406,6 +408,24 @@ public class TelegramService : ApplicationService, ITelegramService
             var groupAgent = _firstStepPublishingList[i];
             await groupAgent.PublishEventAsync(new GroupStartEvent() { Message = message });
         }
+
+        var creativeJudgeAgentList = new List<Guid>();
+        creativeJudgeAgentList.AddRange(_creativeList.Select(x => x.GetPrimaryKey()).ToList());
+        var voteJudgeAgentList = new List<Guid>();
+        voteJudgeAgentList.AddRange(_judgeList.Select(x => x.GetPrimaryKey()).ToList());
+        
+        var round = 1;
+        IVoteCharmingGAgent voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(GuidUtil.GetVoteCharmingGrainId(round.ToString()));
+        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+
+        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
+        {
+            JudgeGuidList = voteJudgeAgentList,
+            CreativeGuidList = creativeJudgeAgentList,
+            Round = Convert.ToInt32(round),
+            TotalBatches = 2
+        });
     }
 
     public async Task StartSecondRoundTestAsync(string message)

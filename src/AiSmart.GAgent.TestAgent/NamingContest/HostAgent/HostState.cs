@@ -10,6 +10,7 @@ public class HostState:StateBase
     [Id(2)]  public  string AgentResponsibility{ get; set; }
     [Id(3)] public Queue<MicroAIMessage> RecentMessages = new Queue<MicroAIMessage>();
     [Id(4)] public string Naming { get; set; }
+    [Id(5)] public Guid GroupId { get; set; }
 
     public void Apply(AddHistoryChatSEvent @event)
     {

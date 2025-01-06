@@ -14,7 +14,7 @@ public class NamingLogEvent : EventBase
     [Id(3)] public Guid AgentId { get; set; } = Guid.Empty;
     [Id(4)] public string AgentName { get; set; }
     [Id(5)] public string Content { get; set; }
-    [Id(6)] public long Time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    [Id(6)] public long Time = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     public NamingLogEvent(NamingContestStepEnum step, Guid agentId, NamingRoleType roleType = NamingRoleType.None,
         string agentName = "", string content = "")

@@ -1,7 +1,9 @@
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.GAgent.Core;
-using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent.Grains;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
+using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using Microsoft.Extensions.Logging;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
@@ -9,25 +11,45 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVoteCharmingGAgent
 {
 
-    public VoteCharmingGAgent( ILogger<MicroAIGAgent> logger) : base(logger)
+    public VoteCharmingGAgent( ILogger<VoteCharmingGAgent> logger) : base(logger)
     {
     }
     
     [EventHandler]
     public async Task HandleEventAsync(InitVoteCharmingEvent @event)
     {
-        Random random = new Random();
-        var list = @event.GrainGuidList;
-        for (int i = list.Count - 1; i > 0; i--)
+        if (!State.VoterIds.IsNullOrEmpty())
         {
-            int j = random.Next(0, i + 1);
+            return;
+        }
+
+        var random = new Random();
+        var list = new List<Guid>();
+        list.AddRange(@event.CreativeGuidList);
+        list.AddRange(@event.JudgeGuidList);
+
+        for (var i = list.Count - 1; i > 0; i--)
+        {
+            var j = random.Next(0, i + 1);
             (list[i], list[j]) = (list[j], list[i]);
+        }
+
+        var grainGuidTypeDictionary = new Dictionary<Guid, string>();
+        foreach (var agentId in @event.CreativeGuidList)
+        {
+            grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixCreative);
+        }
+        foreach (var agentId in @event.JudgeGuidList)
+        {
+            grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixJudge);
         }
 
         base.RaiseEvent(new InitVoteCharmingGEvent
         {
             GrainGuidList = list,
-            TotalBatches =  @event.TotalBatches
+            TotalBatches =  @event.TotalBatches,
+            Round = @event.Round,
+            GrainGuidTypeDictionary = grainGuidTypeDictionary
         });
         await ConfirmEvents();
     }
@@ -40,16 +62,16 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
             return;
         }
 
-        int actualBatchSize = 0;
+        var actualBatchSize = 0;
         if (State.TotalBatches == State.CurrentBatch + 1)
         {
             actualBatchSize = State.VoterIds.Count;
         }
         else
         {
-            int averageBatchSize = State.VoterIds.Count / State.TotalBatches;
-            int minBatchSize = Math.Max(1, (int)(averageBatchSize * 0.6)); 
-            int maxBatchSize = Math.Min(State.VoterIds.Count, (int)(averageBatchSize * 1.5)); 
+            var averageBatchSize = State.VoterIds.Count / State.TotalBatches;
+            var minBatchSize = Math.Max(1, (int)(averageBatchSize * 0.6)); 
+            var maxBatchSize = Math.Min(State.VoterIds.Count, (int)(averageBatchSize * 1.5)); 
             var random = new Random();
             actualBatchSize = random.Next(minBatchSize, maxBatchSize);
         }
@@ -57,7 +79,20 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         var selectedVoteIds = State.VoterIds.GetRange(0, actualBatchSize);
         foreach (var voteId in selectedVoteIds)
         {
-           await  RegisterAsync(GrainFactory.GetGrain<IMicroAIGAgent>(voteId));
+            if (!State.VoterIdTypeDictionary.TryGetValue(voteId, out var grainClassNamePrefix))
+            {
+                continue;
+            }
+
+            switch (grainClassNamePrefix)
+            {
+                case NamingConstants.AgentPrefixCreative:
+                    await  RegisterAsync(GrainFactory.GetGrain<ICreativeGAgent>(voteId));
+                    break;
+                case NamingConstants.AgentPrefixJudge:
+                    await  RegisterAsync(GrainFactory.GetGrain<IJudgeGAgent>(voteId));
+                    break;
+            }
         }
 
         await PublishAsync(new SingleVoteCharmingEvent

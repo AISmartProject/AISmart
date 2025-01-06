@@ -5,5 +5,5 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.HostAgent;
 
 public interface IHostGAgent:IMicroAIGAgent
 {
-    
+
 }

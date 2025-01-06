@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.CQRS.Dto;
@@ -172,5 +173,120 @@ public class ElasticIndexingService : IIndexingService
             throw e;
         }
         
+    }
+
+    public void CheckExistOrCreateIndex<T>() where T : class
+    {
+        var indexName = typeof(T).Name.ToLower();
+        var indexExistsResponse = _elasticClient.Indices.Exists(indexName);
+        if (indexExistsResponse.Exists)
+        {
+            return;
+        }
+        var createIndexResponse = _elasticClient.Indices.Create(indexName, c => c
+            .Map<T>(m => m.AutoMap())
+        );
+        if (!createIndexResponse.IsValid)
+        {
+            _logger.LogError("Error creating index. {indexName} ,{error}",indexName, createIndexResponse.ServerError?.Error);
+        }
+        else
+        {
+            _logger.LogError("Index created successfully. {indexName}", indexName);
+        }
+    }
+
+    public async Task SaveOrUpdateChatLogIndexAsync(AIChatLogIndex index)
+    {
+        var indexName = index.GetType().Name.ToLower();
+        var response = await _elasticClient.IndexAsync(index, i => i
+            .Index(indexName)
+            .Id(index.Id)
+        );
+        
+        if (!response.IsValid)
+        {
+            _logger.LogInformation("{indexName} save Error, indexing document error:{error}: " ,indexName, response.ServerError);
+        }
+        else
+        {
+            _logger.LogInformation("{indexName} save Successfully.",indexName);
+        }
+    }
+
+    public async Task<(long TotalCount,List<AIChatLogIndex> ChatLogs)> QueryChatLogListAsync(ChatLogQueryInputDto input)
+    {
+        if (input == null)
+        {
+            return (0, new List<AIChatLogIndex>());
+        }
+
+        if (input.BeginTimestamp > input.EndTimestamp)
+        {
+            return (0, new List<AIChatLogIndex>());
+        }
+
+        var mustQuery = new List<Func<QueryContainerDescriptor<AIChatLogIndex>, QueryContainer>>();
+        if (!input.GroupId.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i
+                => i.Field(f => f.GroupId).Field(input.GroupId)));
+        }
+        
+        if (!input.AgentId.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i
+                => i.Field(f => f.AgentId).Field(input.AgentId)));
+        }
+        
+        if (input.Ids?.Count > 0)
+        {
+            mustQuery.Add(q => q.Terms(i => i.Field(f => f.Id).Terms(input.Ids)));
+        }
+        
+        if (input.BeginTimestamp > 0)
+        {
+            mustQuery.Add(q => q.DateRange(i =>
+                i.Field(f => f.Ctime)
+                    .GreaterThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.BeginTimestamp))));
+        }
+
+        if (input.EndTimestamp > 0)
+        {
+            mustQuery.Add(q => q.DateRange(i =>
+                i.Field(f => f.Ctime)
+                    .LessThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.EndTimestamp))));
+        }
+        QueryContainer Filter(QueryContainerDescriptor<AIChatLogIndex> f)
+            => f.Bool(b => b.Must(mustQuery));
+        var searchResponse = _elasticClient.Search<AIChatLogIndex>(s => s
+            .Index(nameof(AIChatLogIndex).ToLower())
+            .Query(q => q
+                .Bool(b => b
+                    .Must(mustQuery)
+                )
+            )
+            .From(input.SkipCount)
+            .Size(input.MaxResultCount)
+            .Sort(ss => ss
+                    .Ascending(a => a.Ctime)
+            )
+        );
+        switch (searchResponse.IsValid)
+        {
+            case true:
+            {
+                var chatLogIndexList = new List<AIChatLogIndex>();
+                if (searchResponse.Total != 0)
+                {
+                    chatLogIndexList = searchResponse.Documents.ToList();
+                }
+                return (searchResponse.Total, chatLogIndexList);
+            }
+            default:
+                _logger.LogInformation("QueryChatLogListAsync fail errMsg:{errMsg}.",searchResponse.ServerError);
+                break;
+        }
+        return (0, new List<AIChatLogIndex>());
     }
 }

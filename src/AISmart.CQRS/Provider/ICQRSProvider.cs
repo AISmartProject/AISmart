@@ -12,6 +12,8 @@ public interface ICQRSProvider : IEventDispatcher
     Task SendEventCommandAsync(EventBase eventBase);
 
     Task<string> QueryGEventAsync(string index, string id);
-
-
+    
+    Task SendLogCommandAsync(SaveLogCommand command);
+    
+    Task<ChatLogPageResultDto> QueryChatLogListAsync(GetLogQuery command);
 }

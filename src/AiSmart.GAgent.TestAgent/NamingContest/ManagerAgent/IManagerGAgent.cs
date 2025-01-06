@@ -11,4 +11,6 @@ public interface IManagerGAgent:IGAgent,IGrainWithGuidKey
     Task InitGroupInfoAsync(InitNetWorkMessageSEvent initNetWorkMessageSEvent,string groupAgentId );
 
     Task ClearAllAgentsAsync();
+
+    Task<ManagerAgentState> GetManagerAgentStateAsync();
 }

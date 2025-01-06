@@ -250,7 +250,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     private async Task PublishMostCharmingEventAsync()
     {
         IVoteCharmingGAgent voteCharmingGAgent =
-            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId());
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(NamingConstants.FirstRound));
         var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
 

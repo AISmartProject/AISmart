@@ -8,20 +8,24 @@ public class VoteCharmingState: StateBase
     [Id(0)] public List<Guid> VoterIds { get; set; } = new List<Guid>();
     [Id(1)] public int TotalBatches { get; set; }
     [Id(2)] public int CurrentBatch { get; set; }
-    
     [Id(3)] public int Round { get; set; }
-    
+    [Id(4)] public Dictionary<Guid, string> VoterIdTypeDictionary { get; set; } = new();
 
     public void Apply(InitVoteCharmingGEvent @event)
     {
         VoterIds.AddRange(@event.GrainGuidList);
         TotalBatches = @event.TotalBatches;
         Round = @event.Round;
+        VoterIdTypeDictionary = @event.GrainGuidTypeDictionary;
     }
 
     public void Apply(VoteCharmingGEvent @event)
     {
         VoterIds.RemoveAll(@event.GrainGuidList);
+        foreach (var voterId in VoterIds)
+        {
+            VoterIdTypeDictionary.Remove(voterId);
+        }
         CurrentBatch++;
     }
    

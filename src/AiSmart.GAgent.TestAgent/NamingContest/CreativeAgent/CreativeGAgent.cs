@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.CQRS.Dto;
+using AISmart.CQRS.Provider;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
@@ -21,9 +23,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 {
     private readonly ILogger<CreativeGAgent> _logger;
 
-    public CreativeGAgent(ILogger<CreativeGAgent> logger) : base(logger)
+    private readonly ICQRSProvider _cqrsProvider;
+    public CreativeGAgent(ILogger<CreativeGAgent> logger, ICQRSProvider cqrsProvider) : base(logger)
     {
         _logger = logger;
+        _cqrsProvider = cqrsProvider;
     }
 
     [EventHandler]
@@ -52,6 +56,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                         AssembleMessageUtil.AssembleSummaryBeforeStep(@event.CreativeNameings, response.Content,
                             @event.ThemeDescribe))
                 });
+                
+                //save chat log
+                SaveAIChatLogAsync(NamingConstants.CreativeSummaryHistoryPrompt, response.Content);
             }
         }
 
@@ -75,6 +82,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 namingReply = response.Content;
+                SaveAIChatLogAsync(NamingConstants.NamingPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -157,7 +165,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (message != null && !message.Content.IsNullOrEmpty())
             {
                 debateReply = message.Content;
+                SaveAIChatLogAsync(NamingConstants.DebatePrompt, message.Content);
             }
+
         }
         catch (Exception ex)
         {
@@ -203,6 +213,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 discussionReply = response.Content;
+                SaveAIChatLogAsync(NamingConstants.CreativeDiscussionPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -272,7 +283,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 summary = JsonSerializer.Deserialize<CreativeGroupSummary>(response.Content);
+                SaveAIChatLogAsync(NamingConstants.CreativeGroupSummaryPrompt, response.Content);
             }
+
         }
         catch (Exception ex)
         {
@@ -353,6 +366,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 answer = response.Content.ToString();
+                SaveAIChatLogAsync(NamingConstants.CreativeAnswerQuestionPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -441,6 +455,22 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     {
         return Task.FromResult(State.AgentName);
     }
+
+    private async Task SaveAIChatLogAsync(string request, string response)
+    {
+        var command = new SaveLogCommand
+        {
+            GroupId = State.GroupId.ToString(),
+            AgentId = this.GetPrimaryKey().ToString(),
+            AgentName = State.AgentName,
+            AgentResponsibility = State.AgentResponsibility,
+            RoleType = NamingRoleType.Contestant.ToString(),
+            Request = request,
+            Response = response,
+            Ctime = DateTime.UtcNow
+        };
+        await _cqrsProvider.SendLogCommandAsync(command);
+    }
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
@@ -460,6 +490,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
+            SaveAIChatLogAsync(NamingConstants.CreativeAnswerQuestionPrompt, message.Content);
         }
         await base.ConfirmEvents();
     }
