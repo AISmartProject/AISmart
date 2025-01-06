@@ -25,7 +25,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     private readonly ChainOptions _chainOptions;
     
     private const string GetHolderInfoMethodName = "GetHolderInfo";
-
+    private const string Nonce = "Nonce:";
     public WalletLoginProvider(ILogger<WalletLoginProvider> logger,
         IOptionsMonitor<SignatureGrantOptions> signatureOptions, IOptionsMonitor<ChainOptions> chainOptions)
     {
@@ -66,7 +66,7 @@ public class WalletLoginProvider: IWalletLoginProvider, ISingletonDependency
     {
         var rawText = Encoding.UTF8.GetString(ByteArrayHelper.HexStringToByteArray(plainText));
         _logger.LogInformation("rawText:{rawText}", rawText);
-        var timestampVal = rawText.TrimEnd().Substring(rawText.LastIndexOf("Nonce:") + 6);
+        var timestampVal = rawText.TrimEnd().Substring(rawText.LastIndexOf(Nonce) + Nonce.Length);        
         var timestamp = long.Parse(timestampVal);
         _logger.LogInformation("timestamp:{timestamp}", timestamp);
         //Validate timestamp validity period
