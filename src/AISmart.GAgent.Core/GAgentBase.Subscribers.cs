@@ -1,3 +1,4 @@
+using AISmart.Agents;
 using AISmart.Agents.GAgentBase;
 using Microsoft.Extensions.Logging;
 
@@ -5,44 +6,39 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    private Task AddSubscriberAsync(GrainId grainId)
+    private async Task AddSubscriberAsync(GrainId grainId)
     {
         if (State.Subscribers.Contains(grainId))
         {
             Logger.LogError($"Cannot add duplicate subscriber {grainId}.");
-            return Task.CompletedTask;
+            return;
         }
 
-        RaiseEvent((TEvent)(object)new AddSubscriberGEvent
+        base.RaiseEvent(new AddSubscriberGEvent
         {
             Subscriber = grainId
         });
-        ConfirmEvents();
-        
-        return Task.CompletedTask;
-    }
+        await ConfirmEvents();
+    }  
 
-    private Task RemoveSubscriberAsync(GrainId grainId)
+    private async Task RemoveSubscriberAsync(GrainId grainId)
     {
         if (!State.Subscribers.IsNullOrEmpty())
         {
-            RaiseEvent((TEvent)(object)new RemoveSubscriberGEvent
+            base.RaiseEvent(new RemoveSubscriberGEvent
             {
                 Subscriber = grainId
             });
-            ConfirmEvents();
+            await ConfirmEvents();
         }
-        
-        return Task.CompletedTask;
     }
 
-    private Task SetSubscriptionAsync(GrainId grainId)
+    private async Task SetSubscriptionAsync(GrainId grainId)
     {
-        RaiseEvent((TEvent)(object)new SetSubscriptionGEvent
+        base.RaiseEvent(new SetSubscriptionGEvent
         {
             Subscription = grainId
         });
-        ConfirmEvents();
-        return Task.CompletedTask;
+        await ConfirmEvents();
     }
 }

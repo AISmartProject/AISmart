@@ -14,7 +14,7 @@ namespace AISmart.GAgent.Core;
 [GAgent]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState, TEvent>, IStateGAgent<TState>
+public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState>, IStateGAgent<TState>
     where TState : StateBase, new()
     where TEvent : GEventBase
 {
@@ -54,9 +54,9 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         await OnRegisterAgentAsync(guid);
     }
 
-    public Task SubscribeToAsync(IGAgent gAgent)
+    public async Task SubscribeToAsync(IGAgent gAgent)
     {
-        return SetSubscriptionAsync(gAgent.GetGrainId());
+        await SetSubscriptionAsync(gAgent.GetGrainId());
     }
 
     public async Task UnregisterAsync(IGAgent gAgent)
@@ -222,13 +222,13 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         Logger.LogInformation("base raiseEvent info:{info}", JsonConvert.SerializeObject(@event));
         base.RaiseEvent(@event);
-        InternalRaiseEventAsync(@event).ContinueWith(task =>
-        {
-            if (task.Exception != null)
-            {
-                Logger.LogError(task.Exception, "InternalRaiseEventAsync operation failed");
-            }
-        }, TaskContinuationOptions.OnlyOnFaulted);
+        // InternalRaiseEventAsync(@event).ContinueWith(task =>
+        // {
+        //     if (task.Exception != null)
+        //     {
+        //         Logger.LogError(task.Exception, "InternalRaiseEventAsync operation failed");
+        //     }
+        // }, TaskContinuationOptions.OnlyOnFaulted);
     }
     private async Task InternalRaiseEventAsync(TEvent @event)
     {
