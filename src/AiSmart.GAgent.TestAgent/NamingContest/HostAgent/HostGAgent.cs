@@ -1,28 +1,22 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
-using AISmart.CQRS.Dto;
-using AISmart.CQRS.Provider;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.HostAgent;
 
 public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
 {
     private readonly ILogger<HostGAgent> _logger;
-    private readonly ICQRSProvider _cqrsProvider;
 
-    public HostGAgent(ILogger<HostGAgent> logger,ICQRSProvider cqrsProvider) : base(logger)
+    public HostGAgent(ILogger<HostGAgent> logger) : base(logger)
     {
         _logger = logger;
-        _cqrsProvider = cqrsProvider;
-
     }
 
     [EventHandler]
@@ -119,22 +113,4 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
     {
         return Task.FromResult(State.AgentName);
     }
-    private async Task SaveAIChatLogAsync(string request, string response)
-    {
-        var groupId= await this.GetSubscriptionAsync();
-
-        var command = new SaveLogCommand
-        {
-            GroupId = groupId.ToString(),
-            AgentId = this.GetPrimaryKey().ToString(),
-            AgentName = State.AgentName,
-            AgentResponsibility = State.AgentResponsibility,
-            RoleType = NamingRoleType.Host.ToString(),
-            Request = request,
-            Response = response,
-            Ctime = DateTime.UtcNow
-        };
-        await _cqrsProvider.SendLogCommandAsync(command);
-    }
-
 }
