@@ -93,8 +93,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                     VoteName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey(),
                     JudgeName = State.AgentName
                 });
-                SaveAIChatLogAsync(NamingConstants.JudgeVotePrompt, response.Content);
-
             }
         }
         catch (Exception ex)
@@ -125,8 +123,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 reply = response.Content;
-                SaveAIChatLogAsync(prompt, response.Content);
-
             }
         }
         catch (Exception e)
@@ -161,8 +157,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 defaultScore = response.Content;
-                SaveAIChatLogAsync(NamingConstants.JudgeScorePrompt, response.Content);
-
             }
         }
         catch (Exception e)
@@ -199,8 +193,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
-            SaveAIChatLogAsync(prompt, message.Content);
-
         }
         await base.ConfirmEvents();
     }
