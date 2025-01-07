@@ -5,5 +5,5 @@ namespace AISmart.GAgent.AtomicAgent.Dtos;
 public class UpdateAtomicAgentDto
 {
     public string? Name { get; set; }
-    public AgentPropertyDto Properties { get; set; }
+    public Dictionary<string, string> Properties { get; set; }
 }

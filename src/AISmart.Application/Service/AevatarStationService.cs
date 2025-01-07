@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.CQRS.Provider;
 using AISmart.GAgent.AtomicAgent.Agent;
 using AISmart.GAgent.AtomicAgent.Dtos;
 using AISmart.GAgent.AtomicAgent.Models;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -51,23 +53,9 @@ public class AevatarStationService : ApplicationService, IAevatarStationService
         {
             Id = agentData.Id.ToString(),
             Type = agentData.Type,
-            Name = agentData.Name
+            Name = agentData.Name,
+            Properties = JsonConvert.DeserializeObject<Dictionary<string, string>>(agentData.Properties)
         };
-        
-        switch (agentData.Type)
-        {
-            case AgentType.AiBasic:
-                resp.Properties = _objectMapper.Map<AIBasicAgentData, AgentPropertyDto>(agentData.AIBasicAgentData);
-                break;
-            case AgentType.TelegramMessaging:
-                resp.Properties = _objectMapper.Map<TelegramAgentData, AgentPropertyDto>(agentData.TelegramAgentData);
-                break;
-            case AgentType.TwitterMessaging:
-                resp.Properties = _objectMapper.Map<TwitterAgentData, AgentPropertyDto>(agentData.TwitterAgentData);
-                break;
-            default:
-                throw new UserFriendlyException("Invalid agent type");
-        }
         
         return resp;
     }
@@ -79,32 +67,11 @@ public class AevatarStationService : ApplicationService, IAevatarStationService
         var atomicAgent = _clusterClient.GetGrain<IAtomicGAgent>(guid);
         var agentData = _objectMapper.Map<CreateAtomicAgentDto, AgentData>(createDto);
         agentData.Id = guid;
-
-        switch (createDto.Type)
-        {
-            case AgentType.AiBasic:
-                var aiBasicAgentData = _objectMapper.Map<AgentPropertyDto, AIBasicAgentData>(createDto.Properties);
-                agentData.AIBasicAgentData = aiBasicAgentData;
-                await atomicAgent.CreateAgentAsync(agentData, address);
-                _logger.LogInformation("CreateAgentAsync AIBasicAgentData: {aiBasicAgentData}", agentData);
-                break;
-            case AgentType.TelegramMessaging:
-                var telegramAgentData = _objectMapper.Map<AgentPropertyDto, TelegramAgentData>(createDto.Properties);
-                agentData.TelegramAgentData = telegramAgentData;
-                await atomicAgent.CreateAgentAsync(agentData, address);
-                break;
-            case AgentType.TwitterMessaging:
-                var twitterAgentData = _objectMapper.Map<AgentPropertyDto, TwitterAgentData>(createDto.Properties);
-                agentData.TwitterAgentData = twitterAgentData;
-                await atomicAgent.CreateAgentAsync(agentData, address);
-                break;
-            default:
-                throw new UserFriendlyException("Invalid agent type");
-        }
-        
-        _logger.LogInformation("CreateAgentAsync: {agentData}", agentData);
-        
-        return _objectMapper.Map<CreateAtomicAgentDto, AtomicAgentDto>(createDto);
+        agentData.Properties = JsonConvert.SerializeObject(createDto.Properties);
+        await atomicAgent.CreateAgentAsync(agentData, address);
+        var resp = _objectMapper.Map<CreateAtomicAgentDto, AtomicAgentDto>(createDto);
+        resp.Id = guid.ToString();
+        return resp;
     }
 
     public async Task<AtomicAgentDto> UpdateAgentAsync(string id, UpdateAtomicAgentDto updateDto)
@@ -130,32 +97,28 @@ public class AevatarStationService : ApplicationService, IAevatarStationService
             Type = agentData.Type
         };
         
-        switch (agentData.Type)
-        {
-            case AgentType.AiBasic:
-                _objectMapper.Map(updateDto.Properties, agentData.AIBasicAgentData);
-                resp.Properties = _objectMapper.Map<AIBasicAgentData, AgentPropertyDto>(agentData.AIBasicAgentData);
-                break;
-            case AgentType.TelegramMessaging:
-                _objectMapper.Map(updateDto.Properties, agentData.TelegramAgentData);
-                resp.Properties = _objectMapper.Map<TelegramAgentData, AgentPropertyDto>(agentData.TelegramAgentData);
-                break;
-            case AgentType.TwitterMessaging:
-                _objectMapper.Map(updateDto.Properties, agentData.TwitterAgentData);
-                resp.Properties = _objectMapper.Map<TwitterAgentData, AgentPropertyDto>(agentData.TwitterAgentData);
-                break;
-            default:
-                throw new UserFriendlyException("Invalid agent type");
-        }
-        
-        // _objectMapper.Map(updateDto.Properties, agentData);
         if (!updateDto.Name.IsNullOrEmpty())
         {
             agentData.Name = updateDto.Name;
         }
+
+        var newProperties = JsonConvert.DeserializeObject<Dictionary<string, string>>(agentData.Properties);
+        if (newProperties != null)
+        {
+            foreach (var kvp in updateDto.Properties)
+            {
+                if (newProperties.ContainsKey(kvp.Key))
+                {
+                    newProperties[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            agentData.Properties = JsonConvert.SerializeObject(newProperties);
+        }
         
         await atomicAgent.UpdateAgentAsync(agentData);
         resp.Name = agentData.Name;
+        resp.Properties = newProperties;
 
         return resp;
     }
