@@ -38,8 +38,6 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 summaryReply = response.Content;
-                SaveAIChatLogAsync(NamingConstants.SummaryPrompt, response.Content);
-
             }
         }
         catch (Exception ex)
