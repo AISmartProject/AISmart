@@ -56,9 +56,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                         AssembleMessageUtil.AssembleSummaryBeforeStep(@event.CreativeNameings, response.Content,
                             @event.ThemeDescribe))
                 });
-                
-                //save chat log
-                SaveAIChatLogAsync(NamingConstants.CreativeSummaryHistoryPrompt, response.Content);
             }
         }
 
@@ -86,7 +83,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 namingReply = response.Content;
-                SaveAIChatLogAsync(NamingConstants.NamingPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -170,7 +166,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (message != null && !message.Content.IsNullOrEmpty())
             {
                 debateReply = message.Content;
-                SaveAIChatLogAsync(NamingConstants.DebatePrompt, message.Content);
             }
 
         }
@@ -218,7 +213,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 discussionReply = response.Content;
-                SaveAIChatLogAsync(NamingConstants.CreativeDiscussionPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -289,7 +283,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 summary = JsonSerializer.Deserialize<CreativeGroupSummary>(response.Content);
-                SaveAIChatLogAsync(NamingConstants.CreativeGroupSummaryPrompt, response.Content);
             }
 
         }
@@ -374,7 +367,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 answer = response.Content.ToString();
-                SaveAIChatLogAsync(NamingConstants.CreativeAnswerQuestionPrompt, response.Content);
             }
         }
         catch (Exception ex)
@@ -500,7 +492,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
-            SaveAIChatLogAsync(prompt, message.Content);
         }
         await base.ConfirmEvents();
     }
