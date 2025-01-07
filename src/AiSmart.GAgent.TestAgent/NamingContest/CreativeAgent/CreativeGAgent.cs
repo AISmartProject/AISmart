@@ -2,20 +2,14 @@ using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
-using AISmart.CQRS.Dto;
-using AISmart.CQRS.Provider;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
-using Google.Cloud.AIPlatform.V1;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 
@@ -23,11 +17,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 {
     private readonly ILogger<CreativeGAgent> _logger;
 
-    private readonly ICQRSProvider _cqrsProvider;
-    public CreativeGAgent(ILogger<CreativeGAgent> logger, ICQRSProvider cqrsProvider) : base(logger)
+    public CreativeGAgent(ILogger<CreativeGAgent> logger) : base(logger)
     {
         _logger = logger;
-        _cqrsProvider = cqrsProvider;
     }
 
     [EventHandler]
@@ -456,22 +448,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         return Task.FromResult(State.AgentName);
     }
 
-    private async Task SaveAIChatLogAsync(string request, string response)
-    {
-        var groupId= await this.GetSubscriptionAsync();
-        var command = new SaveLogCommand
-        {
-            GroupId = groupId.ToString(),
-            AgentId = this.GetPrimaryKey().ToString(),
-            AgentName = State.AgentName,
-            AgentResponsibility = State.AgentResponsibility,
-            RoleType = NamingRoleType.Contestant.ToString(),
-            Request = request,
-            Response = response,
-            Ctime = DateTime.UtcNow
-        };
-        await _cqrsProvider.SendLogCommandAsync(command);
-    }
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {

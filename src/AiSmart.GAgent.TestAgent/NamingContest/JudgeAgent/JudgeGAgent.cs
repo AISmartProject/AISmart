@@ -1,8 +1,6 @@
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
-using AISmart.CQRS.Dto;
-using AISmart.CQRS.Provider;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
@@ -16,11 +14,8 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 {
-    private readonly ICQRSProvider _cqrsProvider;
-
-    public JudgeGAgent(ILogger<MicroAIGAgent> logger,ICQRSProvider cqrsProvider) : base(logger)
+    public JudgeGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
     {
-        _cqrsProvider = cqrsProvider;
     }
 
     [EventHandler]
@@ -195,22 +190,5 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             });
         }
         await base.ConfirmEvents();
-    }
-    private async Task SaveAIChatLogAsync(string request, string response)
-    {
-        var groupId= await this.GetSubscriptionAsync();
-
-        var command = new SaveLogCommand
-        {
-            GroupId = groupId.ToString(),
-            AgentId = this.GetPrimaryKey().ToString(),
-            AgentName = State.AgentName,
-            AgentResponsibility = State.AgentResponsibility,
-            RoleType = NamingRoleType.Judge.ToString(),
-            Request = request,
-            Response = response,
-            Ctime = DateTime.UtcNow
-        };
-        await _cqrsProvider.SendLogCommandAsync(command);
     }
 }
