@@ -27,26 +27,27 @@ public class GAgentBaseTests : AISmartApplicationTestBase
     [Fact]
     public async Task ComplicatedEventHandleTest()
     {
+        var guid = Guid.NewGuid();
         // Arrange.
-        var marketingLeader = _grainFactory.GetGrain<IMarketingLeaderTestGAgent>(Guid.NewGuid());
-        var developingLeader = _grainFactory.GetGrain<IDevelopingLeaderTestGAgent>(Guid.NewGuid());
+        var marketingLeader = _grainFactory.GetGrain<IMarketingLeaderTestGAgent>(guid);
+        var developingLeader = _grainFactory.GetGrain<IDevelopingLeaderTestGAgent>(guid);
 
-        var developer1 = _grainFactory.GetGrain<IDeveloperTestGAgent>(Guid.NewGuid());
+        var developer1 = _grainFactory.GetGrain<IDeveloperTestGAgent>(guid);
         var developer2 = _grainFactory.GetGrain<IDeveloperTestGAgent>(Guid.NewGuid());
         var developer3 = _grainFactory.GetGrain<IDeveloperTestGAgent>(Guid.NewGuid());
         await developingLeader.RegisterAsync(developer1);
         await developingLeader.RegisterAsync(developer2);
         await developingLeader.RegisterAsync(developer3);
 
-        var investor1 = _grainFactory.GetGrain<IStateGAgent<InvestorTestGAgentState>>(Guid.NewGuid());
+        var investor1 = _grainFactory.GetGrain<IStateGAgent<InvestorTestGAgentState>>(guid);
         var investor2 = _grainFactory.GetGrain<IStateGAgent<InvestorTestGAgentState>>(Guid.NewGuid());
         await marketingLeader.RegisterAsync(investor1);
         await marketingLeader.RegisterAsync(investor2);
 
-        var groupGAgent = _grainFactory.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
+        var groupGAgent = _grainFactory.GetGrain<IStateGAgent<GroupAgentState>>(guid);
         await groupGAgent.RegisterAsync(marketingLeader);
         await groupGAgent.RegisterAsync(developingLeader);
-        var publishingGAgent = _grainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        var publishingGAgent = _grainFactory.GetGrain<IPublishingGAgent>(guid);
         await publishingGAgent.RegisterAsync(groupGAgent);
 
         // Act.
@@ -61,7 +62,7 @@ public class GAgentBaseTests : AISmartApplicationTestBase
         groupState.RegisteredAgents.ShouldBe(2);
 
         var investorState = await investor1.GetStateAsync();
-        investorState.Content.Count.ShouldBePositive();
+        investorState.Content.Count.ShouldBe(2);
     }
     
     private async Task<bool> CheckState(IStateGAgent<InvestorTestGAgentState> investor1)

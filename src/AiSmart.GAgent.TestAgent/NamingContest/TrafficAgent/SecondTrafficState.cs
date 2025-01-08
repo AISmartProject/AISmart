@@ -15,6 +15,14 @@ public class SecondTrafficState : StateBase
     [Id(6)] public List<Guid> AskingJudges { get; set; } = new List<Guid>();
     [Id(7)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
     [Id(8)] public int DiscussionCount { get; set; }
+    [Id(9)] public string AgentName { get; set; }
+    [Id(10)] public string AgentDescription { get; set; }
+    [Id(11)] public string Summary { get; set; }
+    [Id(12)] public  int JudgeScoreCount { get; set; }
+    [Id(13)] public int Round { get; set; }
+    
+    [Id(14)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
+
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -26,9 +34,9 @@ public class SecondTrafficState : StateBase
         NamingContent = @event.Content;
     }
 
-    public void Apply(TrafficGrainCompleteGEvent gEvent)
+    public void Apply(TrafficGrainCompleteSEvent sEvent)
     {
-        CalledGrainIdList.Add(gEvent.CompleteGrainId);
+        CalledGrainIdList.Add(sEvent.CompleteGrainId);
         CurrentGrainId = Guid.Empty;
     }
 
@@ -51,6 +59,11 @@ public class SecondTrafficState : StateBase
     public void Apply(AddJudgeSEvent @event)
     {
         this.JudgeAgentList.Add(@event.JudgeGrainId);
+    }
+    
+    public void Apply(AddHostSEvent @event)
+    {
+        this.JudgeAgentList.Add(@event.HostGrainId);
     }
 
     public void Apply(ClearCalledGrainsSEvent @event)
@@ -80,5 +93,26 @@ public class SecondTrafficState : StateBase
     public void Apply(SetDiscussionSEvent @event)
     {
         DiscussionCount = @event.DiscussionCount;
+    }
+
+    public void Apply(DiscussionCountReduceSEvent @event)
+    {
+        DiscussionCount -= 1;
+    }
+
+    public void Apply(TrafficSetAgentSEvent @event)
+    {
+        AgentName = @event.AgentName;
+        AgentDescription = @event.Description;
+    }
+
+    public void Apply(AddScoreJudgeCountSEvent @event)
+    {
+        JudgeScoreCount += 1;
+    }
+
+    public void Apply(SetRoundNumberSEvent @event)
+    {
+        Round = @event.RoundCount;
     }
 }

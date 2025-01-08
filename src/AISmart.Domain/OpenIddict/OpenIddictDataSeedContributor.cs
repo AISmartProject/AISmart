@@ -98,7 +98,8 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             OpenIddictConstants.Permissions.Scopes.Phone,
             OpenIddictConstants.Permissions.Scopes.Profile,
             OpenIddictConstants.Permissions.Scopes.Roles,
-            "AISmart"
+            "AISmart",
+            "AISmartAuthServer"
         };
 
         var configurationSection = _configuration.GetSection("OpenIddict:Applications");

@@ -17,4 +17,7 @@ public interface ITelegramService
     Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName);
 
     Task SendMessageToAllGroup(string message);
+    Task InitGroupListAsync();
+    Task StartFirstRoundTestAsync(string message);
+    Task StartSecondRoundTestAsync(string message);
 }

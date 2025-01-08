@@ -5,6 +5,7 @@ using AISmart.Options;
 using Localization.Resources.AbpUi;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
+using StackExchange.Redis;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
@@ -18,6 +19,7 @@ using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Caching;
+using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Localization;
@@ -33,6 +35,7 @@ namespace AISmart.AuthServer;
 
 [DependsOn(
     typeof(AbpAutofacModule),
+    typeof(AbpCachingStackExchangeRedisModule),
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpAccountApplicationModule),
     typeof(AbpAccountHttpApiModule),
@@ -86,6 +89,8 @@ public class AISmartAuthServerModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var hostingEnvironment = context.Services.GetHostingEnvironment();
+
         var configuration = context.Services.GetConfiguration();
         
         context.Services.Configure<SignatureGrantOptions>(configuration.GetSection("Signature"));
@@ -164,7 +169,14 @@ public class AISmartAuthServerModule : AbpModule
         });
 
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("AISmartAuthServer");
-
+        
+        if (!hostingEnvironment.IsDevelopment())
+        {
+            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
+            dataProtectionBuilder.PersistKeysToStackExchangeRedis(redis, "AISmartAuthServer-Protection-Keys");
+        }
+        
+        
         context.Services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>

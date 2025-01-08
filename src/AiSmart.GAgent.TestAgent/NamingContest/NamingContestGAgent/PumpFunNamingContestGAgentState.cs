@@ -26,19 +26,22 @@ public class PumpFunNamingContestGAgentState : StateBase
     [Id(6)] public List<string> HostAgentIdList { get; set; } 
     
     [Id(7)] public string Round { get; set; }
+    
+    [Id(8)] public Guid groupId { get; set; }
 
     
 
 
-    public void Apply(IniNetWorkMessagePumpFunGEvent iniNetWorkMessageGEvent)
+    public void Apply(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent)
     {
-        CallBackUrl = iniNetWorkMessageGEvent.CallBackUrl;
-        Name = iniNetWorkMessageGEvent.Name;
-        Round = iniNetWorkMessageGEvent.Round;
-        CreativeAgentIdList = iniNetWorkMessageGEvent.CreativeAgentIdList;
-        JudgeAgentIdList = iniNetWorkMessageGEvent.JudgeAgentIdList;
-        JudgeScoreAgentIdList = iniNetWorkMessageGEvent.ScoreAgentIdList;
-        HostAgentIdList = iniNetWorkMessageGEvent.HostAgentIdList;
+        CallBackUrl = iniNetWorkMessageSEvent.CallBackUrl;
+        Name = iniNetWorkMessageSEvent.Name;
+        Round = iniNetWorkMessageSEvent.Round;
+        CreativeAgentIdList = iniNetWorkMessageSEvent.CreativeAgentIdList;
+        JudgeAgentIdList = iniNetWorkMessageSEvent.JudgeAgentIdList;
+        JudgeScoreAgentIdList = iniNetWorkMessageSEvent.ScoreAgentIdList;
+        HostAgentIdList = iniNetWorkMessageSEvent.HostAgentIdList;
+        groupId = iniNetWorkMessageSEvent.GroupId;
     }
 
 }

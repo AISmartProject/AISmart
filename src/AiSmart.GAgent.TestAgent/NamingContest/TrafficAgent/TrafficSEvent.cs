@@ -13,7 +13,7 @@ public class TrafficEventSourcingBase : GEventBase
 [GenerateSerializer]
 public class TrafficCallSelectGrainIdSEvent : TrafficEventSourcingBase
 {
-    public Guid GrainId { get; set; }
+   [Id(0)] public Guid GrainId { get; set; }
 }
 
 [GenerateSerializer]
@@ -23,7 +23,7 @@ public class TrafficCreativeFinishSEvent : TrafficEventSourcingBase
 }
 
 [GenerateSerializer]
-public class TrafficGrainCompleteGEvent : TrafficEventSourcingBase
+public class TrafficGrainCompleteSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public Guid CompleteGrainId { get; set; }
 }
@@ -84,6 +84,13 @@ public class AddJudgeSEvent : TrafficEventSourcingBase
     [Id(0)] public Guid JudgeGrainId { get; set; }
 }
 
+
+[GenerateSerializer]
+public class AddHostSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public Guid HostGrainId { get; set; }
+}
+
 [GenerateSerializer]
 public class ClearCalledGrainsSEvent : TrafficEventSourcingBase
 {
@@ -112,4 +119,22 @@ public class AddAskingJudgeSEvent : TrafficEventSourcingBase
 public class SetDiscussionSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public int DiscussionCount { get; set; }
+}
+
+[GenerateSerializer]
+public class DiscussionCountReduceSEvent : TrafficEventSourcingBase
+{
+    
+}
+
+[GenerateSerializer]
+public class AddScoreJudgeCountSEvent : TrafficEventSourcingBase
+{
+    
+}
+
+[GenerateSerializer]
+public class SetRoundNumberSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public int RoundCount { get; set; }
 }

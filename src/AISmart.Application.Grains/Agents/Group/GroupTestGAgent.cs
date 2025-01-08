@@ -9,6 +9,7 @@ namespace AISmart.Application.Grains.Agents.Group;
 public class GroupTestGAgentState : StateBase
 {
     [Id(0)] public Guid GroupManagerGuid { get; set; }
+    [Id(1)] public int CalledCount { get; set; }
 }
 
 [GAgent]
@@ -26,5 +27,6 @@ public class GroupTestGAgent: GAgentBase<GroupTestGAgentState, GroupGEvent>
     public async Task HandleEventAsync(GroupReloadTestEvent eventData)
     {
         State.GroupManagerGuid = eventData.GroupManagerGuid;
+        State.CalledCount++;
     }
 }

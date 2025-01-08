@@ -1,18 +1,14 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
-using AISmart.Events;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel.Agents;
-using Nest;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
@@ -74,6 +70,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             return;
         }
 
+        var judgeResponse = new JudgeVoteChatResponse();
         try
         {
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -81,27 +78,116 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 var voteResult = JsonSerializer.Deserialize<JudgeVoteChatResponse>(response.Content);
-                if (voteResult == null)
+                if (voteResult != null)
                 {
-                    _logger.LogError("");
-                    return;
+                    judgeResponse = voteResult;
                 }
-
-                await PublishAsync(new JudgeVoteResultGEvent()
-                {
-                    VoteName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey(),
-                    JudgeName = State.AgentName
-                });
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
+        }
+        finally
+        {
             await PublishAsync(new JudgeVoteResultGEvent()
             {
-                VoteName = "", Reason = "", JudgeGrainId = this.GetPrimaryKey(),
+                VoteName = judgeResponse.Name, Reason = judgeResponse.Reason, JudgeGrainId = this.GetPrimaryKey(),
                 JudgeName = State.AgentName
             });
         }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeAskingGEvent @event)
+    {
+        if (@event.JudgeGuid != this.GetPrimaryKey())
+        {
+            return;
+        }
+
+        var reply = string.Empty;
+        var prompt = NamingConstants.JudgeAskingPrompt;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(prompt, @event.History);
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                reply = response.Content;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "[JudgeGAgent] JudgeAskingGEvent error");
+        }
+        finally
+        {
+            if (!reply.IsNullOrWhiteSpace())
+            {
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, reply, prompt));
+            }
+
+            await PublishAsync(new JudgeAskingCompleteGEvent()
+            {
+                JudgeGuid = this.GetPrimaryKey(),
+                Reply = reply,
+            });
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(JudgeScoreGEvent @event)
+    {
+        var defaultScore = "84.3";
+        var prompt = NamingConstants.JudgeScorePrompt;
+        try
+        {
+            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(prompt, @event.History);
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                defaultScore = response.Content;
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "[JudgeGAgent] JudgeScoreGEvent error");
+        }
+        finally
+        {
+            if (!defaultScore.IsNullOrWhiteSpace())
+            {
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeScore, this.GetPrimaryKey(),
+                    NamingRoleType.Judge, State.AgentName, defaultScore, prompt));
+            }
+
+            await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
+        }
+    }
+
+    [EventHandler]
+    public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
+    {
+        var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
+        var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
+        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+            .SendAsync(prompt, @event.VoteMessage);
+
+        if (message != null && !message.Content.IsNullOrEmpty())
+        {
+            var namingReply = message.Content.Replace("\"", "").ToLower();
+            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+            var winner = agent.Key;
+            await PublishAsync(new VoteCharmingCompleteEvent()
+            {
+                Winner = winner,
+                VoterId = this.GetPrimaryKey(),
+                Round = @event.Round
+            });
+        }
+
+        await base.ConfirmEvents();
     }
 }

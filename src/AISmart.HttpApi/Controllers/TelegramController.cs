@@ -63,6 +63,15 @@ public class TelegramController : AISmartController
     {
         await _microAiService.ReceiveMessagesAsync(message, groupName);
     }
+    
+    [HttpGet("LoadTestMessageCount")]
+    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
+    {
+        return await _telegramService.GetLoadTestMessageCount(groupName);
+    }
+    {
+        await _microAiService.ReceiveMessagesAsync(message, groupName);
+    }
 
     [HttpGet("LoadTestMessageCount")]
     public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
@@ -93,4 +102,23 @@ public class TelegramController : AISmartController
     {
         await _telegramService.SendMessageToAllGroup(message);
     }
+
+    [HttpPost("initNamingGroup")]
+    public async Task InitGroupListAsync()
+    {
+        await _telegramService.InitGroupListAsync();
+    }
+
+    [HttpPost("startFirstRoundTest")]
+    public async Task StartFirstRoundTestAsync(string message)
+    {
+        await _telegramService.StartFirstRoundTestAsync(message);
+    }
+
+    [HttpPost("startSecondRoundTest")]
+    public async Task StartSecondRoundTestAsync(string message)
+    {
+        await _telegramService.StartSecondRoundTestAsync(message);
+    }
+
 }

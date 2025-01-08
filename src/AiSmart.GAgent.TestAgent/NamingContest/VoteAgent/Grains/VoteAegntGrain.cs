@@ -1,8 +1,10 @@
+using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.Dapr;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AISmart.Provider;
 using AutoGen.Core;
-using AutoGen.OpenAI;
+using AutoGen.SemanticKernel;
 using Newtonsoft.Json;
 using Orleans.Streams;
 
@@ -11,8 +13,15 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent.Grains;
 public class VoteAegntGrain : Grain,IVoteAgentGrain
 {
     private IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
-    private MiddlewareStreamingAgent<OpenAIChatAgent>? _agent;
+    private MiddlewareStreamingAgent<SemanticKernelAgent>? _agent;
     private IAIAgentProvider _aiAgentProvider;
+
+    public VoteAegntGrain(IAIAgentProvider aiAgentProvider
+        )
+    {
+        _aiAgentProvider = aiAgentProvider;
+    }
+
     public async Task VoteAgentAsync(VoteCharmingEvent voteCharmingEvent)
     {
       var microAIMessage  = await _aiAgentProvider.SendAsync(_agent, JsonConvert.ToString(voteCharmingEvent)+"  The above JSON contains each GUID with their names and associated conversations. Please select the GUID that is most appealing to you", null);
@@ -26,10 +35,29 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
           });
       }
     }
-    
+
+    public async Task VoteAgentAsync(SingleVoteCharmingEvent singleVoteCharmingEvent)
+    {
+        var agentNames = string.Join(" and ", singleVoteCharmingEvent.AgentIdNameDictionary.Values);
+        var message  = await _aiAgentProvider.SendAsync(_agent, NamingConstants.VotePrompt.Replace("$AgentNames$",agentNames),singleVoteCharmingEvent.VoteMessage);
+        if (message.Content != null)
+        {
+            var namingReply = message.Content.Replace("\"","").ToLower();
+            var agent = singleVoteCharmingEvent.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+            var winner = agent.Key;
+
+            await PublishEventAsync(new VoteCharmingCompleteEvent
+            {
+                Winner = winner,
+                VoterId = this.GetPrimaryKey(),
+                Round = 1
+            });
+        }
+    }
+
     private async Task PublishEventAsync(EventBase publishData)
     {
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetPrimaryKey());
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString());
         var stream = StreamProvider.GetStream<EventBase>(streamId);
         await stream.OnNextAsync(publishData);
     }

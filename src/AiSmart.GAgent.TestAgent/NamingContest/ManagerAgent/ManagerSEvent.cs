@@ -4,14 +4,14 @@ using Orleans;
 namespace AiSmart.GAgent.TestAgent.NamingContest.ManagerAgent;
 
 [GenerateSerializer]
-public abstract class ManagerGEvent:GEventBase
+public abstract class ManagerSEvent:GEventBase
 {
    
 }
 
 
 [GenerateSerializer]
-public class InitAgentMessageGEvent : ManagerGEvent
+public class InitAgentMessageSEvent : ManagerSEvent
 {
     [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
     
@@ -21,9 +21,15 @@ public class InitAgentMessageGEvent : ManagerGEvent
  
 }
 
+[GenerateSerializer]
+public class ClearAllAgentMessageSEvent : ManagerSEvent
+{
+    
+}
+
 
 [GenerateSerializer]
-public class IniNetWorkMessageGEvent : ManagerGEvent
+public class InitNetWorkMessageSEvent : ManagerSEvent
 {
     [Id(0)] public List<string> CreativeAgentIdList { get; set; } 
     
@@ -42,4 +48,10 @@ public class IniNetWorkMessageGEvent : ManagerGEvent
     
     [Id(7)] public string GroupAgentId { get; set; }
  
+}
+
+[GenerateSerializer]
+public class ClearAllNetWorkMessageSEvent : ManagerSEvent
+{
+    
 }

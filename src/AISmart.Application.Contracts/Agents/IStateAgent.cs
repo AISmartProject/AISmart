@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Orleans;
+using Orleans.Runtime;
 using Orleans.Streams;
 
 namespace AISmart.Agents;
@@ -20,8 +21,11 @@ public interface IGAgent : IGrainWithGuidKey
     //Function to get agent description
     Task<string> GetDescriptionAsync();
     Task RegisterAsync(IGAgent gAgent);
+    Task SubscribeToAsync(IGAgent gAgent);
     Task UnregisterAsync(IGAgent gAgent);
     Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
+    Task<List<GrainId>> GetSubscribersAsync();
+    Task<GrainId> GetSubscriptionAsync();
 }
 
 public interface IStateGAgent<TState> : IGAgent

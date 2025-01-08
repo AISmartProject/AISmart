@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.CQRS.Dto;
@@ -17,5 +18,9 @@ public interface IIndexingService
 
     public Task<string> QueryEventIndexAsync(string id, string indexName);
 
+    public void CheckExistOrCreateIndex<T>() where T : class;
+    public Task SaveOrUpdateChatLogIndexAsync(AIChatLogIndex index);
+    
+    public Task<(long TotalCount,List<AIChatLogIndex> ChatLogs)> QueryChatLogListAsync(ChatLogQueryInputDto input);
 
 }
