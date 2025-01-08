@@ -15,5 +15,6 @@ public static class CommonConstants
     public const string StreamNamespace = "AINamespace";
     public const string StreamProvider = "AISmart";
     public static Guid StreamGuid = Guid.NewGuid();
+    
 
 }

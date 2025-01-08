@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using AISmart.Options;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using Volo.Abp;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Identity;
 using Volo.Abp.OpenIddict.Applications;
 using Volo.Abp.OpenIddict.Scopes;
 using Volo.Abp.PermissionManagement;
@@ -33,8 +30,7 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
     private readonly IOpenIddictScopeManager _scopeManager;
     private readonly IPermissionDataSeeder _permissionDataSeeder;
     private readonly IStringLocalizer<OpenIddictResponse> L;
-    private readonly IdentityUserManager _identityUserManager;
-    private readonly UsersOptions _usersOptions;
+
     public OpenIddictDataSeedContributor(
         IConfiguration configuration,
         IOpenIddictApplicationRepository openIddictApplicationRepository,
@@ -42,8 +38,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         IOpenIddictScopeRepository openIddictScopeRepository,
         IOpenIddictScopeManager scopeManager,
         IPermissionDataSeeder permissionDataSeeder,
-        IdentityUserManager identityUserManager,
-        IOptionsSnapshot<UsersOptions> userOptions,
         IStringLocalizer<OpenIddictResponse> l )
     {
         _configuration = configuration;
@@ -53,8 +47,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
         _scopeManager = scopeManager;
         _permissionDataSeeder = permissionDataSeeder;
         L = l;
-        _identityUserManager = identityUserManager;
-        _usersOptions = userOptions.Value;
     }
 
     [UnitOfWork]
@@ -62,7 +54,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
     {
         await CreateScopesAsync();
         await CreateApplicationsAsync();
-        await SeedAdminUserAsync();
     }
 
     private async Task CreateScopesAsync()
@@ -74,21 +65,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             });
         }
     }
-    
-    private async Task SeedAdminUserAsync()
-    {
-        var adminUser = await _identityUserManager.FindByNameAsync("admin");
-        if (adminUser != null)
-        {
-            var adminPassword = _usersOptions.AdminPassword;
-            var token = await _identityUserManager.GeneratePasswordResetTokenAsync(adminUser);
-            var result = await _identityUserManager.ResetPasswordAsync(adminUser, token, adminPassword);
-            if (!result.Succeeded)
-            {
-                throw new Exception("Failed to set admin password: " + result.Errors.Select(e => e.Description).Aggregate((errors, error) => errors + ", " + error));
-            }
-        }
-    }
 
     private async Task CreateApplicationsAsync()
     {
@@ -98,11 +74,15 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
             OpenIddictConstants.Permissions.Scopes.Phone,
             OpenIddictConstants.Permissions.Scopes.Profile,
             OpenIddictConstants.Permissions.Scopes.Roles,
-            "AISmart",
-            "AISmartAuthServer"
+            "AISmart"
         };
 
         var configurationSection = _configuration.GetSection("OpenIddict:Applications");
+
+
+
+
+
 
         // Swagger Client
         var swaggerClientId = configurationSection["AISmart_Swagger:ClientId"];
@@ -120,33 +100,6 @@ public class OpenIddictDataSeedContributor : IDataSeedContributor, ITransientDep
                 scopes: commonScopes,
                 redirectUri: $"{swaggerRootUrl}/swagger/oauth2-redirect.html",
                 clientUri: swaggerRootUrl
-            );
-        }
-        
-        var authServerClientId = configurationSection["AISmartAuthServer:ClientId"];
-        if (!authServerClientId.IsNullOrWhiteSpace())
-        {
-            var authServerRootUrl = configurationSection["AISmartAuthServer:RootUrl"]?.TrimEnd('/');
-
-            await CreateApplicationAsync(
-                name: authServerClientId!,
-                type: OpenIddictConstants.ClientTypes.Public,
-                consentType: OpenIddictConstants.ConsentTypes.Implicit,
-                displayName: "AISmartAuthServer Application",
-                secret: null,
-                grantTypes: new List<string>
-                {
-                    OpenIddictConstants.GrantTypes.AuthorizationCode,
-                    OpenIddictConstants.GrantTypes.Password,
-                    OpenIddictConstants.GrantTypes.ClientCredentials,
-                    OpenIddictConstants.GrantTypes.RefreshToken,
-                    GrantTypeConstants.SIGNATURE,
-                    GrantTypeConstants.LOGIN
-                },
-                scopes: commonScopes,
-                redirectUri: authServerRootUrl,
-                clientUri: authServerRootUrl,
-                postLogoutRedirectUri: authServerRootUrl
             );
         }
     }

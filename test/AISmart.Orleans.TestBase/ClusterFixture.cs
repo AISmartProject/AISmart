@@ -2,29 +2,13 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using AISmart;
-using AISmart.Agent.Grains;
 using AISmart.Application.Grains;
-using AISmart.CQRS;
-using AISmart.CQRS.Handler;
-using AISmart.CQRS.Provider;
-using AISmart.EventSourcing.Core.Hosting;
-using AISmart.GAgent.Core;
-using AISmart.Grains;
-using AISmart.Mock;
-using AISmart.Options;
-using AISmart.Provider;
-using AISmart.Service;
 using AutoMapper;
-using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Nest;
-using NSubstitute.Extensions;
 using Orleans.Hosting;
-using Orleans.Storage;
 using Orleans.TestingHost;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.DependencyInjection;
@@ -56,15 +40,9 @@ public class ClusterFixture : IDisposable, ISingletonDependency
     {
         public void Configure(ISiloBuilder hostBuilder)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile("appsettings.secrets.json")
-                .Build();
-            
             hostBuilder.ConfigureServices(services =>
             {
                 services.AddAutoMapper(typeof(AIApplicationGrainsModule).Assembly);
-                services.AddAutoMapper(typeof(AISmartCQRSAutoMapperProfile).Assembly);
                 var mock = new Mock<ILocalEventBus>();
                 services.AddSingleton(typeof(ILocalEventBus), mock.Object);
 
@@ -77,8 +55,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                     //logging.AddProvider(loggerProvider);
                     logging.AddConsole(); // Adds console logger
                 });
-                var aelfNodeProvider = new MockAElfNodeProvider();
-                services.AddSingleton<IAElfNodeProvider>(aelfNodeProvider);
+
                 services.OnExposing(onServiceExposingContext =>
                 {
                     var implementedTypes = ReflectionHelper.GetImplementedGenericTypes(
@@ -94,47 +71,12 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 {
                     Mapper = sp.GetRequiredService<IMapper>()
                 });
-                //services.AddMediatR(typeof(TestSiloConfigurations).Assembly);
-
                 services.AddTransient<IMapperAccessor>(provider => provider.GetRequiredService<MapperAccessor>());
-                services.AddMediatR(typeof(SaveStateCommandHandler).Assembly);
-                services.AddMediatR(typeof(GetStateQueryHandler).Assembly);
-                services.AddMediatR(typeof(SendEventCommandHandler).Assembly);
-                services.AddMediatR(typeof(SaveGEventCommandHandler).Assembly);
-                services.AddMediatR(typeof(GetGEventQueryHandler).Assembly);
-                services.AddMediatR(typeof(SaveLogCommandHandler).Assembly);
-                services.AddMediatR(typeof(GetLogQueryHandler).Assembly);
-
-                services.AddTransient<SaveStateCommandHandler>();
-                services.AddTransient<GetGEventQueryHandler>();
-                services.AddTransient<SendEventCommandHandler>();
-                services.AddTransient<SaveGEventCommandHandler>();
-                services.AddSingleton<IIndexingService, ElasticIndexingService>();
-                services.AddTransient<SaveLogCommandHandler>();
-                services.AddTransient<GetLogQueryHandler>();
-
-                services.AddSingleton(typeof(IEventDispatcher), typeof(CQRSProvider));
-                services.AddSingleton(typeof(ICQRSProvider), typeof(CQRSProvider));
-                /*var mockElasticClient = new Mock<IElasticClient>();
-                services.AddSingleton(mockElasticClient.Object);
-                var _mockIndexingService = new Mock<IIndexingService>();
-                services.AddSingleton(_mockIndexingService.Object); */
-                services.AddSingleton<IElasticClient>(provider =>
-                {
-                    var settings =new ConnectionSettings(new Uri("http://127.0.0.1:9200"))
-                        .DefaultIndex("cqrs");
-                    return new ElasticClient(settings);
-                });
-                services.AddSingleton(typeof(ICqrsService), typeof(CqrsService));
-                
-                services.AddSingleton(typeof(INameContestProvider), typeof(NameContestProvider));
             })
             .AddMemoryStreams("AISmart")
             .AddMemoryGrainStorage("PubSubStore")
-            .AddMemoryGrainStorageAsDefault()
-            .AddLogStorageBasedLogConsistencyProvider("LogStorage")
-            .Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"))
-            .Configure<NameContestOptions>(configuration.GetSection("NameContest"));
+            //.AddMemoryGrainStorageAsDefault()
+            .AddLogStorageBasedLogConsistencyProvider("LogStorage");
         }
     }
 

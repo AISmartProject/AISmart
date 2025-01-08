@@ -13,7 +13,6 @@ public class Program
     {
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
-            .AddJsonFile("appsettings.secrets.json", optional: true)
             .Build();
         Log.Logger = new LoggerConfiguration()
             .Enrich.FromLogContext()

@@ -1,19 +1,18 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AISmart.Options;
-using AISmart.Provider;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace AISmart.Rag;
 
-public class QdrantIntegrationTests : AISmartApplicationTestBase
+public class QdrantIntegrationTests
 {
+    private readonly string _qdrantUrl = "http://localhost:6333";  
+    private readonly string _collectionName = "test_batch_collection";
+
     [Fact]
     public async Task TestStoreAndRetrieve()
     {
-        var config = GetRequiredService<IOptionsMonitor<RagOptions>>().CurrentValue;
-        var qdrantDatabase = new QdrantVectorDatabase(config.QdrantUrl, config.CollectionName, config.VectorSize);
+        var qdrantDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
         
         string textContent = "Test chunk content.";
         float[] testVector = new float[] { 0.1f, 0.2f, 0.3f };
@@ -28,9 +27,8 @@ public class QdrantIntegrationTests : AISmartApplicationTestBase
     [Fact]
     public async Task StoreBatchAsync_ShouldStoreAndRetrieveData()
     {
-        var config = GetRequiredService<IOptionsMonitor<RagOptions>>().CurrentValue;
-        var vectorDatabase = new QdrantVectorDatabase(config.QdrantUrl, config.CollectionName, config.VectorSize);
-        
+        var vectorDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
+
         var points = new List<(float[] vector, string text)>
         {
             ( new float[] { 0.1f, 0.3f, 0.1f }, "Text 1"),

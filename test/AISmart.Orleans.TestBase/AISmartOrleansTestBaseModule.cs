@@ -1,5 +1,3 @@
-using AISmart.CQRS;
-using AISmart.CQRS.Provider;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Volo.Abp;
@@ -16,9 +14,7 @@ namespace AISmart;
 [DependsOn(
     typeof(AbpAutofacModule),
     typeof(AbpTestBaseModule),
-    typeof(AbpAuthorizationModule),
-    typeof(AISmartCQRSModule)
-
+    typeof(AbpAuthorizationModule)
 )]
 public class AISmartOrleansTestBaseModule : AbpModule
 {
@@ -31,7 +27,6 @@ public class AISmartOrleansTestBaseModule : AbpModule
         context.Services.AddSingleton<ClusterFixture>();
         context.Services.AddSingleton<IClusterClient>(sp => context.Services.GetRequiredService<ClusterFixture>().Cluster.Client);
         context.Services.AddSingleton<IGrainFactory>(sp => context.Services.GetRequiredService<ClusterFixture>().Cluster.GrainFactory);
-        context.Services.AddSingleton<ICQRSProvider, CQRSProvider>();
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<AISmartApplicationModule>(); });
 
     }
