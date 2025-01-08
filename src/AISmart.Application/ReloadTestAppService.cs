@@ -74,4 +74,28 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         var state = await groupMember.GetStateAsync();
         return $"{state.GroupManagerGuid}, {state.CalledCount.ToString()}";
     }
+
+    public async Task<string> SetAComplicatedGroupAsync()
+    {
+        var groupMember1 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        var groupMember2 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        var groupMember3 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        
+        var groupMember1A = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        var groupMember1B = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        await groupMember1.RegisterAsync(groupMember1A);
+        await groupMember1.RegisterAsync(groupMember1B);
+        
+        var groupMember1Aa = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        var groupMember1Ab = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
+        await groupMember1A.RegisterAsync(groupMember1Aa);
+        await groupMember1A.RegisterAsync(groupMember1Ab);
+
+        var groupGAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.NewGuid());
+        await groupGAgent.RegisterAsync(groupMember1);
+        await groupGAgent.RegisterAsync(groupMember2);
+        await groupGAgent.RegisterAsync(groupMember3);
+        
+        return groupGAgent.GetPrimaryKey().ToString();
+    }
 }
