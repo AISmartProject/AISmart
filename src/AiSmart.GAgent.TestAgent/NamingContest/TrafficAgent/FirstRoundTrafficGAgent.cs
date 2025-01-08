@@ -23,7 +23,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
-        Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent ");
+        Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent Start");
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
@@ -35,6 +35,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.Naming });
 
         await base.ConfirmEvents();
+        
+        Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent End");
     }
 
     [EventHandler]
@@ -47,6 +49,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] NamedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
@@ -63,15 +66,18 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await DispatchCreativeAgent();
+        
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] NamedCompleteGEvent End GrainId:{this.GetPrimaryKey().ToString()} ");
     }
 
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] DebatedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
         if (State.CurrentGrainId != @event.GrainGuid)
         {
             Logger.LogError(
-                $"Traffic DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
+                $"[FirstRoundTrafficGAgent] DebatedCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.GrainGuid.ToString()}");
             return;
         }
 
@@ -89,6 +95,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await DispatchDebateAgent();
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] DebatedCompleteGEvent End GrainId:{this.GetPrimaryKey().ToString()} ");
     }
 
     [EventHandler]
@@ -97,10 +104,10 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         if (State.CurrentGrainId != @event.JudgeGrainId)
         {
             Logger.LogError(
-                $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGrainId.ToString()}");
+                $"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGrainId.ToString()}");
             return;
         }
-        
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
         var creativeInfo = State.CreativeList.FirstOrDefault(f => f.Naming == @event.VoteName);
         if (creativeInfo != null)
         {
@@ -113,6 +120,10 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.JudgeGrainId,
                 NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
         }
+        else
+        {
+            Logger.LogInformation($"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent null GrainId:{this.GetPrimaryKey().ToString()} ");
+        }
 
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
@@ -122,6 +133,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await DispatchJudgeAgent();
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent End GrainId:{this.GetPrimaryKey().ToString()} ");
     }
 
     [EventHandler]
@@ -130,10 +142,11 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         if (State.CurrentGrainId != @event.HostId)
         {
             Logger.LogError(
-                $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.HostId.ToString()}");
+                $"[FirstRoundTrafficGAgent] HostSummaryCompleteGEvent Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.HostId.ToString()}");
             return;
         }
 
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] HostSummaryCompleteGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.HostId,
@@ -142,6 +155,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         await base.ConfirmEvents();
 
         await DispatchHostAgent();
+        
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] HostSummaryCompleteGEvent End GrainId:{this.GetPrimaryKey().ToString()} ");
     }
 
     public Task<MicroAIGAgentState> GetStateAsync()
