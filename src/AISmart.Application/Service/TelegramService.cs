@@ -212,7 +212,7 @@ public class TelegramService : ApplicationService, ITelegramService
     {
         var groupId = GuidUtil.StringToGuid(registerTelegramDto.BotName);
         var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(groupId);
-        await socialAgent.SetAgent(registerTelegramDto.BotName, "You need to answer all the questions you know.");
+        await socialAgent.SetAgent(registerTelegramDto.BotName, registerTelegramDto.Bio);
         var telegramAgent = _clusterClient.GetGrain<ITelegramGAgent>(groupId);
         await telegramAgent.RegisterTelegramAsync(registerTelegramDto.BotName, registerTelegramDto.Token);
         var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
