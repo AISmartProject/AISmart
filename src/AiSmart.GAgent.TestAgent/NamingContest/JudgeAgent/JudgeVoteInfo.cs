@@ -12,7 +12,7 @@ public class JudgeVoteInfo
 
 public class JudgeVoteChatResponse
 {
-    [JsonPropertyName(@"name")] public string Name { get; set; }
+    [JsonPropertyName(@"name")] public string Name { get; set; } = "";
 
-    [JsonPropertyName(@"reason")] public string Reason { get; set; }
+    [JsonPropertyName(@"reason")] public string Reason { get; set; } = "";
 }

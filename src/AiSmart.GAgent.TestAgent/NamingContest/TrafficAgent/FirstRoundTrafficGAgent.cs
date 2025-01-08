@@ -99,7 +99,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 $"Traffic HandleEventAsync Current GrainId not match {State.CurrentGrainId.ToString()}--{@event.JudgeGrainId.ToString()}");
             return;
         }
-
+        
         var creativeInfo = State.CreativeList.FirstOrDefault(f => f.Naming == @event.VoteName);
         if (creativeInfo != null)
         {

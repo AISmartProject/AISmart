@@ -70,6 +70,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             return;
         }
 
+        var judgeResponse = new JudgeVoteChatResponse();
         try
         {
             var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -77,25 +78,21 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             if (response != null && !response.Content.IsNullOrEmpty())
             {
                 var voteResult = JsonSerializer.Deserialize<JudgeVoteChatResponse>(response.Content);
-                if (voteResult == null)
+                if (voteResult != null)
                 {
-                    _logger.LogError("");
-                    return;
+                    judgeResponse = voteResult;
                 }
-
-                await PublishAsync(new JudgeVoteResultGEvent()
-                {
-                    VoteName = voteResult.Name, Reason = voteResult.Reason, JudgeGrainId = this.GetPrimaryKey(),
-                    JudgeName = State.AgentName
-                });
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
+        }
+        finally
+        {
             await PublishAsync(new JudgeVoteResultGEvent()
             {
-                VoteName = "", Reason = "", JudgeGrainId = this.GetPrimaryKey(),
+                VoteName = judgeResponse.Name, Reason = judgeResponse.Reason, JudgeGrainId = this.GetPrimaryKey(),
                 JudgeName = State.AgentName
             });
         }
@@ -169,6 +166,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             await PublishAsync(new JudgeScoreCompleteGEvent() { JudgeGrainId = this.GetPrimaryKey() });
         }
     }
+
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
@@ -179,7 +177,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content.Replace("\"","").ToLower();
+            var namingReply = message.Content.Replace("\"", "").ToLower();
             var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
             var winner = agent.Key;
             await PublishAsync(new VoteCharmingCompleteEvent()
@@ -189,6 +187,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 Round = @event.Round
             });
         }
+
         await base.ConfirmEvents();
     }
 }
