@@ -63,15 +63,6 @@ public class TelegramController : AISmartController
     {
         await _microAiService.ReceiveMessagesAsync(message, groupName);
     }
-    
-    [HttpGet("LoadTestMessageCount")]
-    public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
-    {
-        return await _telegramService.GetLoadTestMessageCount(groupName);
-    }
-    {
-        await _microAiService.ReceiveMessagesAsync(message, groupName);
-    }
 
     [HttpGet("LoadTestMessageCount")]
     public async Task<LoadTestMessageCountResult> GetLoadTestMessageCount(string groupName)
