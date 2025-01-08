@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AElf.OpenTelemetry;
 using AutoResponseWrapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,14 +16,9 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
 using Microsoft.OpenApi.Models;
 using AISmart.Application.Grains;
 using AISmart.Domain.Grains;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Validation.AspNetCore;
-using StackExchange.Redis;
 using Volo.Abp;
+using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.Bundling;
@@ -29,7 +26,9 @@ using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
+using Volo.Abp.Security.Claims;
 using Volo.Abp.Swashbuckle;
+using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
 
 namespace AISmart;
@@ -47,73 +46,48 @@ namespace AISmart;
 )]
 public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrainsModule
 {
-    
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
-        PreConfigure<IdentityBuilder>(builder =>
+        PreConfigure<OpenIddictBuilder>(builder =>
         {
-            builder.AddDefaultTokenProviders();
+            builder.AddValidation(options =>
+            {
+                options.AddAudiences("AISmart");
+                options.UseLocalServer();
+                options.UseAspNetCore();
+            });
         });
     }
-    
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        ConfigureAuthentication(context, configuration);
+        ConfigureAuthentication(context);
         ConfigureBundles();
-       // ConfigureUrls(configuration);
+        ConfigureUrls(configuration);
         ConfigureConventionalControllers();
         ConfigureVirtualFileSystem(context);
         ConfigureCors(context, configuration);
         ConfigureAutoResponseWrapper(context);
         ConfigureSwaggerServices(context, configuration);
-        ConfigureRedis(context, configuration, hostingEnvironment);
-
-        //context.Services.AddDaprClient();
-        
-        context.Services.AddMvc(options =>
-        {
-            options.Filters.Add(new IgnoreAntiforgeryTokenAttribute());
-        });
+        context.Services.AddDaprClient();
     }
-
+    
     private static void ConfigureAutoResponseWrapper(ServiceConfigurationContext context)
     {
         context.Services.AddAutoResponseWrapper();
     }
-    
-    private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
+
+    private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
-        context.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.Authority = configuration["AuthServer:Authority"];
-                options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
-                options.Audience = "AISmart";
-            });
-        context.Services.AddAuthorization(options =>
+        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+        context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
         {
-            options.AddPolicy("OnlyAdminAccess", policy =>
-                policy.RequireRole("admin"));
+            options.IsDynamicClaimsEnabled = true;
         });
     }
-    
-    private void ConfigureRedis(
-        ServiceConfigurationContext context,
-        IConfiguration configuration,
-        IWebHostEnvironment hostingEnvironment)
-    {
-        if (!hostingEnvironment.IsDevelopment())
-        {
-            var redis = ConnectionMultiplexer.Connect(configuration["Redis:Configuration"]);
-            context.Services
-                .AddDataProtection()
-                .PersistKeysToStackExchangeRedis(redis, "AISmartAuthServer-Protection-Keys");
-        }
-    }
-
 
     private void ConfigureBundles()
     {
@@ -128,6 +102,19 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             );
         });
     }
+
+    private void ConfigureUrls(IConfiguration configuration)
+    {
+        Configure<AppUrlOptions>(options =>
+        {
+            options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
+            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"]?.Split(',') ?? Array.Empty<string>());
+
+            options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
+            options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
+        });
+    }
+
     private void ConfigureVirtualFileSystem(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
@@ -162,33 +149,18 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        context.Services.AddAbpSwaggerGen(options =>
+        context.Services.AddAbpSwaggerGenWithOAuth(
+            configuration["AuthServer:Authority"]!,
+            new Dictionary<string, string>
+            {
+                    {"AISmart", "AISmart API"}
+            },
+            options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "AISmart API", Version = "v1" });
-                // options.DocumentFilter<HideApisFilter>();
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                {
-                    Name = "Authorization",
-                    Scheme = "bearer",
-                    Description = "Specify the authorization token.",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                });
-
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                        },
-                        new string[] { }
-                    }
-                });
-            }
-        );
+            });
     }
 
     private void ConfigureCors(ServiceConfigurationContext context, IConfiguration configuration)
@@ -233,11 +205,12 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
-        app.UseAuthorization();
+        app.UseAbpOpenIddictValidation();
 
         app.UseUnitOfWork();
         app.UseDynamicClaims();
-        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+        app.UseAuthorization();
+
         app.UseSwagger();
         app.UseAbpSwaggerUI(c =>
         {
@@ -247,7 +220,7 @@ public class AISmartHttpApiHostModule : AIApplicationGrainsModule, IDomainGrains
             c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
             c.OAuthScopes("AISmart");
         });
-        
+
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();

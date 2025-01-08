@@ -1,7 +1,5 @@
-﻿using AISmart.Agent.GEvents;
-using AutoMapper;
-using AISmart.Dto;
-using AISmart.GAgent.Dto;
+﻿using AutoMapper;
+using AISmart.Authors;
 
 namespace AISmart;
 
@@ -14,11 +12,7 @@ public class AISmartApplicationAutoMapperProfile : Profile
          * into multiple profile classes for a better organization. */
         
         //Example related, can be removed
-        CreateMap<CreateTransactionGEventDto, CreateTransactionGEvent>();
-        CreateMap<CreateTransactionGEvent, CreateTransactionGEventDto>();
-        CreateMap<BindTwitterAccountGEvent, BindTwitterAccountGEventDto>();
-        CreateMap<BindTwitterAccountGEventDto, BindTwitterAccountGEvent>();
-        CreateMap<PumpFunSendMessageGEvent, PumpFunSendMessageGEventDto>();
-        CreateMap<PumpFunSendMessageGEventDto, PumpFunSendMessageGEvent>();
+        CreateMap<Author, AuthorDto>();
+
     }
 }

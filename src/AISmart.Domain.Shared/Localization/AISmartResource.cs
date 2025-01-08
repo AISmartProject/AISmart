@@ -1,13 +1,9 @@
 ﻿using Volo.Abp.Localization;
 
-namespace AISmart.Localization
+namespace AISmart.Localization;
+
+[LocalizationResourceName("AISmart")]
+public class AISmartResource
 {
-    [LocalizationResourceName("AISmart")]
-    public class AISmartResource
-    {
 
-    }
 }
-
-
-
