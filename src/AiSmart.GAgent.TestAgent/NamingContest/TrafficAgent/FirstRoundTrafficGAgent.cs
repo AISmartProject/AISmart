@@ -266,12 +266,14 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             await publishingAgent.RegisterAsync(voteCharmingGAgent);
         }
         
+        
         await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
         {
             AgentIdNameDictionary = State.CreativeList.ToDictionary(p => p.CreativeGrainId, p => p.CreativeName),
             Round = 1,
             VoteMessage = State.ChatHistory
         });
+        Logger.LogInformation("VoteCharmingEvent send");
     }
 
     private async Task DispatchHostAgent()
