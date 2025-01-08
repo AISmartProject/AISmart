@@ -51,12 +51,6 @@ public class TelegramService : ApplicationService, ITelegramService
     private static List<IPublishingGAgent> _firstStepPublishingList = new List<IPublishingGAgent>();
     private static List<ISecondTrafficGAgent> _secondTrafficList = new List<ISecondTrafficGAgent>();
 
-
-    private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
-        new Dictionary<string, ILoadTestGAgentCount>();
-
-    private static Dictionary<string, IPublishingGAgent> _publishingList = new Dictionary<string, IPublishingGAgent>();
-
     private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
         new Dictionary<string, ILoadTestGAgentCount>();
 
