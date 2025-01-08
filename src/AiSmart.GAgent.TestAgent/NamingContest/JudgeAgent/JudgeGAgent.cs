@@ -90,6 +90,11 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         }
         finally
         {
+            if (judgeResponse.Name.IsNullOrWhiteSpace())
+            {
+                _logger.LogError("[Judge] JudgeVoteGEVent Vote name is empty");
+            }
+            
             await PublishAsync(new JudgeVoteResultGEvent()
             {
                 VoteName = judgeResponse.Name, Reason = judgeResponse.Reason, JudgeGrainId = this.GetPrimaryKey(),
