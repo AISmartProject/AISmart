@@ -5,6 +5,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 
@@ -57,6 +58,9 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
     [EventHandler]
     public async Task HandleEventAsync(VoteCharmingEvent @event)
     {
+        Logger.LogInformation("VoteCharmingEvent recieve {info},TotalBatches:{TotalBatches},CurrentBatch:{CurrentBatch}", 
+            JsonConvert.SerializeObject(@event), State.TotalBatches, State.CurrentBatch);
+
         if (State.TotalBatches == State.CurrentBatch)
         {
             return;
@@ -101,6 +105,8 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
             VoteMessage = @event.VoteMessage,
             Round = @event.Round
         });
+        Logger.LogInformation("SingleVoteCharmingEvent send");
+
         base.RaiseEvent(new VoteCharmingGEvent
         {
             GrainGuidList = selectedVoteIds

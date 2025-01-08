@@ -462,6 +462,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
+        Logger.LogInformation("SingleVoteCharmingEvent recieve {info}", JsonConvert.SerializeObject(@event));
         var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
         var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -479,6 +480,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
+            Logger.LogInformation("VoteCharmingCompleteEvent send");
+
         }
 
         await base.ConfirmEvents();
