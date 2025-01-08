@@ -19,10 +19,9 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     protected async Task<Guid> PublishAsync<T>(T @event) where T : EventBase
     {
-        var isTop = _correlationId == null;
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
-        Logger.LogInformation($"Published event {@event}, {isTop}, {_correlationId}");;
+        Logger.LogInformation($"Published event {JsonConvert.SerializeObject(@event)}");;
         var eventId = Guid.NewGuid();
         await LoadSubscriptionAsync();
         if (_subscription.State.IsDefault)
