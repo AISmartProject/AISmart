@@ -25,6 +25,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
+        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         if (@event.IfFirstStep == true)
         {
             RaiseEvent(new AddHistoryChatSEvent()
@@ -52,19 +53,20 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         }
 
         await base.ConfirmEvents();
+        
+        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
     }
 
     [EventHandler]
     public async Task HandleEventAsync(TrafficInformCreativeGEvent @event)
     {
-        GrainId grainId= await this.GetSubscriptionAsync();
-        
-        
         if (@event.CreativeGrainId != this.GetPrimaryKey())
         {
             return;
         }
-
+        
+        Logger.LogInformation($"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
         try
@@ -104,6 +106,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             RaiseEvent(new SetNamingSEvent { Naming = namingReply });
 
             await base.ConfirmEvents();
+            
+            Logger.LogInformation($"[CreativeGAgent] TrafficInformCreativeGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 
@@ -149,6 +153,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             return;
         }
 
+        Logger.LogInformation($"[CreativeGAgent] TrafficInformDebateGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         var debateReply = string.Empty;
         var prompt = NamingConstants.DebatePrompt;
         try
@@ -185,6 +190,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.Debate, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, debateReply, prompt));
             await base.ConfirmEvents();
+            
+            Logger.LogInformation($"[CreativeGAgent] TrafficInformDebateGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 

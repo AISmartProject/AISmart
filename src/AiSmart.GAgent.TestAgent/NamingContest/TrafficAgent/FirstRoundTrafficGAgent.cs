@@ -23,6 +23,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
+        Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent ");
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
@@ -155,11 +156,13 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchCreativeAgent()
     {
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchCreativeAgent GrainId:{this.GetPrimaryKey().ToString()}");
         var random = new Random();
         var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
             .ToList();
         if (creativeList.Count == 0)
         {
+            Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchCreativeAgent Over GrainId:{this.GetPrimaryKey().ToString()}");
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DebateStart, Guid.Empty));
 
             // end message 
@@ -192,11 +195,13 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchDebateAgent()
     {
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchDebateAgent GrainId:{this.GetPrimaryKey().ToString()}");
         // the second stage - debate
         var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
             .ToList();
         if (State.DebateRoundCount == 0 && creativeList.Count == 0)
         {
+            Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchDebateAgent Over GrainId:{this.GetPrimaryKey().ToString()}");
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVoteStart, Guid.Empty));
             RaiseEvent(new ClearCalledGrainsSEvent());
             await base.ConfirmEvents();
@@ -227,9 +232,11 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchJudgeAgent()
     {
+        Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchJudgeAgent GrainId:{this.GetPrimaryKey().ToString()}");
         var creativeList = State.JudgeAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
         if (creativeList.Count == 0)
         {
+            Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchJudgeAgent Over GrainId:{this.GetPrimaryKey().ToString()}");
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
 
