@@ -19,42 +19,6 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
     }
 
     [EventHandler]
-    public async Task HandleEventAsync(JudgeGEvent @event)
-    {
-        var history = new List<MicroAIMessage>()
-        {
-            new MicroAIMessage(Role.User.ToString(),
-                $"The theme of this naming contest is: \"{@event.NamingQuestion}\""),
-        };
-
-        history.AddRange(State.RecentMessages);
-        history.Add(new MicroAIMessage(Role.User.ToString(), @event.NamingReply));
-
-        List<AIMessageGEvent> sEvent = new List<AIMessageGEvent>();
-        sEvent.Add(new AIReceiveMessageGEvent()
-            { Message = new MicroAIMessage(Role.User.ToString(), @event.NamingReply) });
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(@event.NamingReply, history);
-
-        if (message != null && !message.Content.IsNullOrEmpty())
-        {
-            var namingReply = message.Content;
-            var score = int.Parse(namingReply);
-
-            sEvent.Add(new AIReceiveMessageGEvent()
-                { Message = new MicroAIMessage(Role.Assistant.ToString(), namingReply) });
-            await PublishAsync(new RankingGEvent()
-            {
-                CreativeGrainId = @event.CreativeGrainId, CreativeName = @event.CreativeName, Score = score,
-                Question = @event.NamingQuestion, Reply = @event.NamingReply
-            });
-        }
-
-        RaiseEvents(sEvent);
-        await base.ConfirmEvents();
-    }
-
-    [EventHandler]
     public async Task HandleEventAsync(TrafficNamingContestOver @event)
     {
         await PublishAsync(new JudgeOverGEvent() { NamingQuestion = @event.NamingQuestion });
@@ -70,6 +34,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             return;
         }
 
+        Logger.LogInformation($"[JudgeGAgent] JudgeVoteGEVent Start GrainId:{this.GetPrimaryKey().ToString()}");
         var judgeResponse = new JudgeVoteChatResponse();
         try
         {
@@ -82,6 +47,10 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 {
                     judgeResponse = voteResult;
                 }
+                else
+                {
+                    _logger.LogError($"[Judge] response voteResult == null response content:{response.Content}");
+                }
             }
         }
         catch (Exception ex)
@@ -90,11 +59,18 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         }
         finally
         {
+            if (judgeResponse.Name.IsNullOrWhiteSpace())
+            {
+                _logger.LogError("[Judge] JudgeVoteGEVent Vote name is empty");
+            }
+            
             await PublishAsync(new JudgeVoteResultGEvent()
             {
                 VoteName = judgeResponse.Name, Reason = judgeResponse.Reason, JudgeGrainId = this.GetPrimaryKey(),
                 JudgeName = State.AgentName
             });
+            
+            Logger.LogInformation($"[JudgeGAgent] JudgeVoteGEVent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 

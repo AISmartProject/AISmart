@@ -9,6 +9,7 @@ using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
@@ -25,6 +26,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
+        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         if (@event.IfFirstStep == true)
         {
             RaiseEvent(new AddHistoryChatSEvent()
@@ -52,18 +54,20 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         }
 
         await base.ConfirmEvents();
+
+        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
     }
 
     [EventHandler]
     public async Task HandleEventAsync(TrafficInformCreativeGEvent @event)
     {
-        GrainId grainId= await this.GetSubscriptionAsync();
-        
-        
         if (@event.CreativeGrainId != this.GetPrimaryKey())
         {
             return;
         }
+
+        Logger.LogInformation(
+            $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
 
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
@@ -91,10 +95,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 NamingReply = namingReply,
                 CreativeName = State.AgentName,
             });
-            
+
             await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.Naming, this.GetPrimaryKey(),
-                NamingRoleType.Contestant, State.AgentName, namingReply,prompt));
-            
+                NamingRoleType.Contestant, State.AgentName,
+                JsonConvert.SerializeObject(new NamingResponse(namingReply, string.Empty)), prompt));
+
             RaiseEvent(new AddHistoryChatSEvent()
             {
                 Message = new MicroAIMessage(Role.User.ToString(),
@@ -104,6 +109,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             RaiseEvent(new SetNamingSEvent { Naming = namingReply });
 
             await base.ConfirmEvents();
+
+            Logger.LogInformation(
+                $"[CreativeGAgent] TrafficInformCreativeGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 
@@ -114,7 +122,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -131,7 +139,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -149,6 +157,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             return;
         }
 
+        Logger.LogInformation(
+            $"[CreativeGAgent] TrafficInformDebateGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         var debateReply = string.Empty;
         var prompt = NamingConstants.DebatePrompt;
         try
@@ -159,7 +169,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             {
                 debateReply = message.Content;
             }
-
         }
         catch (Exception ex)
         {
@@ -181,10 +190,13 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 Message = new MicroAIMessage(Role.User.ToString(),
                     AssembleMessageUtil.AssembleDebateContent(State.AgentName, debateReply))
             });
-            
+
             await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.Debate, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, debateReply, prompt));
             await base.ConfirmEvents();
+
+            Logger.LogInformation(
+                $"[CreativeGAgent] TrafficInformDebateGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 
@@ -227,7 +239,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                     Message = new MicroAIMessage(Role.User.ToString(),
                         AssembleMessageUtil.AssembleDiscussionContent(State.AgentName, discussionReply))
                 });
-                
+
                 await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.Discussion, this.GetPrimaryKey(),
                     NamingRoleType.Contestant, State.AgentName, discussionReply, prompt));
             }
@@ -243,7 +255,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         if (@event.DiscussionReply.IsNullOrEmpty())
         {
             return;
@@ -276,7 +288,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             {
                 summary = JsonSerializer.Deserialize<CreativeGroupSummary>(response.Content);
             }
-
         }
         catch (Exception ex)
         {
@@ -301,7 +312,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
             await PublishAsync(new CreativeSummaryCompleteGEvent()
                 { SummaryName = summary.Name, Reason = summary.Reason, GraindId = this.GetPrimaryKey() });
-            
+
             await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.DiscussionSummary, this.GetPrimaryKey(),
                 NamingRoleType.Contestant, State.AgentName, JsonSerializer.Serialize(summary), prompt));
 
@@ -317,7 +328,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         RaiseEvent(new AddHistoryChatSEvent()
         {
             Message = new MicroAIMessage(Role.User.ToString(),
@@ -349,7 +360,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         var answer = string.Empty;
         var prompt = NamingConstants.CreativeAnswerQuestionPrompt;
         try
@@ -374,9 +385,9 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                     Message = new MicroAIMessage(Role.User.ToString(),
                         AssembleMessageUtil.AssembleCreativeAnswer(State.AgentName, answer))
                 });
-                
+
                 await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
-                    NamingRoleType.Contestant, State.AgentName, answer,prompt ));
+                    NamingRoleType.Contestant, State.AgentName, answer, prompt));
             }
 
             await PublishAsync(new CreativeAnswerCompleteGEvent()
@@ -391,7 +402,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             return;
         }
-        
+
         if (@event.CreativeName.IsNullOrWhiteSpace())
         {
             return;
@@ -451,6 +462,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(SingleVoteCharmingEvent @event)
     {
+        Logger.LogInformation("SingleVoteCharmingEvent recieve {info}", JsonConvert.SerializeObject(@event));
         var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
         var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
         var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
@@ -458,17 +470,20 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         if (message != null && !message.Content.IsNullOrEmpty())
         {
-            var namingReply = message.Content.Replace("\"","").ToLower();
+            var namingReply = message.Content.Replace("\"", "").ToLower();
             var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
             var winner = agent.Key;
-                
+
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
                 Winner = winner,
                 VoterId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
+            Logger.LogInformation("VoteCharmingCompleteEvent send");
+
         }
+
         await base.ConfirmEvents();
     }
 }
