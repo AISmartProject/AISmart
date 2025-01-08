@@ -82,6 +82,10 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 {
                     judgeResponse = voteResult;
                 }
+                else
+                {
+                    _logger.LogError($"[Judge] response voteResult == null response content:{response.Content}");
+                }
             }
         }
         catch (Exception ex)
