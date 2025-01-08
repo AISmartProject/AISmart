@@ -1,9 +1,10 @@
 using System;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.Domain.Entities.Auditing;
 
 namespace AISmart.User;
 
-public class IdentityUserExtension: Entity<Guid>
+public class IdentityUserExtension:  FullAuditedAggregateRoot<Guid>
 {
     public Guid UserId { get; set; }
     /// <summary>

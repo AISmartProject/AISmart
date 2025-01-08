@@ -57,6 +57,11 @@ public class TelegramService : ApplicationService, ITelegramService
 
     private static Dictionary<string, IPublishingGAgent> _publishingList = new Dictionary<string, IPublishingGAgent>();
 
+    private static Dictionary<string, ILoadTestGAgentCount> _loadTestRecords =
+        new Dictionary<string, ILoadTestGAgentCount>();
+
+    private static Dictionary<string, IPublishingGAgent> _publishingList = new Dictionary<string, IPublishingGAgent>();
+
     public TelegramService(IOptions<TelegramTestOptions> telegramTestOptions, IOptions<TelegramOptions> telegramOption,
         IClusterClient clusterClient,
         ILogger<TelegramService> logger)
