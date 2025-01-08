@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\AISmart.Application\AISmart.Application.csproj" />
+        <ProjectReference Include="..\..\src\AISmart.GAgent.Twitter\AISmart.GAgent.Twitter.csproj" />
+        <ProjectReference Include="..\AISmart.Application.Tests\AISmart.Application.Tests.csproj" />
+        <ProjectReference Include="..\AISmart.Domain.Tests\AISmart.Domain.Tests.csproj" />
+        <ProjectReference Include="..\AISmart.GAgents.Tests\AISmart.GAgents.Tests.csproj" />
+        <ProjectReference Include="..\AISmart.Orleans.TestBase\AISmart.Orleans.TestBase.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AutoGen" />
+        <PackageReference Include="Azure.AI.TextAnalytics" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Microsoft.Orleans.TestingHost" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+
+
+</Project>

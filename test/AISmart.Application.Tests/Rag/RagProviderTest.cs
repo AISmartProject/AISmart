@@ -1,32 +1,22 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AISmart.Rag.Agent;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using AISmart.Options;
+using AISmart.Provider;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
-using Moq;
 
 namespace AISmart.Rag;
 
 
 public class RagProviderTest : AISmartApplicationTestBase
 {
-    private readonly string _qdrantUrl = "http://localhost:6333"; 
-    private readonly string _collectionName = "test_collection"; 
-    
     [Fact]
     public async Task StoreBatchAsync_Test()
     {
-        var configuration = ServiceProvider.GetRequiredService<IConfiguration>();
-        var apiKey = configuration["Rag:APIKey"];
-        var endpoint = configuration["AzureService:endpoint"];
-        var azureKey = configuration["AzureService:apiKey"];
-        
-        var chunker = new SimpleChunker(endpoint, azureKey); 
-        var embeddingProvider = new OpenAIEmbeddingProvider(apiKey); 
-        var vectorDatabase = new QdrantVectorDatabase(_qdrantUrl, _collectionName);
-
-        var ragProvider = new RagProvider(chunker, embeddingProvider, vectorDatabase);
+        var config = GetRequiredService<IOptionsMonitor<RagOptions>>();
+        var logger = GetRequiredService<ILogger<RagProvider>>();
+        var ragProvider = new RagProvider(config, logger);
 
         var texts = new List<string>
         {
@@ -42,13 +32,9 @@ public class RagProviderTest : AISmartApplicationTestBase
 
         var keyword = "RAG";
         var question = "what is " + keyword;
-        var queryEmbedding = await embeddingProvider.GetEmbeddingAsync(question);
-        var answer = await vectorDatabase.RetrieveAsync(queryEmbedding,3);
-        
-        foreach (var chunk in answer)
-        {
-            Assert.Contains(keyword, chunk);
-        }
+       
+        var answer = await ragProvider.RetrieveAnswerAsync(question);
+        Assert.Contains(keyword, answer);
     }
     
 }

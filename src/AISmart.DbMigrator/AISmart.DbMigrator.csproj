@@ -21,17 +21,18 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>    
-    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+  <ItemGroup>
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.Async" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Volo.Abp.Autofac" />
+    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.Autofac" Version="8.2.0" />
-    <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="8.2.0" />
     <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
     <ProjectReference Include="..\AISmart.MongoDB\AISmart.MongoDB.csproj" />
   </ItemGroup>

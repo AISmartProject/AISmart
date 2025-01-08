@@ -9,7 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="OpenIddict.Server.AspNetCore" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Volo.Abp.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Volo.Abp.OpenIddict.EntityFrameworkCore" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" />
+    <PackageReference Include="Volo.Abp.TestBase" />
+    <PackageReference Include="Volo.Abp.Uow" />
   </ItemGroup>
 
   <ItemGroup>

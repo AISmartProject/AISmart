@@ -1,0 +1,33 @@
+{
+  "NetWork": {
+    "ContractsList": [
+      {
+        "Name": "GroupGAgent",
+        "Description": "群聊Agent，能把多个Agent加入到一个群聊",
+        "Type": "System",
+        "GrainType": "AISmart.Application.Grains.Agents.Group.GroupGAgent"
+      },
+      {
+        "Name": "MarketLeaderGAgent",
+        "Description": "市场部门领导，会自动分发任务",
+        "Type": "User",
+        "GrainType": "AISmart.Application.Grains.Agents.MarketLeader.MarketLeaderGAgent"
+      },
+      {
+        "Name": "DeveloperGAgent-William",
+        "Description": "市场部，运营人员",
+        "Type": "User",
+        "GrainType": "AISmart.Application.Grains.Agents.Developer.DeveloperGAgent"
+      }
+    ],
+    "Groups": [
+      {
+        "Name": "市场部",
+        "AgentsList": [
+          "MarketLeaderGAgent",
+          "DeveloperGAgent-William"
+        ]
+      }
+    ]
+  }
+}

@@ -2,6 +2,10 @@ using AElf.OpenTelemetry;
 using AISmart.Domain.Grains;
 using Microsoft.Extensions.DependencyInjection;
 using AISmart.Application.Grains;
+using AISmart.GAgent.Autogen;
+using AiSmart.GAgent.SocialAgent;
+using AISmart.GAgent.Telegram;
+using AiSmart.GAgent.TestAgent;
 using Serilog;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
@@ -12,7 +16,15 @@ namespace AISmart.Silo;
 [DependsOn(
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpAutofacModule),
-    typeof(OpenTelemetryModule)
+    typeof(OpenTelemetryModule),
+    typeof(AISmartGAgentAElfModule),
+    typeof(AISmartGAgentPumpfunModule),
+    typeof(AISmartGAgentTelegramModule),
+    typeof(AISmartGAgentTwitterModule),
+    typeof(AISmartGAgentAutogenModule),
+    typeof(AISmartGAgentMicroAIModule),
+    typeof(AISmartGAgentTestAgentModule),
+    typeof(AISmartGAgentSocialGAgentModule)
 )]
 public class SiloModule : AIApplicationGrainsModule, IDomainGrainsModule
 {
@@ -24,7 +36,6 @@ public class SiloModule : AIApplicationGrainsModule, IDomainGrainsModule
         //add dependencies here
         context.Services.AddSerilog(loggerConfiguration => {},
             true, writeToProviders: true);
-
         context.Services.AddHttpClient();
     }
 }

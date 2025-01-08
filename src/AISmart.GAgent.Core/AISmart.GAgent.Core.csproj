@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
+      <ProjectReference Include="..\AISmart.Core\AISmart.Core.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Orleans.Core.Abstractions" />
+        <PackageReference Include="Microsoft.Orleans.EventSourcing" />
+        <PackageReference Include="Microsoft.Orleans.Streaming" />
+    </ItemGroup>
+
+</Project>

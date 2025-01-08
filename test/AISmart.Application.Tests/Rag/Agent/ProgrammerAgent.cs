@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AISmart.Provider;
 
 namespace AISmart.Rag.Agent;
 

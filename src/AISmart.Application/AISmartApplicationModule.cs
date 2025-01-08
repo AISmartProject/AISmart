@@ -1,4 +1,11 @@
 ﻿using AISmart.Application.Grains;
+using AiSmart.GAgent.SocialAgent;
+using AISmart.GAgent.Telegram;
+using AISmart.CQRS;
+using AiSmart.GAgent.TestAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.Common;
+using AISmart.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Account;
 using Volo.Abp.AspNetCore.Mvc.Dapr;
 using Volo.Abp.AutoMapper;
@@ -17,7 +24,16 @@ namespace AISmart;
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpDaprModule),
     typeof(AbpAspNetCoreMvcDaprModule),
-    typeof(AIApplicationGrainsModule)
+    typeof(AIApplicationGrainsModule),
+    typeof(AISmartSimpleRagModule),
+    typeof(AISmartGAgentAElfModule),
+    typeof(AISmartGAgentTelegramModule),
+    typeof(AISmartGAgentTwitterModule),
+    typeof(AISmartGAgentMicroAIModule),
+    typeof(AISmartGAgentTestAgentModule),
+    typeof(AISmartGAgentSocialGAgentModule),
+    typeof(AISmartCQRSModule)
+
 )]
 public class AISmartApplicationModule : AbpModule
 {
@@ -28,5 +44,10 @@ public class AISmartApplicationModule : AbpModule
             options.AddMaps<AISmartApplicationModule>();
         });
         
+        var configuration = context.Services.GetConfiguration();
+        Configure<RagOptions>(configuration.GetSection("Rag"));
+        Configure<TelegramTestOptions>(configuration.GetSection("NamingContest:Telegram"));
+        Configure<NameContestOptions>(configuration.GetSection("NameContest"));
+
     }
 }

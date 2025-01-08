@@ -10,12 +10,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
+    <ProjectReference Include="..\AISmart.Application\AISmart.Application.csproj" />
+    <ProjectReference Include="..\AISmart.GAgent.Pumpfun\AISmart.GAgent.Pumpfun.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.Account.HttpApi" Version="8.2.0" />
-    <PackageReference Include="Volo.Abp.Identity.HttpApi" Version="8.2.0" />
-    <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="8.2.0" />
+    <PackageReference Include="Volo.Abp.Account.HttpApi" />
+    <PackageReference Include="Volo.Abp.Core" />
+    <PackageReference Include="Volo.Abp.Identity.HttpApi" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" />
   </ItemGroup>
 
 </Project>

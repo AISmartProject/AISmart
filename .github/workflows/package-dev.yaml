@@ -1,0 +1,43 @@
+name: Package Testnet
+
+on:
+  push:
+    branches:
+      - "dev"
+
+run-name: Package AiSmart on ${{ github.ref }}
+
+env:
+  DOTNET_INSTALL_DIR: "./.dotnet"
+
+concurrency:
+  group: workflow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: aismart-runner
+    strategy:
+      matrix:
+        servicename:
+          [
+            AISmart.HttpApi.Host,
+            AISmart.Silo,
+            AISmart.AuthServer,
+          ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache NuGet Packages
+        id: nuget-packages
+        uses: actions/cache@v4
+        env:
+          cache-name: nuget-package-cache
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ matrix.servicename }}
+
+      - name: List NuGet Packages
+        if: ${{ steps.nuget-packages.outputs.cache-hit == 'true' }}
+        continue-on-error: true
+        run: ls -lh ~/.nuget/packages
+      - run: dotnet publish src/${{ matrix.servicename }}/${{ matrix.servicename }}.csproj -o out/${{ matrix.servicename }}

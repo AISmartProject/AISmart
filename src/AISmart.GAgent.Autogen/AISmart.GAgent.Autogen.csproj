@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\AISmart.Application.Contracts\AISmart.Application.Contracts.csproj" />
+        <ProjectReference Include="..\AISmart.Application.Grains\AISmart.Application.Grains.csproj" />
+        <ProjectReference Include="..\AISmart.SimpleRag\AISmart.SimpleRag.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AutoGen" />
+      <PackageReference Include="AutoGen.Core" />
+    </ItemGroup>
+
+</Project>
