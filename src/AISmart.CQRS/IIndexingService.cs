@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.Agents;
@@ -17,6 +18,7 @@ public interface IIndexingService
     public Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase;
 
     public Task<string> QueryEventIndexAsync(string id, string indexName);
+    public Task<string> QueryEventIndexAsync(DateTime beginDateTime,DateTime endDateTime, string indexName);
 
     public void CheckExistOrCreateIndex<T>() where T : class;
     public Task SaveOrUpdateChatLogIndexAsync(AIChatLogIndex index);

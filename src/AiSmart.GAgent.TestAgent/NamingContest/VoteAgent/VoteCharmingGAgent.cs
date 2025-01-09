@@ -45,7 +45,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
             grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixJudge);
         }
 
-        base.RaiseEvent(new InitVoteCharmingGEvent
+        RaiseEvent(new InitVoteCharmingGEvent
         {
             GrainGuidList = list,
             TotalBatches =  @event.TotalBatches,
@@ -107,7 +107,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         });
         Logger.LogInformation("SingleVoteCharmingEvent send");
 
-        base.RaiseEvent(new VoteCharmingGEvent
+        RaiseEvent(new VoteCharmingGEvent
         {
             GrainGuidList = selectedVoteIds
         });
