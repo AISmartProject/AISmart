@@ -129,7 +129,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
                 
                 services.AddSingleton(typeof(INameContestProvider), typeof(NameContestProvider));
             })
-            .AddMemoryStreams("AISmart")
+            .AddMemoryStreams("PubSubStore")
             .AddMemoryGrainStorage("PubSubStore")
             .AddMemoryGrainStorageAsDefault()
             .AddLogStorageBasedLogConsistencyProvider("LogStorage")

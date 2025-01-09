@@ -7,15 +7,13 @@ using Newtonsoft.Json;
 using Orleans.EventSourcing;
 using Orleans.Providers;
 using Orleans.Streams;
-using Orleans.Streams.Core;
 
 namespace AISmart.GAgent.Core;
 
 [GAgent]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-[ImplicitStreamSubscription(CommonConstants.StreamNamespace)]
-public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState>, IStateGAgent<TState>, IStreamSubscriptionObserver
+public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState>, IStateGAgent<TState>
     where TState : StateBase, new()
     where TEvent : GEventBase
 {
@@ -23,7 +21,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     protected readonly ILogger Logger;
 
-    private readonly List<EventWrapperBaseAsyncObserver> _observers = new();
+    private readonly Dictionary<EventWrapperBaseAsyncObserver, Guid> _observers = new();
 
     private IEventDispatcher? EventDispatcher { get; set; }
 
@@ -109,7 +107,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             Logger.LogInformation($"No need to update event handlers for {this.GetGrainId().ToString()}.");
         }
 
-        foreach (var observer in _observers)
+        foreach (var observer in _observers.Keys)
         {
             Logger.LogError(
                 $"Stream of {this.GetGrainId().ToString()} is subscribing observer: {observer.MethodName}-{observer.ParameterTypeName}");
@@ -219,17 +217,25 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         {
             var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
             var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-            if (handles != null && handles.Count != 0)
+
+            if (handles.Count == 0)
+            {
+                foreach (var observer in _observers.Keys)
+                {
+                    var handle = await streamOfThisGAgent.SubscribeAsync(observer);
+                    _observers[observer] = handle.HandleId;
+                }
+            }
+            else
             {
                 foreach (var handle in handles)
                 {
-                    await handle.UnsubscribeAsync();
+                    var observer = _observers.FirstOrDefault(x => x.Value == handle.HandleId).Key;
+                    if (observer != null)
+                    {
+                        await handle.ResumeAsync(observer);
+                    }
                 }
-            }
-
-            foreach (var observer in _observers)
-            {
-                await streamOfThisGAgent.SubscribeAsync(observer);
             }
         }
         catch (Exception e)
@@ -303,13 +309,5 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainIdString);
         return StreamProvider.GetStream<EventWrapperBase>(streamId);
-    }
-
-    public async Task OnSubscribed(IStreamSubscriptionHandleFactory handleFactory)
-    {
-        foreach (var observer in _observers)
-        {
-            await handleFactory.Create<EventWrapperBase>().ResumeAsync(observer);
-        }
     }
 }

@@ -85,7 +85,7 @@ public static class OrleansHostExtension
                         options.ResponseTimeout = TimeSpan.FromMinutes(5);
                         options.SystemResponseTimeout = TimeSpan.FromMinutes(5);
                     })
-                    .AddMongoDBGrainStorage("PubSubStore", options =>
+                    .AddMongoDBGrainStorage("AISmart", options =>
                     {
                         // Config PubSubStore Storage for Persistent Stream 
                         options.CollectionPrefix = "StreamStorage";

@@ -69,7 +69,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             observer.MethodName = eventHandlerMethod.Name;
             observer.ParameterTypeName = eventHandlerMethod.GetParameters()[0].ParameterType.Name;
-            _observers.Add(observer);
+            _observers.Add(observer, Guid.Empty);
         }
 
         Logger.LogInformation($"Added {_observers.Count} event handlers to {this.GetGrainId().ToString()}.");
