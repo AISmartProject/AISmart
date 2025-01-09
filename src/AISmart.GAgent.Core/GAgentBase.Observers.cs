@@ -9,7 +9,7 @@ namespace AISmart.GAgent.Core;
 public abstract partial class GAgentBase<TState, TEvent>
 {
     [AggregateExecutionTime]
-    private Task UpdateObserverList()
+    private async Task UpdateObserverList()
     {
         var eventHandlerMethods = GetEventHandlerMethods();
 
@@ -66,8 +66,6 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             Observers.Add(observer, new Dictionary<StreamId, Guid>());
         }
-
-        return Task.CompletedTask;
     }
 
     private IEnumerable<MethodInfo> GetEventHandlerMethods()
