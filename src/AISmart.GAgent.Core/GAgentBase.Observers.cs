@@ -8,7 +8,6 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    [AggregateExecutionTime]
     private async Task UpdateObserverList()
     {
         Logger.LogInformation($"{this.GetGrainId().ToString()}: UpdateObserverList");
