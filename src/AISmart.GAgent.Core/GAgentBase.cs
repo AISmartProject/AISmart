@@ -110,8 +110,15 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
         foreach (var observer in _observers)
         {
-            await streamOfThisGAgent.SubscribeAsync(observer);
+            var handle = await streamOfThisGAgent.SubscribeAsync(observer);
+            if (handle?.HandleId == null)
+            {
+                Logger.LogError($"Stream of {this.GetGrainId().ToString()} Failed to subscribe observer: {observer}");
+            }
         }
+
+        var count = (await streamOfThisGAgent.GetAllSubscriptionHandles()).Count;
+        Logger.LogError($"Stream of {this.GetGrainId().ToString()} subscribed {count} handles.");
 
         return streamOfThisGAgent;
     }
