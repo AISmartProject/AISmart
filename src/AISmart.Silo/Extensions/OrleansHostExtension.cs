@@ -85,7 +85,7 @@ public static class OrleansHostExtension
                         options.ResponseTimeout = TimeSpan.FromMinutes(5);
                         options.SystemResponseTimeout = TimeSpan.FromMinutes(5);
                     })
-                    .AddMongoDBGrainStorage("AISmart", options =>
+                    .AddMongoDBGrainStorage("PubSubStore", options =>
                     {
                         // Config PubSubStore Storage for Persistent Stream 
                         options.CollectionPrefix = "StreamStorage";
@@ -111,7 +111,7 @@ public static class OrleansHostExtension
                 var streamProvider = configuration.GetSection("OrleansStream:Provider").Get<string>();
                 if (streamProvider == "Kafka")
                 {
-                    siloBuilder.AddKafka("PubSubStore")
+                    siloBuilder.AddKafka("AISmart")
                         .WithOptions(options =>
                         {
                             options.BrokerList = configuration.GetSection("OrleansStream:Brokers").Get<List<string>>();
