@@ -13,6 +13,8 @@ public abstract partial class GAgentBase<TState, TEvent>
     {
         var eventHandlerMethods = GetEventHandlerMethods();
 
+        Logger.LogInformation($"Found {eventHandlerMethods.Count()} event handler methods on {this.GetGrainId().ToString()}.");
+
         foreach (var eventHandlerMethod in eventHandlerMethods)
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
@@ -66,6 +68,8 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             Observers.Add(observer, new Dictionary<StreamId, Guid>());
         }
+        
+        Logger.LogInformation($"Added {Observers.Count} event handlers to {this.GetGrainId().ToString()}.");
     }
 
     private IEnumerable<MethodInfo> GetEventHandlerMethods()
