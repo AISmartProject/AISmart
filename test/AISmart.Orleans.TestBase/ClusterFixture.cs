@@ -58,7 +58,7 @@ public class ClusterFixture : IDisposable, ISingletonDependency
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
-                .AddJsonFile("appsettings.secrets.json")
+                .AddJsonFile("appsettings.secrets.json", true)
                 .Build();
             
             hostBuilder.ConfigureServices(services =>
