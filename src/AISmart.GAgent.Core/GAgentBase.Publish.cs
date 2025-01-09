@@ -20,8 +20,10 @@ public abstract partial class GAgentBase<TState, TEvent>
         _correlationId ??= Guid.NewGuid();
         @event.CorrelationId = _correlationId;
         Logger.LogInformation($"Published event {@event}, {_correlationId}");
-        ;
         var eventId = Guid.NewGuid();
+
+        Logger.LogInformation($"{this.GetGrainId().ToString()}'s parent is {State.Subscription.ToString()}.");
+
         if (State.Subscription.IsDefault)
         {
             Logger.LogInformation(
