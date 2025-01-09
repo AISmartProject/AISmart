@@ -2,6 +2,7 @@ using AISmart.Agents;
 using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Orleans.Streams;
 
 namespace AISmart.GAgent.Core;
 
@@ -81,20 +82,8 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             var tasks = State.Subscribers.Select(async grainId =>
             {
-                var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
-                await gAgent.ActivateAsync();
-                var stream = await gAgent.GetStreamAsync();
-                var handles = await stream.GetAllSubscriptionHandles();
-
-                Logger.LogInformation(
-                    $"Stream of {gAgent.GetGrainId().ToString()} has {handles.Count} subscription handles.");
-
-                foreach (var handle in handles)
-                {
-                    Logger.LogInformation(
-                        $"Stream of {gAgent.GetGrainId().ToString()}, handle {handle.HandleId}, stream id: {handle.StreamId}");
-                }
-
+                var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainId.ToString());
+                var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
                 await stream.OnNextAsync(eventWrapper);
             }).ToList();
 
