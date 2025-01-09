@@ -67,10 +67,10 @@ public abstract partial class GAgentBase<TState, TEvent>
                 }
             });
 
-            Observers.Add(observer, new Dictionary<StreamId, Guid>());
+            _observers.Add(observer);
         }
         
-        Logger.LogInformation($"Added {Observers.Count} event handlers to {this.GetGrainId().ToString()}.");
+        Logger.LogInformation($"Added {_observers.Count} event handlers to {this.GetGrainId().ToString()}.");
     }
 
     private async Task UpdateObserverListAgain()

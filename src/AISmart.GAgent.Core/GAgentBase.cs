@@ -22,10 +22,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     protected readonly ILogger Logger;
 
-    /// <summary>
-    /// Observer -> StreamId -> HandleId
-    /// </summary>
-    private readonly Dictionary<EventWrapperBaseAsyncObserver, Dictionary<StreamId, Guid>> Observers = new();
+    private readonly List<EventWrapperBaseAsyncObserver> _observers = new();
 
     private IEventDispatcher? EventDispatcher { get; set; }
 
@@ -98,20 +95,20 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             await handle.UnsubscribeAsync();
         }
 
-        var observersCount = Observers.Count;
+        var observersCount = _observers.Count;
         Logger.LogInformation($"{this.GetGrainId().ToString()} has {observersCount} event handlers.");
 
         if (observersCount == 0)
         {
             await UpdateObserverListAgain();
-            Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
+            Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {_observers.Count} event handlers.");
         }
         else
         {
             Logger.LogInformation($"No need to update event handlers for {this.GetGrainId().ToString()}.");
         }
 
-        foreach (var observer in Observers.Keys)
+        foreach (var observer in _observers)
         {
             await streamOfThisGAgent.SubscribeAsync(observer);
         }
@@ -219,7 +216,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
                 }
             }
 
-            foreach (var observer in Observers.Keys)
+            foreach (var observer in _observers)
             {
                 await streamOfThisGAgent.SubscribeAsync(observer);
             }

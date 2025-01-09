@@ -23,7 +23,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
-        Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent Start");
+        Logger.LogInformation($"{this.GetGrainId().ToString()}: [FirstRoundTrafficGAgent] GroupStartEvent Start");
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
