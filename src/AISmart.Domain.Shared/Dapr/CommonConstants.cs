@@ -13,7 +13,7 @@ public static class CommonConstants
     public const string CommonTopic = "CommonTopic";
     
     public const string StreamNamespace = "AINamespace";
-    public const string StreamProvider = "AISmart";
+    public const string StreamProvider = "PubSubStore";
     public static Guid StreamGuid = Guid.NewGuid();
 
 }

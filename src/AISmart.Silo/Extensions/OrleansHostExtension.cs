@@ -111,7 +111,7 @@ public static class OrleansHostExtension
                 var streamProvider = configuration.GetSection("OrleansStream:Provider").Get<string>();
                 if (streamProvider == "Kafka")
                 {
-                    siloBuilder.AddKafka("AISmart")
+                    siloBuilder.AddKafka("PubSubStore")
                         .WithOptions(options =>
                         {
                             options.BrokerList = configuration.GetSection("OrleansStream:Brokers").Get<List<string>>();
