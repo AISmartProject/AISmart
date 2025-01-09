@@ -226,7 +226,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         Logger.LogInformation("base raiseEvent info:{info}", JsonConvert.SerializeObject(@event));
         base.RaiseEvent(@event);
-        await InternalRaiseEventAsync(@event).ContinueWith(task =>
+        InternalRaiseEventAsync(@event).ContinueWith(task =>
         {
             if (task.Exception != null)
             {

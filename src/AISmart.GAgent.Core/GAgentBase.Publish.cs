@@ -90,7 +90,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             Logger.LogInformation($"{this.GetGrainId().ToString()} has {State.Subscribers.Count} subscribers.");
 
-            foreach (var grainId in State.Subscribers)
+            var tasks = State.Subscribers.Select(async grainId =>
             {
                 var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
                 await gAgent.ActivateAsync();
@@ -99,7 +99,9 @@ public abstract partial class GAgentBase<TState, TEvent>
                 Logger.LogInformation(
                     $"[SendEventDownwardsAsync]{gAgent.GetGrainId().ToString()} has {handles.Count} event handlers.");
                 await stream.OnNextAsync(eventWrapper);
-            }
+            }).ToList();
+
+            await Task.WhenAll(tasks);
         }
         catch (Exception e)
         {
