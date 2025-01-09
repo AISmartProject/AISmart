@@ -68,6 +68,15 @@ public static class NamingConstants
     public const string FirstRound = "1";
     public const string SecondRound = "2";
     public const string ThirdRound = "3";
+    public const string CreativeDefaultSummary = """
+                                                 The key points of naming are:
+                                                 (1)Clear and easy to understand
+                                                 (2)Simple and intuitive
+                                                 (3)Semantically clear
+                                                 (4)Consistent style
+                                                 (5)Relevant to the context or field
+                                                 (6)Avoid confusion or ambiguity
+                                                 """;
     public static Dictionary<string, int> RoundTotalBatchesMap = new Dictionary<string, int> { { "1", 50 }, { "2", 20 }, { "3", 6 } };
     public const int DefaultTotalTotalBatches = 20;
 

@@ -36,10 +36,30 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         }
         else
         {
-            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(NamingConstants.CreativeSummaryHistoryPrompt, State.RecentMessages.ToList());
-            if (response != null && !response.Content.IsNullOrEmpty())
+            var summary = string.Empty;
+            try
             {
+                var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                    .SendAsync(NamingConstants.CreativeSummaryHistoryPrompt, State.RecentMessages.ToList());
+                if (response != null && !response.Content.IsNullOrEmpty())
+                {
+                    summary = response.Content.ToString();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "[CreativeGAgent] GroupChatStartGEvent handler error");
+            }
+            finally
+            {
+                if (summary.IsNullOrWhiteSpace())
+                {
+                    summary = $"""
+                               I naming is:{State.Naming} 
+                               {NamingConstants.CreativeDefaultSummary}
+                               """;
+                }
+
                 // clear history message
                 RaiseEvent(new ClearHistoryChatSEvent());
 
@@ -47,7 +67,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 RaiseEvent(new AddHistoryChatSEvent()
                 {
                     Message = new MicroAIMessage(Role.System.ToString(),
-                        AssembleMessageUtil.AssembleSummaryBeforeStep(@event.CreativeNameings, response.Content,
+                        AssembleMessageUtil.AssembleSummaryBeforeStep(@event.CreativeNameings, summary,
                             @event.ThemeDescribe))
                 });
             }
@@ -481,7 +501,6 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 Round = @event.Round
             });
             Logger.LogInformation("VoteCharmingCompleteEvent send");
-
         }
 
         await base.ConfirmEvents();
