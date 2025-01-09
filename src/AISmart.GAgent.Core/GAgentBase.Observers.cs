@@ -76,13 +76,13 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private async Task UpdateObserverListAgain()
     {
-        Logger.LogInformation("UpdateObserverListAgain");
+        Logger.LogInformation($"{this.GetGrainId().ToString()}: UpdateObserverListAgain");
         await UpdateObserverList();
     }
 
     private IEnumerable<MethodInfo> GetEventHandlerMethods()
     {
-        Logger.LogInformation("GetEventHandlerMethods");
+        Logger.LogInformation($"{this.GetGrainId().ToString()}: GetEventHandlerMethods, {GetType().FullName}");
         return GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .Where(IsEventHandlerMethod);
@@ -90,7 +90,6 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private bool IsEventHandlerMethod(MethodInfo methodInfo)
     {
-        Logger.LogInformation("IsEventHandlerMethod");
         return methodInfo.GetParameters().Length == 1 && (
             // Either the method has the EventHandlerAttribute
             // Or is named HandleEventAsync
