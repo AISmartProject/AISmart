@@ -85,8 +85,16 @@ public abstract partial class GAgentBase<TState, TEvent>
                 await gAgent.ActivateAsync();
                 var stream = await gAgent.GetStreamAsync();
                 var handles = await stream.GetAllSubscriptionHandles();
+
                 Logger.LogInformation(
                     $"Stream of {gAgent.GetGrainId().ToString()} has {handles.Count} subscription handles.");
+
+                foreach (var handle in handles)
+                {
+                    Logger.LogInformation(
+                        $"Stream of {gAgent.GetGrainId().ToString()}, handle {handle.HandleId}, stream id: {handle.StreamId}");
+                }
+
                 await stream.OnNextAsync(eventWrapper);
             }).ToList();
 
