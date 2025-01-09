@@ -169,6 +169,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task BaseOnActivateAsync(CancellationToken cancellationToken)
     {
+        Logger.LogInformation($"{this.GetGrainId().ToString()} is activating.");
         // This must be called first to initialize Observers field.
         await UpdateObserverList();
         await InitializeStreamOfThisGAgentAsync();
@@ -194,6 +195,7 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
+        Logger.LogInformation($"{this.GetGrainId().ToString()} is deactivating.");
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
 

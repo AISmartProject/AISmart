@@ -11,11 +11,11 @@ public abstract partial class GAgentBase<TState, TEvent>
     [AggregateExecutionTime]
     private async Task UpdateObserverList()
     {
-        Logger.LogInformation("UpdateObserverList");
+        Logger.LogInformation($"{this.GetGrainId().ToString()}: UpdateObserverList");
 
-        var eventHandlerMethods = GetEventHandlerMethods();
+        var eventHandlerMethods = GetEventHandlerMethods().ToList();
 
-        Logger.LogInformation($"Found {eventHandlerMethods.Count()} event handler methods on {this.GetGrainId().ToString()}.");
+        Logger.LogInformation($"Found {eventHandlerMethods.Count} event handler methods on {this.GetGrainId().ToString()}.");
 
         foreach (var eventHandlerMethod in eventHandlerMethods)
         {
