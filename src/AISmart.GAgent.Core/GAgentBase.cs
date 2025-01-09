@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Orleans.EventSourcing;
 using Orleans.Providers;
-using Orleans.Storage;
 using Orleans.Streams;
+using Orleans.Streams.Core;
 
 namespace AISmart.GAgent.Core;
 
@@ -15,7 +15,7 @@ namespace AISmart.GAgent.Core;
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
 [ImplicitStreamSubscription(CommonConstants.StreamNamespace)]
-public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState>, IStateGAgent<TState>
+public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState>, IStateGAgent<TState>, IStreamSubscriptionObserver
     where TState : StateBase, new()
     where TEvent : GEventBase
 {
@@ -303,5 +303,13 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     {
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainIdString);
         return StreamProvider.GetStream<EventWrapperBase>(streamId);
+    }
+
+    public async Task OnSubscribed(IStreamSubscriptionHandleFactory handleFactory)
+    {
+        foreach (var observer in _observers)
+        {
+            await handleFactory.Create<EventWrapperBase>().ResumeAsync(observer);
+        }
     }
 }
