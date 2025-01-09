@@ -71,6 +71,10 @@ public abstract partial class GAgentBase<TState, TEvent>
                 await UpdateObserverListAgain();
                 Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
             }
+            else
+            {
+                Logger.LogInformation($"No need to update event handlers for {this.GetGrainId().ToString()}.");
+            }
 
             foreach (var observer in Observers.Keys)
             {
