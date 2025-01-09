@@ -80,14 +80,18 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             Logger.LogInformation($"{this.GetGrainId().ToString()} has {State.Subscribers.Count} subscribers.");
 
-            var tasks = State.Subscribers.Select(async grainId =>
+            foreach (var subscriber in State.Subscribers)
             {
-                var streamId = StreamId.Create(CommonConstants.StreamNamespace, grainId.ToString());
+                var gAgent = GrainFactory.GetGrain<IGAgent>(subscriber);
+                await gAgent.ActivateAsync();
+                var streamId = StreamId.Create(CommonConstants.StreamNamespace, subscriber.ToString());
                 var stream = StreamProvider.GetStream<EventWrapperBase>(streamId);
+                if ((await stream.GetAllSubscriptionHandles()).Count == 0)
+                {
+                    await stream.SubscribeAsync(gAgent);
+                }
                 await stream.OnNextAsync(eventWrapper);
-            }).ToList();
-
-            await Task.WhenAll(tasks);
+            }
         }
         catch (Exception e)
         {
