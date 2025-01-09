@@ -1,27 +1,26 @@
 using System.Reflection;
 using AElf.OpenTelemetry.ExecutionTime;
+using Aevatar.Core;
+using Aevatar.Core.Abstractions;
 using AISmart.Agents;
-using AISmart.Dapr;
 using Microsoft.Extensions.Logging;
 
 namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    private async Task UpdateObserverList()
+    [AggregateExecutionTime]
+    private Task UpdateObserverList()
     {
-        Logger.LogInformation($"{this.GetGrainId().ToString()}: UpdateObserverList");
-
-        var eventHandlerMethods = GetEventHandlerMethods().ToList();
-
-        Logger.LogInformation($"Found {eventHandlerMethods.Count} event handler methods on {this.GetGrainId().ToString()}.");
+        var eventHandlerMethods = GetEventHandlerMethods();
 
         foreach (var eventHandlerMethod in eventHandlerMethods)
         {
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
                 var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
-                if (grainId == this.GetGrainId() && eventHandlerMethod.Name != nameof(ForwardEventAsync))
+                if (grainId == this.GetGrainId() && eventHandlerMethod.Name != nameof(ForwardEventAsync) &&
+                    eventHandlerMethod.Name != AevatarGAgentConstants.InitializeDefaultMethodName)
                 {
                     // Skip the event if it is sent by itself.
                     return;
@@ -31,15 +30,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
-                Logger.LogInformation($"Handling event {eventType.GetType().Name} with method {eventHandlerMethod.Name}");
-
                 _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
                     ?.GetValue(item);
-                // if (_correlationId != null &&
-                //     StreamId.Create(CommonConstants.StreamNamespace, this.GetGrainId().ToString()) != streamId)
-                // {
-                //     //_streamIdDictionary.TryAdd(_correlationId.Value, streamId);
-                // }
 
                 if (parameter.ParameterType == eventType.GetType())
                 {
@@ -67,23 +59,34 @@ public abstract partial class GAgentBase<TState, TEvent>
                 }
             });
 
-            observer.MethodName = eventHandlerMethod.Name;
-            observer.ParameterTypeName = eventHandlerMethod.GetParameters()[0].ParameterType.Name;
-            _observers.Add(observer, Guid.Empty);
+            _observers.Add(observer);
         }
 
-        Logger.LogInformation($"Added {_observers.Count} event handlers to {this.GetGrainId().ToString()}.");
+        return Task.CompletedTask;
     }
 
-    private async Task UpdateObserverListAgain()
+    private Task UpdateInitializeDtoType()
     {
-        Logger.LogInformation($"{this.GetGrainId().ToString()}: UpdateObserverListAgain");
-        await UpdateObserverList();
+        var initializeMethod = GetType()
+            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            .SingleOrDefault(IsInitializeMethod);
+        if (initializeMethod == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var parameterType = initializeMethod.GetParameters()[0].ParameterType;
+        RaiseEvent(new SetInitializeDtoTypeGEvent
+        {
+            InitializeDtoType = parameterType
+        });
+        ConfirmEvents();
+
+        return Task.CompletedTask;
     }
 
     private IEnumerable<MethodInfo> GetEventHandlerMethods()
     {
-        Logger.LogInformation($"{this.GetGrainId().ToString()}: GetEventHandlerMethods, {GetType().FullName}");
         return GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .Where(IsEventHandlerMethod);
@@ -97,12 +100,22 @@ public abstract partial class GAgentBase<TState, TEvent>
             //     and the parameter is not EventWrapperBase 
             //     and the parameter is inherited from EventBase
             ((methodInfo.GetCustomAttribute<EventHandlerAttribute>() != null ||
-              methodInfo.Name == AISmartGAgentConstants.EventHandlerDefaultMethodName) &&
+              methodInfo.Name == AevatarGAgentConstants.EventHandlerDefaultMethodName) &&
              methodInfo.GetParameters()[0].ParameterType != typeof(EventWrapperBase) &&
              typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType))
             // Or the method has the AllEventHandlerAttribute and the parameter is EventWrapperBase
             || (methodInfo.GetCustomAttribute<AllEventHandlerAttribute>() != null &&
-                methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase)));
+                methodInfo.GetParameters()[0].ParameterType == typeof(EventWrapperBase))
+            // Or the method is for GAgent initialization
+            || (methodInfo.Name == AevatarGAgentConstants.InitializeDefaultMethodName &&
+                typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType)));
+    }
+
+    private bool IsInitializeMethod(MethodInfo methodInfo)
+    {
+        return methodInfo.GetParameters().Length == 1 &&
+               methodInfo.Name == AevatarGAgentConstants.InitializeDefaultMethodName &&
+               typeof(EventBase).IsAssignableFrom(methodInfo.GetParameters()[0].ParameterType);
     }
 
     private async Task HandleMethodInvocationAsync(MethodInfo method, ParameterInfo parameter, EventBase eventType,

@@ -275,7 +275,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         IVoteCharmingGAgent voteCharmingGAgent =
             GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(NamingConstants.FirstRound));
 
-        GrainId grainId = await voteCharmingGAgent.GetSubscriptionAsync();
+        GrainId grainId = await voteCharmingGAgent.GetParentAsync();
 
         IPublishingGAgent publishingAgent;
 

@@ -31,7 +31,7 @@ public class StreamSubscriptionViewService : ApplicationService, IStreamSubscrip
     public async Task<List<string>> ViewGroupSubscribersAsync(string guid)
     {
         var gAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(guid));
-        var subscribers = await gAgent.GetSubscribersAsync();
+        var subscribers = await gAgent.GetChildrenAsync();
         return subscribers.Select(s => s.ToString()).ToList();
     }
 
@@ -45,7 +45,7 @@ public class StreamSubscriptionViewService : ApplicationService, IStreamSubscrip
     private async Task BuildGroupTreeAsync(GrainId grainId, Dictionary<string, List<string>> result)
     {
         var gAgent = _clusterClient.GetGrain<IGAgent>(grainId);
-        var subscribers = await gAgent.GetSubscribersAsync();
+        var subscribers = await gAgent.GetChildrenAsync();
         if (subscribers.IsNullOrEmpty())
         {
             return;

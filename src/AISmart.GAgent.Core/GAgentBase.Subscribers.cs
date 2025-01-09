@@ -5,38 +5,38 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    private async Task AddSubscriberAsync(GrainId grainId)
+    private async Task AddChildAsync(GrainId grainId)
     {
-        if (State.Subscribers.Contains(grainId))
+        if (State.Children.Contains(grainId))
         {
-            Logger.LogError($"Cannot add duplicate subscriber {grainId}.");
+            Logger.LogError($"Cannot add duplicate child {grainId}.");
             return;
         }
 
-        base.RaiseEvent(new AddSubscriberGEvent
+        base.RaiseEvent(new AddChildGEvent
         {
-            Subscriber = grainId
+            Child = grainId
         });
         await ConfirmEvents();
     }  
 
-    private async Task RemoveSubscriberAsync(GrainId grainId)
+    private async Task RemoveChildAsync(GrainId grainId)
     {
-        if (!State.Subscribers.IsNullOrEmpty())
+        if (!State.Children.IsNullOrEmpty())
         {
-            base.RaiseEvent(new RemoveSubscriberGEvent
+            base.RaiseEvent(new RemoveChildGEvent
             {
-                Subscriber = grainId
+                Child = grainId
             });
             await ConfirmEvents();
         }
     }
 
-    private async Task SetSubscriptionAsync(GrainId grainId)
+    private async Task SetParentAsync(GrainId grainId)
     {
-        base.RaiseEvent(new SetSubscriptionGEvent
+        base.RaiseEvent(new SetParentGEvent
         {
-            Subscription = grainId
+            Parent = grainId
         });
         await ConfirmEvents();
     }
