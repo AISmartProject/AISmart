@@ -28,12 +28,13 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
+        await base.ConfirmEvents();
+        
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
         await PublishAsync(new GroupChatStartGEvent() { IfFirstStep = true, ThemeDescribe = @event.Message });
         await DispatchCreativeAgent();
 
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.Naming });
-
         await base.ConfirmEvents();
         
         Logger.LogInformation("[FirstRoundTrafficGAgent] GroupStartEvent End");
