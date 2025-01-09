@@ -67,7 +67,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             if (Observers.Count == 0)
             {
-                await UpdateObserverList();
+                await UpdateObserverListAgain();
                 Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
             }
 

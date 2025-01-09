@@ -11,6 +11,8 @@ public abstract partial class GAgentBase<TState, TEvent>
     [AggregateExecutionTime]
     private async Task UpdateObserverList()
     {
+        Logger.LogInformation("UpdateObserverList");
+
         var eventHandlerMethods = GetEventHandlerMethods();
 
         Logger.LogInformation($"Found {eventHandlerMethods.Count()} event handler methods on {this.GetGrainId().ToString()}.");
@@ -72,8 +74,15 @@ public abstract partial class GAgentBase<TState, TEvent>
         Logger.LogInformation($"Added {Observers.Count} event handlers to {this.GetGrainId().ToString()}.");
     }
 
+    private async Task UpdateObserverListAgain()
+    {
+        Logger.LogInformation("UpdateObserverListAgain");
+        await UpdateObserverList();
+    }
+
     private IEnumerable<MethodInfo> GetEventHandlerMethods()
     {
+        Logger.LogInformation("GetEventHandlerMethods");
         return GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
             .Where(IsEventHandlerMethod);
@@ -81,6 +90,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
     private bool IsEventHandlerMethod(MethodInfo methodInfo)
     {
+        Logger.LogInformation("IsEventHandlerMethod");
         return methodInfo.GetParameters().Length == 1 && (
             // Either the method has the EventHandlerAttribute
             // Or is named HandleEventAsync
