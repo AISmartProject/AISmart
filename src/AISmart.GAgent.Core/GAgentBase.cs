@@ -207,19 +207,27 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     private async Task InitializeStreamOfThisGAgentAsync()
     {
-        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
-        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-        if (handles.Count != 0)
+        try
         {
-            foreach (var handle in handles)
+            var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
+            var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+            if (handles != null && handles.Count != 0)
             {
-                await handle.UnsubscribeAsync();
+                foreach (var handle in handles)
+                {
+                    await handle.UnsubscribeAsync();
+                }
+            }
+
+            foreach (var observer in Observers.Keys)
+            {
+                await streamOfThisGAgent.SubscribeAsync(observer);
             }
         }
-
-        foreach (var observer in Observers.Keys)
+        catch (Exception e)
         {
-            await streamOfThisGAgent.SubscribeAsync(observer);
+            Logger.LogError($"Error while InitializeStreamOfThisGAgentAsync: {e.Message}");
+            throw;
         }
     }
 
