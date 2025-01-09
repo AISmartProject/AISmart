@@ -58,31 +58,7 @@ public abstract partial class GAgentBase<TState, TEvent>
         {
             Logger.LogInformation(
                 $"{this.GetGrainId().ToString()} is sending event to self: {JsonConvert.SerializeObject(eventWrapper)}");
-            var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
-            var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-            foreach (var handle in handles)
-            {
-                await handle.UnsubscribeAsync();
-            }
-
-            var observersCount = Observers.Count;
-            Logger.LogInformation($"{this.GetGrainId().ToString()} has {observersCount} event handlers.");
-
-            if (observersCount == 0)
-            {
-                await UpdateObserverListAgain();
-                Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
-            }
-            else
-            {
-                Logger.LogInformation($"No need to update event handlers for {this.GetGrainId().ToString()}.");
-            }
-
-            foreach (var observer in Observers.Keys)
-            {
-                await streamOfThisGAgent.SubscribeAsync(observer);
-            }
-
+            var streamOfThisGAgent = await GetStreamAsync();
             await streamOfThisGAgent.OnNextAsync(eventWrapper);
         }
         catch (Exception e)
@@ -107,7 +83,7 @@ public abstract partial class GAgentBase<TState, TEvent>
             {
                 var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
                 await gAgent.ActivateAsync();
-                var stream = GetStream(grainId.ToString());
+                var stream = await gAgent.GetStreamAsync();
                 var handles = await stream.GetAllSubscriptionHandles();
                 Logger.LogInformation(
                     $"[SendEventDownwardsAsync]{gAgent.GetGrainId().ToString()} has {handles.Count} event handlers.");

@@ -26,6 +26,7 @@ public interface IGAgent : IGrainWithGuidKey
     Task<List<Type>?> GetAllSubscribedEventsAsync(bool includeBaseHandlers = false);
     Task<List<GrainId>> GetSubscribersAsync();
     Task<GrainId> GetSubscriptionAsync();
+    Task<IAsyncStream<EventWrapperBase>> GetStreamAsync();
 }
 
 public interface IStateGAgent<TState> : IGAgent

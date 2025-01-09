@@ -89,6 +89,36 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         return State.Subscription;
     }
 
+    public async Task<IAsyncStream<EventWrapperBase>> GetStreamAsync()
+    {
+        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
+        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
+        foreach (var handle in handles)
+        {
+            await handle.UnsubscribeAsync();
+        }
+
+        var observersCount = Observers.Count;
+        Logger.LogInformation($"{this.GetGrainId().ToString()} has {observersCount} event handlers.");
+
+        if (observersCount == 0)
+        {
+            await UpdateObserverListAgain();
+            Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
+        }
+        else
+        {
+            Logger.LogInformation($"No need to update event handlers for {this.GetGrainId().ToString()}.");
+        }
+
+        foreach (var observer in Observers.Keys)
+        {
+            await streamOfThisGAgent.SubscribeAsync(observer);
+        }
+
+        return streamOfThisGAgent;
+    }
+
     public Task<Type?> GetInitializeDtoTypeAsync()
     {
         return Task.FromResult(State.InitializeDtoType);
