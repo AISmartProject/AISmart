@@ -230,6 +230,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
 
     public async Task OnNextAsync(EventWrapperBase item, StreamSequenceToken? token = null)
     {
+        var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
+        Logger.LogInformation($"{this.GetGrainId().ToString()} is handling event {eventType}");
         foreach (var observer in _observers)
         {
             await observer.OnNextAsync(item);
