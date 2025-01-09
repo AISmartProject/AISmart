@@ -65,6 +65,12 @@ public abstract partial class GAgentBase<TState, TEvent>
 
             Logger.LogInformation($"{this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
 
+            if (Observers.Count == 0)
+            {
+                await UpdateObserverList();
+                Logger.LogInformation($"Now {this.GetGrainId().ToString()} has {Observers.Count} event handlers.");
+            }
+
             foreach (var observer in Observers.Keys)
             {
                 await streamOfThisGAgent.SubscribeAsync(observer);
