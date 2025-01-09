@@ -18,8 +18,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     where TState : StateBase, new()
     where TEvent : GEventBase
 {
-    protected IStreamProvider StreamProvider => this.GetStreamProvider(AevatarCoreConstants.StreamProvider);
-
     protected readonly ILogger Logger;
 
     private readonly List<EventWrapperBaseAsyncObserver> _observers = [];
@@ -169,19 +167,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         // This must be called first to initialize Observers field.
         await UpdateObserverList();
         await UpdateInitializeDtoType();
-        var streamOfThisGAgent = GetStream(this.GetGrainId().ToString());
-        var handles = await streamOfThisGAgent.GetAllSubscriptionHandles();
-        if (handles.Count > 0)
-        {
-            foreach (var handle in handles)
-            {
-                await handle.ResumeAsync(this);
-            }
-        }
-        else
-        {
-            await streamOfThisGAgent.SubscribeAsync(this);
-        }
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
@@ -241,12 +226,6 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
     protected virtual async Task HandleRaiseEventAsync()
     {
 
-    }
-
-    private IAsyncStream<EventWrapperBase> GetStream(string grainIdString)
-    {
-        var streamId = StreamId.Create(AevatarCoreConstants.StreamNamespace, grainIdString);
-        return StreamProvider.GetStream<EventWrapperBase>(streamId);
     }
 
     public async Task OnNextAsync(EventWrapperBase item, StreamSequenceToken? token = null)
