@@ -7,7 +7,7 @@ using Orleans.Streams;
 
 namespace AISmart.Agents;
 
-public interface IGAgent : IGrainWithGuidKey
+public interface IGAgent : IGrainWithGuidKey, IAsyncObserver<EventWrapperBase>
 {
     /// <summary>
     /// Used for activating the agent manually.
