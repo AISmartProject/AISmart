@@ -5,16 +5,17 @@ namespace AISmart.GAgent.Core;
 
 public class EventWrapperBaseAsyncObserver : IAsyncObserver<EventWrapperBase>
 {
-    private readonly Func<EventWrapperBase, Task> _action;
+    private readonly Action<EventWrapperBase> _action;
 
-    public EventWrapperBaseAsyncObserver(Func<EventWrapperBase, Task> action)
+    public EventWrapperBaseAsyncObserver(Action<EventWrapperBase> action)
     {
         _action = action;
     }
 
-    public async Task OnNextAsync(EventWrapperBase item, StreamSequenceToken? token = null)
+    public Task OnNextAsync(EventWrapperBase item, StreamSequenceToken? token = null)
     {
-        await _action(item);
+        _action(item);
+        return Task.CompletedTask;
     }
 
     public Task OnCompletedAsync()
