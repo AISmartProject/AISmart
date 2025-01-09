@@ -85,15 +85,6 @@ public abstract partial class GAgentBase<TState, TEvent>
                 await gAgent.ActivateAsync();
                 var stream = await gAgent.GetStreamAsync();
                 var handles = await stream.GetAllSubscriptionHandles();
-                var retryCount = 0;
-                while (handles.Count == 0 && retryCount < 10)
-                {
-                    Logger.LogInformation($"Retrying to get subscription handles for {gAgent.GetGrainId().ToString()}, attempt {retryCount + 1}");
-                    await Task.Delay(100); // Optional delay between retries
-                    stream = await gAgent.GetStreamAsync();
-                    handles = await stream.GetAllSubscriptionHandles();
-                    retryCount++;
-                }
 
                 Logger.LogInformation(
                     $"Stream of {gAgent.GetGrainId().ToString()} has {handles.Count} subscription handles.");
