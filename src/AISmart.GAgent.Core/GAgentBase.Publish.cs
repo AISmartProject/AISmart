@@ -25,15 +25,15 @@ public abstract partial class GAgentBase<TState, TEvent>
         if (State.Parent.IsDefault)
         {
             //Logger.LogInformation(
-             //   "Event is the first time appeared to silo: {@Event}", @event);
+            //   "Event is the first time appeared to silo: {@Event}", @event);
             // This event is the first time appeared to silo.
             await SendEventToSelfAsync(new EventWrapper<T>(@event, eventId, this.GetGrainId()));
         }
         else
         {
             //Logger.LogInformation(
-               // "{GrainId} is publishing event upwards: {EventJson}",
-               // this.GetGrainId().ToString(), JsonConvert.SerializeObject(@event));
+            // "{GrainId} is publishing event upwards: {EventJson}",
+            // this.GetGrainId().ToString(), JsonConvert.SerializeObject(@event));
             await PublishEventUpwardsAsync(@event, eventId);
         }
 
@@ -54,7 +54,7 @@ public abstract partial class GAgentBase<TState, TEvent>
     private async Task SendEventToSelfAsync<T>(EventWrapper<T> eventWrapper) where T : EventBase
     {
         //Logger.LogInformation(
-          //  $"{this.GetGrainId().ToString()} is sending event to self: {JsonConvert.SerializeObject(eventWrapper)}");
+        //  $"{this.GetGrainId().ToString()} is sending event to self: {JsonConvert.SerializeObject(eventWrapper)}");
         await OnNextAsync(eventWrapper);
     }
 
@@ -67,7 +67,9 @@ public abstract partial class GAgentBase<TState, TEvent>
 
         //Logger.LogInformation($"{this.GetGrainId().ToString()} has {State.Children.Count} children.");
 
-        foreach (var grainId in State.Children)
+        var children = State.Children.ToList();
+
+        foreach (var grainId in children)
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
             await gAgent.ActivateAsync();
