@@ -18,5 +18,7 @@ public class AISmartGAgentMicroAIModule : AbpModule
         });
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MicroAIOptions>(configuration.GetSection("AutogenConfig"));
+        Configure<AIModelOptions>(configuration.GetSection("LLMConfiguration"));
+
     }
 }
