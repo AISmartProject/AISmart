@@ -16,6 +16,7 @@ public abstract partial class GAgentBase<TState, TEvent>
 
         foreach (var eventHandlerMethod in eventHandlerMethods)
         {
+            var parameterType = eventHandlerMethod.GetParameters()[0].ParameterType.Name;
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
                 var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
@@ -26,43 +27,51 @@ public abstract partial class GAgentBase<TState, TEvent>
                     return;
                 }
 
-                var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))?.GetValue(item)!;
-                var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
-                var parameter = eventHandlerMethod.GetParameters()[0];
-
-                Logger.LogInformation($"{this.GetGrainId().ToString()}: handling {eventType.GetType().Name}.");
-
-                _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
-                    ?.GetValue(item);
-
-                if (parameter.ParameterType == eventType.GetType())
+                try
                 {
-                    await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
+                    var eventId = (Guid)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.EventId))
+                        ?.GetValue(item)!;
+                    var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))
+                        ?.GetValue(item)!;
+                    var parameter = eventHandlerMethod.GetParameters()[0];
+
+                    Logger.LogInformation($"{this.GetGrainId().ToString()}: handling {eventType.GetType().Name}.");
+
+                    if (parameter.ParameterType == eventType.GetType())
+                    {
+                        Logger.LogInformation($"{this.GetGrainId().ToString()}: concrete type matched {eventType.GetType().Name}.");
+                        await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
+                    }
+
+                    if (parameter.ParameterType == typeof(EventWrapperBase))
+                    {
+                        try
+                        {
+                            var invokeParameter =
+                                new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId())
+                                {
+                                    CorrelationId = _correlationId
+                                };
+                            var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
+                            await (Task)result!;
+                        }
+                        catch (Exception ex)
+                        {
+                            // TODO: Make this better.
+                            Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}",
+                                eventHandlerMethod.Name, eventType.GetType().Name);
+                        }
+                    }
                 }
-
-                if (parameter.ParameterType == typeof(EventWrapperBase))
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        var invokeParameter =
-                            new EventWrapper<EventBase>(eventType, eventId, this.GetGrainId())
-                            {
-                                CorrelationId = _correlationId
-                            };
-                        var result = eventHandlerMethod.Invoke(this, [invokeParameter]);
-                        await (Task)result!;
-                    }
-                    catch (Exception ex)
-                    {
-                        // TODO: Make this better.
-                        Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}",
-                            eventHandlerMethod.Name, eventType.GetType().Name);
-                    }
+                    Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}",
+                        eventHandlerMethod.Name, parameterType);
                 }
             })
             {
                 MethodName = eventHandlerMethod.Name,
-                ParameterTypeName = eventHandlerMethod.GetParameters()[0].ParameterType.Name
+                ParameterTypeName = parameterType
             };
 
             _observers.Add(observer);
@@ -129,14 +138,17 @@ public abstract partial class GAgentBase<TState, TEvent>
     {
         if (IsEventWithResponse(parameter))
         {
+            Logger.LogInformation($"{this.GetGrainId().ToString()}: {eventType.GetType().Name} has response.");
             await HandleEventWithResponseAsync(method, eventType, eventId);
         }
         else if (method.ReturnType == typeof(Task))
         {
             try
             {
+                Logger.LogInformation($"{this.GetGrainId().ToString()}: about to execute handler of {eventType.GetType().Name}.");
                 var result = method.Invoke(this, [eventType]);
                 await (Task)result!;
+                Logger.LogInformation($"{this.GetGrainId().ToString()}: executed handler of {eventType.GetType().Name}.");
             }
             catch (Exception ex)
             {
