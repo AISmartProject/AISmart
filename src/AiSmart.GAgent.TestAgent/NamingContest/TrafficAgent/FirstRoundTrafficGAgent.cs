@@ -23,7 +23,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
-        // Logger.LogInformation($"{this.GetGrainId().ToString()}: [FirstRoundTrafficGAgent] GroupStartEvent Start");
+        Logger.LogInformation($"{this.GetGrainId().ToString()}: [FirstRoundTrafficGAgent] GroupStartEvent Start");
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
@@ -50,7 +50,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] NamedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] NamedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.GrainGuid,
@@ -74,7 +75,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(DebatedCompleteGEvent @event)
     {
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] DebatedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DebatedCompleteGEvent start GrainId:{this.GetPrimaryKey().ToString()} ");
         if (State.CurrentGrainId != @event.GrainGuid)
         {
             Logger.LogError(
@@ -109,7 +111,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
         var creativeInfo = State.CreativeList.FirstOrDefault(f => f.Naming == @event.VoteName);
         if (creativeInfo != null)
         {
@@ -149,7 +152,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
             return;
         }
 
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] HostSummaryCompleteGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] HostSummaryCompleteGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
             CompleteGrainId = @event.HostId,
@@ -174,7 +178,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchCreativeAgent()
     {
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchCreativeAgent GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DispatchCreativeAgent GrainId:{this.GetPrimaryKey().ToString()}");
         var random = new Random();
         var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
             .ToList();
@@ -213,13 +218,14 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchDebateAgent()
     {
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchDebateAgent GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DispatchDebateAgent GrainId:{this.GetPrimaryKey().ToString()}");
         // the second stage - debate
         var creativeList = State.CreativeList.FindAll(f => State.CalledGrainIdList.Contains(f.CreativeGrainId) == false)
             .ToList();
         if (State.DebateRoundCount == 0 && creativeList.Count == 0)
         {
-            // Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchDebateAgent Over GrainId:{this.GetPrimaryKey().ToString()}");
+            Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchDebateAgent Over GrainId:{this.GetPrimaryKey().ToString()}");
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVoteStart, Guid.Empty));
 
             RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.JudgeVoteStart });
@@ -245,6 +251,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedInfo.CreativeGrainId });
         await base.ConfirmEvents();
 
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DispatchDebateAgent GrainId:{this.GetPrimaryKey().ToString()}, creative:{selectedInfo.CreativeGrainId.ToString()}");
         // route to the selectedId Agent 
         await PublishAsync(new TrafficInformDebateGEvent()
             { CreativeGrainId = selectedInfo.CreativeGrainId });
@@ -252,7 +260,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
 
     private async Task DispatchJudgeAgent()
     {
-        // Logger.LogInformation($"[FirstRoundTrafficGAgent] DispatchJudgeAgent GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DispatchJudgeAgent GrainId:{this.GetPrimaryKey().ToString()}");
         var creativeList = State.JudgeAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
         if (creativeList.Count == 0)
         {
@@ -271,6 +280,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
 
+        Logger.LogInformation(
+            $"[FirstRoundTrafficGAgent] DispatchJudgeAgent GrainId:{this.GetPrimaryKey().ToString()}, Judge:{selectedId.ToString()}");
         await PublishAsync(new JudgeVoteGEVent() { JudgeGrainId = selectedId, History = State.ChatHistory });
     }
 

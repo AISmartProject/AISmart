@@ -26,7 +26,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
-        // Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         RaiseEvent(new SetExecuteStep { Step = 1 });
         await base.ConfirmEvents();
         if (@event.IfFirstStep == true)
@@ -88,8 +88,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             return;
         }
 
-        // Logger.LogInformation(
-        //     $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation(
+            $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
 
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
