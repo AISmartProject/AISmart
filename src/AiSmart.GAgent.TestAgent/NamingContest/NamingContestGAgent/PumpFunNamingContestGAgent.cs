@@ -65,11 +65,12 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
                 await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
                     .SendMessageAsync(State.groupId,logEvent, State.CallBackUrl);
             }
-            else
+            else if (eventWrapper.Event is NamingLogEvent namingLogEvent)
             {
                 await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-                    .SendMessageAsync(State.groupId,eventWrapper.Event as NamingLogEvent, State.CallBackUrl);
+                    .SendMessageAsync(State.groupId,namingLogEvent, State.CallBackUrl);
             }
+
         }
     }
 
