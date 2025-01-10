@@ -30,6 +30,8 @@ public abstract partial class GAgentBase<TState, TEvent>
                 var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))?.GetValue(item)!;
                 var parameter = eventHandlerMethod.GetParameters()[0];
 
+                Logger.LogInformation($"{this.GetGrainId().ToString()}: handling {eventType.GetType().Name}.");
+
                 _correlationId = (Guid?)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.CorrelationId))
                     ?.GetValue(item);
 
@@ -57,10 +59,12 @@ public abstract partial class GAgentBase<TState, TEvent>
                             eventHandlerMethod.Name, eventType.GetType().Name);
                     }
                 }
-            });
+            })
+            {
+                MethodName = eventHandlerMethod.Name,
+                ParameterTypeName = eventHandlerMethod.GetParameters()[0].ParameterType.Name
+            };
 
-            observer.MethodName = eventHandlerMethod.Name;
-            observer.ParameterTypeName = eventHandlerMethod.GetParameters()[0].ParameterType.Name;
             _observers.Add(observer);
         }
 
