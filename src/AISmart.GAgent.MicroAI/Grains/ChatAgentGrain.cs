@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
+using AISmart.Dapr;
 using AISmart.Options;
 using AutoGen.Core;
 using AutoGen.OpenAI;
@@ -16,6 +18,8 @@ using Microsoft.SemanticKernel.Connectors.Google;
 using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
+using Orleans.Runtime;
+using Orleans.Streams;
 
 namespace AISmart.Grains;
 
@@ -26,6 +30,8 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
     private readonly MicroAIOptions _options;
     private readonly AIModelOptions _aiModelOptions;
     private readonly ILogger<ChatAgentGrain> _logger;
+    protected IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
+
 
     public ChatAgentGrain(IOptions<MicroAIOptions> options, IOptions<AIModelOptions> aiModelOptions,
         ILogger<ChatAgentGrain> logger)
@@ -46,6 +52,16 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
         _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
         return null;
+    }
+
+    public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory,object requestEvent)
+    {
+        MicroAIMessage microAIMessage = (await SendAsync(message, chatHistory))!;
+        Debug.Assert(microAIMessage != null, nameof(microAIMessage) + " != null");
+        var agentGuid = this.GetPrimaryKeyString();
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
+        await stream.OnNextAsync(new MicroAIEventMessage(microAIMessage, requestEvent));
     }
 
     public Task SetAgentAsync(string systemMessage)
@@ -194,5 +210,20 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
             default:
                 throw new ArgumentException($"Unsupported LLM type: {llm}");
         }
+    }
+}
+
+[GenerateSerializer]
+public class MicroAIEventMessage
+{
+    [Id(0)] public MicroAIMessage MicroAIMessage { get; set; }
+    
+    [Id(1)] public object Event { get; set; }
+
+    public MicroAIEventMessage(MicroAIMessage microAIMessage, object @event)
+    {
+        // Validate the input parameters to ensure non-null references
+        MicroAIMessage = microAIMessage;
+        Event = @event;
     }
 }
