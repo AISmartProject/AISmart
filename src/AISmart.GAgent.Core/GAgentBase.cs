@@ -238,26 +238,25 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
             observer.MethodName == nameof(HandleRequestAllSubscriptionsEventAsync)).ToList();
         var parameterTypeNames = string.Join(", ", matchedObservers.Select(observer => observer.ParameterTypeName));
         Logger.LogInformation($"{this.GetGrainId().ToString()} has {matchedObservers.Count} valid observers with parameter types: {parameterTypeNames}");
-        await Task.WhenAll(matchedObservers.Select(observer => observer.OnNextAsync(item)));
+        foreach (var observer in matchedObservers)
+        {
+            await observer.OnNextAsync(item);
+        }
     }
 
     public async Task OnCompletedAsync()
     {
-        // foreach (var observer in _observers)
-        // {
-        //     await observer.OnCompletedAsync();
-        // }
-
-        await Task.WhenAll(_observers.Select(observer => observer.OnCompletedAsync()));
+        foreach (var observer in _observers)
+        {
+            await observer.OnCompletedAsync();
+        }
     }
 
     public async Task OnErrorAsync(Exception ex)
     {
-        // foreach (var observer in _observers)
-        // {
-        //     await observer.OnErrorAsync(ex);
-        // }
-
-        await Task.WhenAll(_observers.Select(observer => observer.OnErrorAsync(ex)));
+        foreach (var observer in _observers)
+        {
+            await observer.OnErrorAsync(ex);
+        }
     }
 }
