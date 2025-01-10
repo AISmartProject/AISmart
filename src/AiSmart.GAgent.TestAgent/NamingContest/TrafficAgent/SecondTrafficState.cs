@@ -22,7 +22,7 @@ public class SecondTrafficState : StateBase
     [Id(13)] public int Round { get; set; }
     
     [Id(14)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
-
+    [Id(15)] public NamingContestStepEnum NamingStep { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -115,4 +115,10 @@ public class SecondTrafficState : StateBase
     {
         Round = @event.RoundCount;
     }
+    
+    public void Apply(ChangeNamingStepSEvent @event)
+    {
+        NamingStep = @event.Step;
+    }
+
 }

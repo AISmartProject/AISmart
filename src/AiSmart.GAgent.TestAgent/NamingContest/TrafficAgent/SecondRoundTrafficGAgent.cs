@@ -31,7 +31,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         RaiseEvent(new AddChatHistorySEvent()
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
-
+        
         List<Tuple<string, string>> creativeNaming = State.CreativeList.Select(creativeInfo =>
             new Tuple<string, string>(creativeInfo.CreativeName, creativeInfo.Naming)).ToList();
 
@@ -40,6 +40,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.DiscussionStart, Guid.Empty));
 
+        RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.DiscussionStart });
         await GenerateDiscussionCount();
 
         await ConfirmEvents();
@@ -83,10 +84,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleDiscussionSummary(@event.SummaryName, @event.Reason))
         });
-
-        await ConfirmEvents();
+        
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartAsking, Guid.Empty));
 
+        RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.JudgeAsking });
+        await ConfirmEvents();
+        
         await DispatchJudgeAsking();
     }
 
@@ -139,6 +142,8 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
+            
+            RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.Complete });
             
             await PublishMostCharmingEventAsync();
         }
@@ -194,6 +199,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             var summaryCreativeId = await SelectCreativeToSummary();
             await PublishAsync(new CreativeSummaryGEvent() { CreativeId = summaryCreativeId });
 
+            RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.DiscussionSummary });
             RaiseEvent(new ClearCalledGrainsSEvent());
             return;
         }
@@ -277,6 +283,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartScore, Guid.Empty));
 
+            RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.JudgeScore });
             await PublishAsync(new JudgeScoreGEvent() { History = State.ChatHistory });
             return;
         }
@@ -380,5 +387,10 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     {
         RaiseEvent(new SetRoundNumberSEvent() { RoundCount = round });
         await ConfirmEvents();
+    }
+
+    public Task<int> GetProcessStep()
+    {
+        return Task.FromResult((int)State.NamingStep);
     }
 }

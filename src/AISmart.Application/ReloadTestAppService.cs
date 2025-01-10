@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.Agents.Group;
 using AISmart.Application.Grains.Agents.Group;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Sender;
 using Orleans;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 
 namespace AISmart;
@@ -110,6 +113,38 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
             var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(creativeId);
             var step = await creativeAgent.GetExecuteStep();
             result.Add(item, step);
+        }
+
+        return result;
+    }
+
+    public async Task<Dictionary<string, int>> GetTrafficNamingStep(int step, List<string> groupIdList)
+    {
+        if (step < 1 || step > 3)
+        {
+            throw new BusinessException("50001", "step error");
+        }
+
+        var result = new Dictionary<string, int>();
+        foreach (var groupId in groupIdList)
+        {
+            var gAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(Guid.Parse(groupId));
+            var subscribers = await gAgent.GetChildrenAsync();
+            if (step == 1)
+            {
+                var firstGrainId = subscribers.FirstOrDefault(f => f.ToString().Contains("first"));
+            
+                var creativeAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(firstGrainId);
+                var executeStep = await creativeAgent.GetProcessStep();
+                result.Add(groupId, executeStep);
+            }
+            else
+            {
+                var second = subscribers.FirstOrDefault(f => f.ToString().Contains("second"));
+                var creativeAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(second);
+                var executeStep = await creativeAgent.GetProcessStep();
+                result.Add(groupId, executeStep);
+            }
         }
 
         return result;
