@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AISmart.Service;
 using Asp.Versioning;
@@ -43,6 +44,19 @@ public class NameContestController: AISmartController
         await _namingContestService.ClearAllAgentsAsync();
     }
     
+    [HttpPost]
+    [Route("loadtest")]
+    public async Task<List<string>> LoadTest()
+    {
+        return await _namingContestService.LoadTest();
+    }
+    
+    [HttpPost]
+    [Route("verifyloadtest")]
+    public async Task<int> VerifyLoadTest(List<string> ids)
+    {
+        return await _namingContestService.VerifyLoadTest(ids);
+    }
     
     [HttpPost]
     [Route("initnetwork")]
