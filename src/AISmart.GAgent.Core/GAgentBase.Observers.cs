@@ -147,7 +147,12 @@ public abstract partial class GAgentBase<TState, TEvent>
             {
                 Logger.LogInformation($"{this.GetGrainId().ToString()}: about to execute handler of {eventType.GetType().Name}.");
                 var result = method.Invoke(this, [eventType]);
-                await (Task)result!;
+                if (result == null)
+                {
+                    Logger.LogInformation($"{this.GetGrainId().ToString()}: the method {method.Name} which handling type {eventType.GetType().Name} returned null.");
+                    throw new InvalidOperationException($"{this.GetGrainId().ToString()}: the method {method.Name} returned null.");
+                }
+                await (Task)result;
                 Logger.LogInformation($"{this.GetGrainId().ToString()}: executed handler of {eventType.GetType().Name}.");
             }
             catch (Exception ex)
