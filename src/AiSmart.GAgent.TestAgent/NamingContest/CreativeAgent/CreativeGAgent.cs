@@ -26,7 +26,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     [EventHandler]
     public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
-        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        // Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         RaiseEvent(new SetExecuteStep { Step = 1 });
         await base.ConfirmEvents();
         if (@event.IfFirstStep == true)
@@ -77,7 +77,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         await base.ConfirmEvents();
 
-        Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
+        // Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
     }
 
     [EventHandler]
@@ -88,8 +88,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             return;
         }
 
-        Logger.LogInformation(
-            $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        // Logger.LogInformation(
+        //     $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
 
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
@@ -132,8 +132,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
             await base.ConfirmEvents();
 
-            Logger.LogInformation(
-                $"[CreativeGAgent] TrafficInformCreativeGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
+            // Logger.LogInformation(
+            //     $"[CreativeGAgent] TrafficInformCreativeGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 
@@ -179,8 +179,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             return;
         }
 
-        Logger.LogInformation(
-            $"[CreativeGAgent] TrafficInformDebateGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        // Logger.LogInformation(
+        //     $"[CreativeGAgent] TrafficInformDebateGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
         var debateReply = string.Empty;
         var prompt = NamingConstants.DebatePrompt;
         try
@@ -217,8 +217,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
                 NamingRoleType.Contestant, State.AgentName, debateReply, prompt));
             await base.ConfirmEvents();
 
-            Logger.LogInformation(
-                $"[CreativeGAgent] TrafficInformDebateGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
+            // Logger.LogInformation(
+            //     $"[CreativeGAgent] TrafficInformDebateGEvent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
 

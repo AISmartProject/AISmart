@@ -8,4 +8,6 @@ public interface ITrafficGAgent:IMicroAIGAgent
     Task AddJudgeAgent(Guid judgeGrainId);
     
     Task AddHostAgent(Guid judgeGrainId);
+    
+    Task<int> GetProcessStep();
 }
