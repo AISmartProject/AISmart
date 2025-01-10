@@ -14,6 +14,7 @@ public class TwitterGAgentState : StateBase
     [Id(3)] public string TokenSecret { get; set; }
     [Id(4)] public Dictionary<string, string> RepliedTweets { get; set; }
     [Id(5)] public string UserName { get; set; }
+    [Id(6)] public List<Guid> SocialRequestIds { get; set; }
     
     public void Apply(BindTwitterAccountGEvent bindTwitterAccountGEvent)
     {
@@ -37,5 +38,10 @@ public class TwitterGAgentState : StateBase
         {
             RepliedTweets[replyTweetGEvent.TweetId] = replyTweetGEvent.Text;
         }
+    }
+
+    public void Apply()
+    {
+        
     }
 }
