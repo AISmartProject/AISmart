@@ -9,14 +9,15 @@ namespace AISmart.GAgent.Core;
 
 public abstract partial class GAgentBase<TState, TEvent>
 {
-    [AggregateExecutionTime]
     private Task UpdateObserverList()
     {
         var eventHandlerMethods = GetEventHandlerMethods();
 
         foreach (var eventHandlerMethod in eventHandlerMethods)
         {
-            var parameterType = eventHandlerMethod.GetParameters()[0].ParameterType.Name;
+            var parameter = eventHandlerMethod.GetParameters()[0];
+            var parameterType = parameter.ParameterType;
+            var parameterTypeName = parameterType.Name;
             var observer = new EventWrapperBaseAsyncObserver(async item =>
             {
                 var grainId = (GrainId)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.GrainId))?.GetValue(item)!;
@@ -33,17 +34,16 @@ public abstract partial class GAgentBase<TState, TEvent>
                         ?.GetValue(item)!;
                     var eventType = (EventBase)item.GetType().GetProperty(nameof(EventWrapper<EventBase>.Event))
                         ?.GetValue(item)!;
-                    var parameter = eventHandlerMethod.GetParameters()[0];
 
-                    Logger.LogInformation($"{this.GetGrainId().ToString()}: handling {eventType.GetType().Name}.");
+                    //Logger.LogInformation($"{this.GetGrainId().ToString()}: handling {eventType.GetType().Name}.");
 
-                    if (parameter.ParameterType == eventType.GetType())
+                    if (parameterType == eventType.GetType())
                     {
-                        Logger.LogInformation($"{this.GetGrainId().ToString()}: concrete type matched {eventType.GetType().Name}.");
+                        //Logger.LogInformation($"{this.GetGrainId().ToString()}: concrete type matched {eventType.GetType().Name}.");
                         await HandleMethodInvocationAsync(eventHandlerMethod, parameter, eventType, eventId);
                     }
 
-                    if (parameter.ParameterType == typeof(EventWrapperBase))
+                    if (parameterType == typeof(EventWrapperBase))
                     {
                         try
                         {
@@ -66,12 +66,12 @@ public abstract partial class GAgentBase<TState, TEvent>
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "Error invoking method {MethodName} with event type {EventType}",
-                        eventHandlerMethod.Name, parameterType);
+                        eventHandlerMethod.Name, parameterTypeName);
                 }
             })
             {
                 MethodName = eventHandlerMethod.Name,
-                ParameterTypeName = parameterType
+                ParameterTypeName = parameterTypeName
             };
 
             _observers.Add(observer);
@@ -138,22 +138,22 @@ public abstract partial class GAgentBase<TState, TEvent>
     {
         if (IsEventWithResponse(parameter))
         {
-            Logger.LogInformation($"{this.GetGrainId().ToString()}: {eventType.GetType().Name} has response.");
+            //Logger.LogInformation($"{this.GetGrainId().ToString()}: {eventType.GetType().Name} has response.");
             await HandleEventWithResponseAsync(method, eventType, eventId);
         }
         else if (method.ReturnType == typeof(Task))
         {
             try
             {
-                Logger.LogInformation($"{this.GetGrainId().ToString()}: about to execute handler of {eventType.GetType().Name}.");
+                //Logger.LogInformation($"{this.GetGrainId().ToString()}: about to execute handler of {eventType.GetType().Name}.");
                 var result = method.Invoke(this, [eventType]);
                 if (result == null)
                 {
-                    Logger.LogInformation($"{this.GetGrainId().ToString()}: the method {method.Name} which handling type {eventType.GetType().Name} returned null.");
+                    //Logger.LogInformation($"{this.GetGrainId().ToString()}: the method {method.Name} which handling type {eventType.GetType().Name} returned null.");
                     throw new InvalidOperationException($"{this.GetGrainId().ToString()}: the method {method.Name} returned null.");
                 }
                 await (Task)result;
-                Logger.LogInformation($"{this.GetGrainId().ToString()}: executed handler of {eventType.GetType().Name}.");
+                //Logger.LogInformation($"{this.GetGrainId().ToString()}: executed handler of {eventType.GetType().Name}.");
             }
             catch (Exception ex)
             {
