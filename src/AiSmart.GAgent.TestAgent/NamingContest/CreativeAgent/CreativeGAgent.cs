@@ -27,6 +27,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     public async Task HandleEventAsync(GroupChatStartGEvent @event)
     {
         Logger.LogInformation($"[CreativeGAgent] GroupChatStartGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
+        RaiseEvent(new SetExecuteStep { Step = 1 });
+        await base.ConfirmEvents();
         if (@event.IfFirstStep == true)
         {
             RaiseEvent(new AddHistoryChatSEvent()
@@ -477,6 +479,11 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     public Task<string> GetCreativeName()
     {
         return Task.FromResult(State.AgentName);
+    }
+
+    public Task<int> GetExecuteStep()
+    {
+        return Task.FromResult(State.ExecuteStep);
     }
 
     [EventHandler]

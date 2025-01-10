@@ -32,3 +32,9 @@ public class SetAgentInfoSEvent : CreativeSEventBase
     [Id(0)] public  string AgentName { get; set; }
     [Id(1)] public string Description { get; set; }
 }
+
+[GenerateSerializer]
+public class SetExecuteStep : CreativeSEventBase
+{
+    [Id(0)] public int Step { get; set; }
+}
