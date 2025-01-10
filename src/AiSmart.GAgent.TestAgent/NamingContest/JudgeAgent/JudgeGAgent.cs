@@ -34,7 +34,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
             return;
         }
 
-        // Logger.LogInformation($"[JudgeGAgent] JudgeVoteGEVent Start GrainId:{this.GetPrimaryKey().ToString()}");
+        Logger.LogInformation($"[JudgeGAgent] JudgeVoteGEVent Start GrainId:{this.GetPrimaryKey().ToString()}");
         var judgeResponse = new JudgeVoteChatResponse();
         try
         {
