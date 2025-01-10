@@ -9,6 +9,7 @@ using AISmart.GEvents.Twitter;
 using AISmart.Sender;
 using AISmart.Twitter;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Orleans;
 using Volo.Abp.Application.Services;
 
@@ -21,7 +22,7 @@ public class TwitterService : ApplicationService, ITwitterService
     private const string GroupAgentName = "GroupAgent";
     private const string SocialAgentName = "SocialAgent";
     private const string PublishAgentName = "PublishAgent";
-    private const string Role = "You are a Twitter user, please answer the question from that perspective and response the content of tweet directly!";
+    private string Role = "You are a Twitter user, please answer the question from that perspective and response the content of tweet directly!";
 
     public TwitterService(
         IClusterClient clusterClient,
@@ -35,8 +36,7 @@ public class TwitterService : ApplicationService, ITwitterService
     {
         var twitterAgent = _clusterClient.GetGrain<ITwitterGAgent>(GuidUtil.StringToGuid(bindTwitterAccountDto.UserId));
         var hasGroup = await twitterAgent.UserHasBoundAsync();
-        _logger.LogInformation("BindTwitterAccountAsync，userId: {userId}, userName: {userName}, hasGroup:{hasGroup}", 
-            bindTwitterAccountDto.UserId, bindTwitterAccountDto.UserName, hasGroup);
+        _logger.LogInformation("BindTwitterAccountAsync，bindTwitterAccountDto: " + JsonConvert.SerializeObject(bindTwitterAccountDto));
         if (hasGroup)
         {
             await twitterAgent.BindTwitterAccountAsync(bindTwitterAccountDto.UserName, bindTwitterAccountDto.UserId, bindTwitterAccountDto.Token, bindTwitterAccountDto.TokenSecret);
@@ -72,7 +72,7 @@ public class TwitterService : ApplicationService, ITwitterService
     {
         _logger.LogInformation("PostTweetAsync，userId: {userId}", postTweetDto.UserId);
         var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+SocialAgentName));
-        await socialAgent.SetAgent(postTweetDto.UserId, Role);
+        // await socialAgent.SetAgent(postTweetDto.UserId, Role);
         
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new CreateTweetEvent
@@ -85,7 +85,7 @@ public class TwitterService : ApplicationService, ITwitterService
     {
         _logger.LogInformation("ReplyMentionAsync，userId: {userId}", replyMentionDto.UserId);
         var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId+SocialAgentName));
-        await socialAgent.SetAgent(replyMentionDto.UserId, Role);
+        // await socialAgent.SetAgent(replyMentionDto.UserId, Role);
         
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(GuidUtil.StringToGuid(replyMentionDto.UserId+PublishAgentName));
         await publishingAgent.PublishEventAsync(new ReplyMentionEvent
