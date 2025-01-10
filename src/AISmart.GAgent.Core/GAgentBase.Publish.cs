@@ -67,11 +67,11 @@ public abstract partial class GAgentBase<TState, TEvent>
 
         Logger.LogInformation($"{this.GetGrainId().ToString()} has {State.Children.Count} children.");
 
-        foreach (var grainId in State.Children)
+        await Task.WhenAll(State.Children.Select(async grainId =>
         {
             var gAgent = GrainFactory.GetGrain<IGAgent>(grainId);
             Logger.LogInformation($"{this.GetGrainId().ToString()} forwarded {eventWrapper.Event} to child {grainId.ToString()}.");
             await gAgent.OnNextAsync(eventWrapper);
-        }
+        }));
     }
 }
