@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AISmart.Agents;
 using AISmart.Agents.Group;
 using AISmart.Application.Grains.Agents.Group;
+using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AISmart.Sender;
 using Orleans;
 using Volo.Abp.Application.Services;
@@ -80,12 +81,12 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         var groupMember1 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         var groupMember2 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         var groupMember3 = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
-        
+
         var groupMember1A = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         var groupMember1B = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         await groupMember1.RegisterAsync(groupMember1A);
         await groupMember1.RegisterAsync(groupMember1B);
-        
+
         var groupMember1Aa = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         var groupMember1Ab = _clusterClient.GetGrain<IStateGAgent<GroupTestGAgentState>>(Guid.NewGuid());
         await groupMember1A.RegisterAsync(groupMember1Aa);
@@ -95,7 +96,22 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         await groupGAgent.RegisterAsync(groupMember1);
         await groupGAgent.RegisterAsync(groupMember2);
         await groupGAgent.RegisterAsync(groupMember3);
-        
+
         return groupGAgent.GetPrimaryKey().ToString();
+    }
+
+    public async Task<Dictionary<string, int>> GetCreativeExecuteStatus(List<string> creativeList)
+    {
+        var result = new Dictionary<string, int>();
+        foreach (var item in creativeList)
+        {
+            var creativeId = Guid.Parse(item);
+
+            var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(creativeId);
+            var step = await creativeAgent.GetExecuteStep();
+            result.Add(item, step);
+        }
+
+        return result;
     }
 }

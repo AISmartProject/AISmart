@@ -7,6 +7,8 @@ using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.Agents.Group;
+using AISmart.Agents.Messaging;
+using AISmart.Application.Grains.Agents.Messaging;
 using AISmart.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
@@ -22,6 +24,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Orleans;
+using Orleans.Runtime;
 using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
 
@@ -32,6 +35,8 @@ public interface INamingContestService : ISingletonDependency
     Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto);
     Task ClearAllAgentsAsync();
     Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto);
+    Task<List<string>> LoadTest();
+    Task<int> VerifyLoadTest(List<string> ids);
     Task<GroupStartResponse> StartGroupAsync(GroupStartDto groupStartDto);
 }
 
@@ -294,6 +299,49 @@ public class NamingContestService : INamingContestService
         
 
         return groupResponse;
+    }
+
+    public async Task<List<string>> LoadTest()
+    {
+        var parentId = Guid.NewGuid();
+        var parentAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(parentId);
+
+        List<string> ids = [];
+        var maxAgents = 400;
+        for(var i = 0; i < maxAgents; ++i)
+        {
+            var messagingAgentId = Guid.NewGuid();
+            var messagingAgent = _clusterClient.GetGrain<IMessagingGAgent>(messagingAgentId);
+            await parentAgent.RegisterAsync(messagingAgent);
+            
+            ids.Add(messagingAgent.GetGrainId().ToString());
+        }
+        _logger.LogInformation("Added {maxAgents} agents to parent agent {ParentAgentId}.",maxAgents, parentAgent.GetGrainId().ToString());
+
+        var publisher = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+        await parentAgent.RegisterAsync(publisher);
+        await publisher.PublishEventAsync(new SendEvent()
+        {
+            Message = "Hello, World!"
+        });
+        
+        _logger.LogInformation("Published event to parent agent {ParentAgentId}.", parentAgent.GetGrainId().ToString());
+
+        return ids;
+    }
+
+    public async Task<int> VerifyLoadTest(List<string> ids)
+    {
+        var completed = 0;
+        foreach (var id in ids)
+        {
+            var grainId = GrainId.Parse(id);
+            var messagingGAgent = _clusterClient.GetGrain<IMessagingGAgent>(grainId);
+            var received = await messagingGAgent.GetReceivedMessagesAsync();
+            completed += (received == 400)? 1: 0;
+        }
+
+        return completed;
     }
 
     public async Task<GroupStartResponse> StartGroupAsync(GroupStartDto groupStartDto)
