@@ -49,7 +49,7 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
         }
         finally
         {
-            var groupGAgentId = Helper.GetHostGroupGrainId();
+            var groupGAgentId = @event.GroupId;
             var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupGAgentId);
             
             GrainId grainId = await groupGAgent.GetParentAsync();
