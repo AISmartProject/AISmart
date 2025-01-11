@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using AISmart.Agent;
 using AISmart.Agent.GEvents;
+using AISmart.Dapr;
 using AISmart.Options;
 using AutoGen.Core;
 using AutoGen.OpenAI;
@@ -10,9 +14,12 @@ using AutoGen.SemanticKernel.Extension;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.Google;
 using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
+using Orleans.Runtime;
+using Orleans.Streams;
 
 namespace AISmart.Grains;
 
@@ -21,11 +28,16 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 {
     private MiddlewareStreamingAgent<SemanticKernelAgent>? _agent;
     private readonly MicroAIOptions _options;
+    private readonly AIModelOptions _aiModelOptions;
     private readonly ILogger<ChatAgentGrain> _logger;
+    protected IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
 
-    public ChatAgentGrain(IOptions<MicroAIOptions> options, ILogger<ChatAgentGrain> logger)
+
+    public ChatAgentGrain(IOptions<MicroAIOptions> options, IOptions<AIModelOptions> aiModelOptions,
+        ILogger<ChatAgentGrain> logger)
     {
         _options = options.Value;
+        _aiModelOptions = aiModelOptions.Value;
         _logger = logger;
     }
 
@@ -42,12 +54,48 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         return null;
     }
 
+    public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory,object requestEvent)
+    {
+        MicroAIMessage microAIMessage = (await SendAsync(message, chatHistory))!;
+        Debug.Assert(microAIMessage != null, nameof(microAIMessage) + " != null");
+        var agentGuid = this.GetPrimaryKeyString();
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
+        await stream.OnNextAsync(new MicroAIEventMessage(microAIMessage, requestEvent));
+    }
+
     public Task SetAgentAsync(string systemMessage)
     {
         var kernelBuilder = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
         var systemName = this.GetPrimaryKeyString();
         var kernel = kernelBuilder.Build();
+        var kernelAgent = new SemanticKernelAgent(
+                kernel: kernel,
+                name: systemName,
+                systemMessage: systemMessage)
+            .RegisterMessageConnector();
+
+        _agent = kernelAgent;
+        return Task.CompletedTask;
+    }
+
+
+    public Task SetAgentWithRandomLLMAsync(string systemMessage)
+    {
+        string llm = GetRandomLlmType();
+        return SetAgentAsync(systemMessage, llm);
+    }
+
+    public Task SetAgentAsync(string systemMessage, string llm)
+    {
+        var kernelBuilder = Kernel.CreateBuilder();
+
+        ConfigureKernelBuilder(kernelBuilder, llm, _aiModelOptions);
+
+
+        var kernel = kernelBuilder.Build();
+        var systemName = this.GetPrimaryKeyString();
         var kernelAgent = new SemanticKernelAgent(
                 kernel: kernel,
                 name: systemName,
@@ -101,5 +149,81 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
             default:
                 return Role.User;
         }
+    }
+
+    private static string GetRandomLlmType()
+    {
+        var random = new Random();
+        return LLMTypesConstant.AllSupportedLlmTypes[random.Next(LLMTypesConstant.AllSupportedLlmTypes.Count)];
+    }
+
+    private void ConfigureKernelBuilder(IKernelBuilder kernelBuilder, string llm, AIModelOptions aiModelOptions)
+    {
+        switch (llm)
+        {
+            case LLMTypesConstant.AzureOpenAI:
+            {
+                // Fetch Azure-specific configuration.
+                var azureOptions = aiModelOptions.AzureOpenAI;
+
+                // Add Azure OpenAI Chat Completion to the KernelBuilder.
+                kernelBuilder.AddAzureOpenAIChatCompletion(
+                    _options.Model, _options.Endpoint, _options.ApiKey);
+                break;
+            }
+
+            case LLMTypesConstant.Bedrock:
+            {
+                // Fetch Bedrock-specific configuration.
+                var bedrockOptions = aiModelOptions.Bedrock;
+
+                #pragma warning disable SKEXP0070
+
+                // Add Bedrock Chat Completion to the KernelBuilder.
+                kernelBuilder.AddBedrockChatCompletionService(
+                    modelId: bedrockOptions.Model,
+                    serviceId: bedrockOptions.ServiceId
+                );
+                #pragma warning restore SKEXP0070
+
+                break;
+            }
+
+            case LLMTypesConstant.GoogleGemini:
+            {
+                // Fetch Google Gemini-specific configuration.
+                var googleOptions = aiModelOptions.GoogleGemini;
+
+                #pragma warning disable SKEXP0070
+                // Add Google Gemini Chat Completion to the KernelBuilder.
+                kernelBuilder.AddGoogleAIGeminiChatCompletion(
+                    modelId: googleOptions.Model,
+                    apiKey: googleOptions.ApiKey,
+                    apiVersion: GoogleAIVersion.V1, // Optional: API version.
+                    serviceId: googleOptions.ServiceId // Optional: Target a specific service.
+                );
+                #pragma warning restore SKEXP0070
+
+                break;
+            }
+
+            default:
+                throw new ArgumentException($"Unsupported LLM type: {llm}");
+        }
+    }
+}
+
+[GenerateSerializer]
+public class MicroAIEventMessage
+{
+    [Id(0)] public MicroAIMessage MicroAIMessage { get; set; }
+    
+    [Id(1)] public object Event { get; set; }
+
+    public MicroAIEventMessage(MicroAIMessage microAIMessage, object @event)
+    {
+        // Validate the input parameters to ensure non-null references
+        MicroAIMessage = microAIMessage;
+        Event = @event;
     }
 }

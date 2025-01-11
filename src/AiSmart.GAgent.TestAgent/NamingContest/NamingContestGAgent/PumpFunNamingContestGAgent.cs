@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
 using AISmart.Agents.AutoGen;
+using AISmart.Agents.Group;
 using AISmart.Application.Grains;
 using AISmart.Events;
 using AISmart.GAgent.Autogen.EventSourcingEvent;
@@ -83,6 +84,34 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
 
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
             .SendMessageAsync(State.groupId,@event, State.CallBackUrl);
+    }
+    
+    [EventHandler]
+    public async Task HandleGroupCleanEventAsync(NamingLogEvent @event)
+    {
+
+        if (@event.Step == NamingContestStepEnum.HostSummaryComplete)
+        {
+            _logger.LogInformation("HandleGroupCleanEventAsync " +
+                                   JsonConvert.SerializeObject(@event));
+            var groupId = State.groupId;
+            var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
+            List<GrainId> subGAgentIdList =  await groupGAgent.GetSubscribersAsync();
+            _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList" +
+                                   JsonConvert.SerializeObject(subGAgentIdList));
+            foreach (var grainId in subGAgentIdList)
+            {
+                var subGAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+                await groupGAgent.UnregisterAsync(subGAgent);
+
+            }
+            subGAgentIdList =  await groupGAgent.GetSubscribersAsync();
+            _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList end" +
+                                   JsonConvert.SerializeObject(subGAgentIdList));
+            _logger.LogInformation("HandleGroupCleanEventAsync end: " +
+                                   JsonConvert.SerializeObject(@event));
+        }
+        
     }
 }
 

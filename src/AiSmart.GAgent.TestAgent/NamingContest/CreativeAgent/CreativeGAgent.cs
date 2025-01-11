@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.Dapr;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
@@ -10,6 +11,7 @@ using AISmart.Grains;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Orleans.Streams;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
@@ -95,12 +97,27 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         var prompt = NamingConstants.NamingPrompt;
         try
         {
-            var response = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendAsync(prompt, State.RecentMessages.ToList());
+            _ =  GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendEventAsync(prompt, State.RecentMessages.ToList(),@event);
+            
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Creative] TrafficInformCreativeGEvent error");
+            namingReply = NamingConstants.DefaultCreativeNaming;
+        }
+    }
+    
+    public async Task HandleAIEventAsync(MicroAIMessage microAIMessage,TrafficInformCreativeGEvent @event)
+    {
+        var namingReply = string.Empty;
+        var prompt = NamingConstants.NamingPrompt;
+        try
+        {
 
-            if (response != null && !response.Content.IsNullOrEmpty())
+            if (microAIMessage != null && !microAIMessage.Content.IsNullOrEmpty())
             {
-                namingReply = response.Content;
+                namingReply = microAIMessage.Content;
             }
         }
         catch (Exception ex)
@@ -452,7 +469,51 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         RaiseEvent(new SetAgentInfoSEvent { AgentName = agentName, Description = agentResponsibility });
         await base.ConfirmEvents();
 
-        await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
+        IChatAgentGrain chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(agentName);
+        await chatAgentGrain.SetAgentAsync(agentResponsibility);
+        
+        //do stream subscription before calling this Long Running Task
+        var agentGuid = chatAgentGrain.GetPrimaryKeyString();
+        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
+        await stream.SubscribeAsync(ChatAgentGrainEventHandler);
+    }
+    
+    private async Task ChatAgentGrainEventHandler(MicroAIEventMessage message, StreamSequenceToken token = null)
+    {
+        try
+        {
+            // Log or debug received message for verification
+            _logger.LogInformation($"Received message: {message}");
+
+            // Step 1: Process the incoming message
+            // Replace this with actual logic depending on what you need to do with the data
+            // For example, you could update state, trigger other actions, etc.
+            if (message.Event is TrafficInformCreativeGEvent @event)
+            {
+                // Step 2: Acknowledge or perform useful business logic
+                // Console.WriteLine($"Successfully processed message with ID: {message.Id}");
+                await HandleAIEventAsync(message.MicroAIMessage,@event);
+            }
+            
+           
+        }
+        catch (Exception ex)
+        {
+            // Step 3: Handle any exceptions gracefully
+            _logger.LogError($"Error in processing message: {ex.Message}");
+        
+            // Optional: Add error tracking or retry logic here
+            throw; // Re-throw exception if you want to propagate it
+        }
+    }
+
+    // Example method for processing the incoming message
+    private Task ProcessMessageAsync(MicroAIMessage message)
+    {
+        // Add your logic for the message here
+        // For example, you might store it to a database or trigger state changes
+        return Task.CompletedTask; // Replace with actual async operation
     }
 
     public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
