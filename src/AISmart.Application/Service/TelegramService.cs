@@ -431,8 +431,7 @@ public class TelegramService : ApplicationService, ITelegramService
             var temperature = random.NextDouble();
             // var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(GuidUtil.StringToGuid(creativeName));
             var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.NewGuid());
-            await creativeAgent.SetAgentWithTemperatureAsync(creativeInfo.Item1, creativeInfo.Item2,
-                (float)temperature);
+            await creativeAgent.SetAgent(creativeInfo.Item1, creativeInfo.Item2);
             _creativeList.Add(creativeAgent);
         }
 
@@ -470,12 +469,14 @@ public class TelegramService : ApplicationService, ITelegramService
             await _firstTrafficList[i % groupCount]
                 .AddCreativeAgent(await creative.GetCreativeName(), creative.GetPrimaryKey());
         }
-
+        
+        var judge = _judgeList[0];
         for (var i = 0; i < _judgeList.Count; i++)
         {
-            var judge = _judgeList[i];
-            await groupList[i % groupCount].RegisterAsync(judge);
-            await _firstTrafficList[i % groupCount].AddJudgeAgent(judge.GetPrimaryKey());
+            // var judge = _judgeList[i];
+            var cloneJudge = await judge.Clone();
+            await groupList[i % groupCount].RegisterAsync(cloneJudge);
+            await _firstTrafficList[i % groupCount].AddJudgeAgent(cloneJudge.GetPrimaryKey());
         }
 
         for (var i = 0; i < groupCount; i++)
