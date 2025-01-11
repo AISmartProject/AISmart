@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Dapr;
+using AISmart.CQRS.Dto;
+using AISmart.CQRS.Provider;
 using AISmart.Options;
 using AutoGen.Core;
-using AutoGen.OpenAI;
-using AutoGen.OpenAI.Extension;
 using AutoGen.SemanticKernel;
 using AutoGen.SemanticKernel.Extension;
 using Microsoft.Extensions.Logging;
@@ -30,15 +30,21 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
     private readonly MicroAIOptions _options;
     private readonly AIModelOptions _aiModelOptions;
     private readonly ILogger<ChatAgentGrain> _logger;
-    protected IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
+    private readonly ICQRSProvider _cqrsProvider;
 
+    private IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
+    
 
-    public ChatAgentGrain(IOptions<MicroAIOptions> options, IOptions<AIModelOptions> aiModelOptions,
-        ILogger<ChatAgentGrain> logger)
+    public ChatAgentGrain(IOptions<MicroAIOptions> options, 
+        IOptions<AIModelOptions> aiModelOptions, 
+        ILogger<ChatAgentGrain> logger,
+        ICQRSProvider cqrsProvider)
+
     {
         _options = options.Value;
         _aiModelOptions = aiModelOptions.Value;
         _logger = logger;
+        _cqrsProvider = cqrsProvider;
     }
 
     public async Task<MicroAIMessage?> SendAsync(string message, List<MicroAIMessage>? chatHistory)
@@ -47,11 +53,25 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         {
             var history = ConvertMessage(chatHistory);
             var imMessage = await _agent.SendAsync(message, history);
+            _ = SaveAIChatLogAsync(message, imMessage.GetContent());
             return new MicroAIMessage("assistant", imMessage.GetContent()!);
         }
 
         _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
         return null;
+    }
+    
+    private async Task SaveAIChatLogAsync(string message, string? response)
+    {
+        var command = new SaveLogCommand
+        {
+            AgentId = this.GetGrainId().ToString(),
+            AgentName = this.GetPrimaryKeyString(),
+            Request = message,
+            Response = response,
+            Ctime = DateTime.UtcNow
+        };
+        await _cqrsProvider.SendLogCommandAsync(command);
     }
 
     public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory,object requestEvent)
@@ -123,12 +143,15 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         return Task.CompletedTask;
     }
 
-    private List<IMessage> ConvertMessage(List<MicroAIMessage> listAutoGenMessage)
+    private List<IMessage> ConvertMessage(List<MicroAIMessage>? listAutoGenMessage)
     {
         var result = new List<IMessage>();
-        foreach (var item in listAutoGenMessage)
+        if (listAutoGenMessage != null)
         {
-            result.Add(new TextMessage(GetRole(item.Role), item.Content));
+            foreach (var item in listAutoGenMessage)
+            {
+                result.Add(new TextMessage(GetRole(item.Role), item.Content));
+            }
         }
 
         return result;

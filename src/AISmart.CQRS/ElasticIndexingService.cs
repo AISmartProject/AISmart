@@ -175,6 +175,40 @@ public class ElasticIndexingService : IIndexingService
         
     }
 
+    public async Task<string> QueryEventIndexAsync(DateTime beginDateTime, DateTime endDateTime, string indexName)
+    {
+        try
+        {
+            var response = await _elasticClient.SearchAsync<dynamic>(s => s
+                .Index(indexName) // Specify the index name
+                .Query(q => q
+                    .DateRange(r => r
+                            .Field("ctime") // Specify the date field
+                            .GreaterThanOrEquals(beginDateTime) // Start time >=
+                            .LessThanOrEquals(endDateTime) // End time <=
+                    )
+                )
+            );
+            if (!response.IsValid)
+            {
+                _logger.LogError("Error QueryEventIndexAsync index. {indexName} ,{error}",indexName, response.ServerError?.Error);
+            }
+
+            var source = response.Documents;
+            if (source == null)
+            {
+                return "";
+            }
+            var documentContent = JsonConvert.SerializeObject(source);
+            return documentContent;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("{indexName} ,beginDateTime:{beginDateTime} ,endDateTime:{endDateTime}  QueryEventIndexAsync fail.", indexName,beginDateTime,endDateTime);
+            throw;
+        }
+    }
+
     public void CheckExistOrCreateIndex<T>() where T : class
     {
         var indexName = typeof(T).Name.ToLower();

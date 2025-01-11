@@ -96,7 +96,7 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
                                    JsonConvert.SerializeObject(@event));
             var groupId = State.groupId;
             var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
-            List<GrainId> subGAgentIdList =  await groupGAgent.GetSubscribersAsync();
+            List<GrainId> subGAgentIdList =  await groupGAgent.GetChildrenAsync();
             _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList" +
                                    JsonConvert.SerializeObject(subGAgentIdList));
             foreach (var grainId in subGAgentIdList)
@@ -105,7 +105,7 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
                 await groupGAgent.UnregisterAsync(subGAgent);
 
             }
-            subGAgentIdList =  await groupGAgent.GetSubscribersAsync();
+            subGAgentIdList =  await groupGAgent.GetChildrenAsync();
             _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList end" +
                                    JsonConvert.SerializeObject(subGAgentIdList));
             _logger.LogInformation("HandleGroupCleanEventAsync end: " +

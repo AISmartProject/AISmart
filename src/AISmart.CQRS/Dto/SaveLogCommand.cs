@@ -12,6 +12,6 @@ public class SaveLogCommand : IRequest
     public string RoleType { get; set; }
     public string AgentResponsibility{ get; set; }
     public string Request { get; set; }
-    public string Response { get; set; }
+    public string? Response { get; set; }
     public DateTime Ctime { get; set; }
 }
