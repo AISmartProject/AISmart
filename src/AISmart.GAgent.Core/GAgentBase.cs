@@ -246,8 +246,8 @@ public abstract partial class GAgentBase<TState, TEvent> : JournaledGrain<TState
         //Logger.LogInformation($"{this.GetGrainId().ToString()} is handling event {eventType}");
         var matchedObservers = _observers.Where(observer =>
             observer.ParameterTypeName == eventType.GetType().Name ||
-            observer.MethodName == nameof(ForwardEventAsync) ||
-            observer.MethodName == nameof(HandleRequestAllSubscriptionsEventAsync)).ToList();
+            observer.ParameterTypeName == nameof(EventWrapperBase) ||
+            observer.MethodName == nameof(ForwardEventAsync)).ToList();
         var parameterTypeNames = string.Join(", ", matchedObservers.Select(observer => observer.ParameterTypeName));
         //Logger.LogInformation($"{this.GetGrainId().ToString()} has {matchedObservers.Count} valid observers with parameter types: {parameterTypeNames}");
         foreach (var observer in matchedObservers)
