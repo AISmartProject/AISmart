@@ -1,10 +1,12 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.Agents.Group;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Grains;
+using AISmart.Sender;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 
@@ -47,15 +49,48 @@ public class HostGAgent : GAgentBase<HostState, HostSEventBase>, IHostGAgent
         }
         finally
         {
-            await this.PublishAsync(new HostSummaryCompleteGEvent()
+            var groupGAgentId = Helper.GetHostGroupGrainId();
+            var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupGAgentId);
+            
+            GrainId grainId = await groupGAgent.GetParentAsync();
+
+            IPublishingGAgent publishingAgent;
+
+            if (grainId != null && grainId.ToString().StartsWith("publishinggagent"))
+            {
+                publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(grainId);
+            }
+            else
+            {
+                publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+                await publishingAgent.RegisterAsync(groupGAgent);
+            }
+
+            await publishingAgent.PublishEventAsync(new HostSummaryCompleteGEvent()
             {
                 HostId = this.GetPrimaryKey(),
                 SummaryReply = summaryReply,
                 HostName = State.AgentName,
             });
             
-            await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.HostSummary, this.GetPrimaryKey(),
-                NamingRoleType.Host, State.AgentName, summaryReply, prompt));
+            await publishingAgent.PublishEventAsync(new NamingAILogEvent(
+                NamingContestStepEnum.HostSummary,
+                this.GetPrimaryKey(),
+                NamingRoleType.Host, 
+                State.AgentName,
+                summaryReply, 
+                prompt));
+            
+
+            // await this.PublishAsync(new HostSummaryCompleteGEvent()
+            // {
+            //     HostId = this.GetPrimaryKey(),
+            //     SummaryReply = summaryReply,
+            //     HostName = State.AgentName,
+            // });
+            
+            // await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.HostSummary, this.GetPrimaryKey(),
+            //     NamingRoleType.Host, State.AgentName, summaryReply, prompt));
 
             RaiseEvent(new AddHistoryChatSEvent()
             {
