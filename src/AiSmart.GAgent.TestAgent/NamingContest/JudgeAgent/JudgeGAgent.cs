@@ -1,20 +1,19 @@
 using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agent.GEvents;
+using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
-using AiSmart.GAgent.TestAgent.NamingContest.RankingAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
-using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
-public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
+public class JudgeGAgent : GAgentBase<JudgeState, JudgeCloneSEvent>, IJudgeGAgent
 {
-    public JudgeGAgent(ILogger<MicroAIGAgent> logger) : base(logger)
+    public JudgeGAgent(ILogger<JudgeGAgent> logger) : base(logger)
     {
     }
 
@@ -49,27 +48,28 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
                 }
                 else
                 {
-                    _logger.LogError($"[Judge] response voteResult == null response content:{response.Content}");
+                    Logger.LogError($"[Judge] response voteResult == null response content:{response.Content}");
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
+            Logger.LogError(ex, "[Judge] JudgeVoteGEVent error");
         }
         finally
         {
             if (judgeResponse.Name.IsNullOrWhiteSpace())
             {
-                _logger.LogError("[Judge] JudgeVoteGEVent Vote name is empty");
+                Logger.LogError("[Judge] JudgeVoteGEVent Vote name is empty");
             }
-            
+
             await PublishAsync(new JudgeVoteResultGEvent()
             {
                 VoteName = judgeResponse.Name, Reason = judgeResponse.Reason, JudgeGrainId = this.GetPrimaryKey(),
+                RealJudgeGrainId = GetRealJudgeId(),
                 JudgeName = State.AgentName
             });
-            
+
             // Logger.LogInformation($"[JudgeGAgent] JudgeVoteGEVent End GrainId:{this.GetPrimaryKey().ToString()}");
         }
     }
@@ -101,7 +101,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         {
             if (!reply.IsNullOrWhiteSpace())
             {
-                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeAsking, this.GetPrimaryKey(),
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeAsking, GetRealJudgeId(),
                     NamingRoleType.Judge, State.AgentName, reply, prompt));
             }
 
@@ -135,7 +135,7 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         {
             if (!defaultScore.IsNullOrWhiteSpace())
             {
-                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeScore, this.GetPrimaryKey(),
+                await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.JudgeScore, GetRealJudgeId(),
                     NamingRoleType.Judge, State.AgentName, defaultScore, prompt));
             }
 
@@ -165,5 +165,67 @@ public class JudgeGAgent : MicroAIGAgent, IJudgeGAgent
         }
 
         await base.ConfirmEvents();
+    }
+
+
+    private Guid GetRealJudgeId()
+    {
+        return State.CloneJudgeId == Guid.Empty ? this.GetPrimaryKey() : State.CloneJudgeId;
+    }
+
+    public async Task<IJudgeGAgent> Clone()
+    {
+        var judgeGAgent = GrainFactory.GetGrain<IJudgeGAgent>(Guid.NewGuid());
+        await judgeGAgent.SetRealJudgeGrainId(this.GetPrimaryKey());
+        await judgeGAgent.SetAgent(State.AgentName, State.AgentResponsibility);
+        
+        return judgeGAgent;
+    }
+
+    public async Task SetRealJudgeGrainId(Guid judgeGrainId)
+    {
+        RaiseEvent(new JudgeCloneSEvent() { JudgeGrainId = judgeGrainId });
+        await ConfirmEvents();
+    }
+
+    public Task<MicroAIGAgentState> GetStateAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Task<string> GetDescriptionAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task SetAgent(string agentName, string agentResponsibility)
+    {
+        RaiseEvent(new AISetAgentMessageGEvent
+        {
+            AgentName = agentName,
+            AgentResponsibility = agentResponsibility
+        });
+        await ConfirmEvents();
+
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName).SetAgentAsync(agentResponsibility);
+    }
+
+    public async Task SetAgentWithTemperatureAsync(string agentName, string agentResponsibility, float temperature,
+        int? seed = null,
+        int? maxTokens = null)
+    {
+        RaiseEvent(new AISetAgentMessageGEvent
+        {
+            AgentName = agentName,
+            AgentResponsibility = agentResponsibility
+        });
+        await ConfirmEvents();
+        await GrainFactory.GetGrain<IChatAgentGrain>(agentName)
+            .SetAgentWithTemperature(agentResponsibility, temperature, seed, maxTokens);
+    }
+
+    public Task<MicroAIGAgentState> GetAgentState()
+    {
+        throw new NotImplementedException();
     }
 }

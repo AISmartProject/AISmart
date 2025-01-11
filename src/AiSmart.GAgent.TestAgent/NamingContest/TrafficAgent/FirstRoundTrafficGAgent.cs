@@ -122,7 +122,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
                 Nameing = @event.VoteName, Reason = @event.Reason
             });
 
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.JudgeGrainId,
+            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.RealJudgeGrainId,
                 NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
         }
         else
