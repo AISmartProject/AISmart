@@ -47,8 +47,6 @@ public class NamingContestService : INamingContestService
     private readonly NameContestOptions _nameContestOptions;
 
 
-
-
     public NamingContestService(
         IClusterClient clusterClient,
         ILogger<NamingContestService> logger,
@@ -61,14 +59,15 @@ public class NamingContestService : INamingContestService
 
     public async Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
-        IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
-        
+        IManagerGAgent managerGAgent =
+            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+
         var random = new Random();
 
         AiSmartInitResponse aiSmartInitResponse = new AiSmartInitResponse();
-        
 
-        if (contestAgentsDto.Network is not null )
+
+        if (contestAgentsDto.Network is not null)
         {
             foreach (var agent in contestAgentsDto.Network)
             {
@@ -80,7 +79,7 @@ public class NamingContestService : INamingContestService
                         agentId = Guid.NewGuid();
                         var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(agentId);
                         await creativeAgent.SetAgent(agent.Name, agent.Bio);
-            
+
                         newAgent = new AiSmartInitResponseDetail()
                         {
                             AgentId = agentId.ToString(),
@@ -94,7 +93,7 @@ public class NamingContestService : INamingContestService
                     case NamingContestConstant.AgentLabelJudge:
                         agentId = Guid.NewGuid();
                         var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(agentId);
-        
+
                         await judgeAgent.SetAgent(agent.Name, agent.Bio);
 
                         newAgent = new AiSmartInitResponseDetail()
@@ -107,11 +106,11 @@ public class NamingContestService : INamingContestService
                         // Add the new agent to the contestant list
                         aiSmartInitResponse.Details.Add(newAgent);
                         break;
-                    
+
                     case NamingContestConstant.AgentLabelHost:
                         agentId = Guid.NewGuid();
                         var hostAgent = _clusterClient.GetGrain<IHostGAgent>(agentId);
-        
+
                         await hostAgent.SetAgent(agent.Name, agent.Bio);
 
                         newAgent = new AiSmartInitResponseDetail()
@@ -140,13 +139,12 @@ public class NamingContestService : INamingContestService
         var hostAgentIdList = aiSmartInitResponse.Details
             .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId)
             .ToList();
-        
+
         await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
         {
             CreativeAgentIdList = creativeAgentIdList,
             JudgeAgentIdList = judgeAgentIdList,
             HostAgentIdList = hostAgentIdList
-            
         });
 
         return aiSmartInitResponse;
@@ -154,23 +152,27 @@ public class NamingContestService : INamingContestService
 
     public async Task ClearAllAgentsAsync()
     {
-        IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        IManagerGAgent managerGAgent =
+            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
         await managerGAgent.ClearAllAgentsAsync();
     }
 
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
-        
-        IManagerGAgent managerGAgent = _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
-        
+        IManagerGAgent managerGAgent =
+            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+
         GroupResponse groupResponse = new GroupResponse();
+        Dictionary<string, bool> judgeDic = networksDto.Networks.SelectMany(network => network.JudgeList)
+            .ToDictionary(judge => judge, judge => false);
+
         foreach (var network in networksDto.Networks)
         {
             Guid groupAgentId = Guid.NewGuid();
 
             var groupAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(groupAgentId);
-            
-            
+
+
             ITrafficGAgent trafficAgent;
 
             if (network.Round == "1")
@@ -180,9 +182,8 @@ public class NamingContestService : INamingContestService
             else
             {
                 trafficAgent = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
-                _ =  ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(20);
+                _ = ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(20);
                 _ = ((ISecondTrafficGAgent)trafficAgent).SetRoundNumber(Convert.ToInt32(network.Round));
-
             }
 
             var namingContestGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
@@ -190,7 +191,7 @@ public class NamingContestService : INamingContestService
 
             await groupAgent.RegisterAsync(trafficAgent);
             await groupAgent.RegisterAsync(namingContestGAgent);
-            
+
             await namingContestGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
             {
                 CallBackUrl = network.CallbackAddress,
@@ -201,15 +202,14 @@ public class NamingContestService : INamingContestService
                 ScoreAgentIdList = network.ScoreList,
                 HostAgentIdList = network.HostList,
                 GroupId = groupAgent.GetPrimaryKey()
-
             });
 
 
             foreach (var agentId in network.ConstentList)
             {
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
-                
-                _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(),creativeAgent.GetPrimaryKey());
+
+                _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(), creativeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(creativeAgent);
             }
@@ -217,12 +217,20 @@ public class NamingContestService : INamingContestService
             foreach (var agentId in network.JudgeList)
             {
                 var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
+                if (judgeDic[agentId])
+                {
+                    judgeAgent = await judgeAgent.Clone();
+                }
+                else
+                {
+                    judgeDic[agentId] = true;
+                }
 
                 _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
 
                 await groupAgent.RegisterAsync(judgeAgent);
             }
-            
+
             var scoreListExcludingJudgeList = network.ScoreList.Except(network.JudgeList);
 
 
@@ -243,7 +251,7 @@ public class NamingContestService : INamingContestService
                 GroupId = groupAgentId.ToString(),
                 Name = network.Name
             };
-            
+
             // Add the new agent to the  list
             groupResponse.GroupDetails.Add(groupDetail);
 
@@ -257,15 +265,14 @@ public class NamingContestService : INamingContestService
                 ScoreAgentIdList = network.ScoreList,
                 HostAgentIdList = network.HostList,
                 GroupAgentId = groupAgentId.ToString()
-
             }, groupAgentId.ToString());
         }
-        
+
         var round = networksDto.Networks.FirstOrDefault()!.Round;
         var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(round));
         var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
-        
+
         var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
 
 
@@ -273,16 +280,16 @@ public class NamingContestService : INamingContestService
         {
             CallBackUrl = _nameContestOptions.MostCharmingCallback,
             GroupId = voteCharmingGAgent.GetPrimaryKey()
-
         });
 
         await voteCharmingGAgent.RegisterAsync(pumpFunMostCharmingGAgent);
-        
+
         var managerAgentState = await managerGAgent.GetManagerAgentStateAsync();
-        if(!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
+        if (!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
         {
             totalBatches = NamingConstants.DefaultTotalTotalBatches;
         }
+
         await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
         {
             CreativeGuidList = managerAgentState.CreativeAgentIdList.Select(Guid.Parse).ToList(),
@@ -290,7 +297,7 @@ public class NamingContestService : INamingContestService
             Round = Convert.ToInt32(round),
             TotalBatches = totalBatches
         });
-        
+
 
         return groupResponse;
     }
@@ -344,15 +351,17 @@ public class NamingContestService : INamingContestService
 
         List<string> ids = [];
         var maxAgents = 400;
-        for(var i = 0; i < maxAgents; ++i)
+        for (var i = 0; i < maxAgents; ++i)
         {
             var messagingAgentId = Guid.NewGuid();
             var messagingAgent = _clusterClient.GetGrain<IMessagingGAgent>(messagingAgentId);
             await parentAgent.RegisterAsync(messagingAgent);
-            
+
             ids.Add(messagingAgent.GetGrainId().ToString());
         }
-        _logger.LogInformation("Added {maxAgents} agents to parent agent {ParentAgentId}.",maxAgents, parentAgent.GetGrainId().ToString());
+
+        _logger.LogInformation("Added {maxAgents} agents to parent agent {ParentAgentId}.", maxAgents,
+            parentAgent.GetGrainId().ToString());
 
         var publisher = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
         await parentAgent.RegisterAsync(publisher);
@@ -360,7 +369,7 @@ public class NamingContestService : INamingContestService
         {
             Message = "Hello, World!"
         });
-        
+
         _logger.LogInformation("Published event to parent agent {ParentAgentId}.", parentAgent.GetGrainId().ToString());
 
         return ids;
@@ -374,7 +383,7 @@ public class NamingContestService : INamingContestService
             var grainId = GrainId.Parse(id);
             var messagingGAgent = _clusterClient.GetGrain<IMessagingGAgent>(grainId);
             var received = await messagingGAgent.GetReceivedMessagesAsync();
-            completed += (received == 400)? 1: 0;
+            completed += (received == 400) ? 1 : 0;
         }
 
         return completed;
@@ -383,16 +392,16 @@ public class NamingContestService : INamingContestService
     public async Task<GroupStartResponse> StartGroupAsync(GroupStartDto groupStartDto)
     {
         GroupStartResponse groupStartResponse = new GroupStartResponse();
-        
+
         foreach (var groupId in groupStartDto.GroupIdList)
         {
-            await StartOneGroupAsync(groupId,groupStartResponse);
+            await StartOneGroupAsync(groupId, groupStartResponse);
         }
 
         return groupStartResponse;
     }
 
-    private async Task StartOneGroupAsync(string groupId,GroupStartResponse groupStartResponse)
+    private async Task StartOneGroupAsync(string groupId, GroupStartResponse groupStartResponse)
     {
         try
         {
@@ -400,13 +409,17 @@ public class NamingContestService : INamingContestService
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             // await publishingAgent.ActivateAsync();
             await publishingAgent.RegisterAsync(groupAgent);
-            await publishingAgent.PublishEventAsync(new GroupStartEvent() { MessageId = Guid.NewGuid().ToString(),Message = "Name a portable smart translator targeting the youth market." });
+            await publishingAgent.PublishEventAsync(new GroupStartEvent()
+            {
+                MessageId = Guid.NewGuid().ToString(),
+                Message = "Name a portable smart translator targeting the youth market."
+            });
             groupStartResponse.SuccessGroupIdList.Add(groupId);
         }
         catch (Exception e)
         {
             groupStartResponse.FailGroupIdList.Add(groupId);
-            _logger.LogError(e, "groupId:{groupId} StartOneGroupAsync error,",groupId);
+            _logger.LogError(e, "groupId:{groupId} StartOneGroupAsync error,", groupId);
         }
     }
 }

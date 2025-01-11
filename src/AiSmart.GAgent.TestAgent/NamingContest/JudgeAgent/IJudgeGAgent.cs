@@ -4,4 +4,7 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 
 public interface IJudgeGAgent:IMicroAIGAgent
 {
+    Task<IJudgeGAgent> Clone();
+
+    Task SetRealJudgeGrainId(Guid judgeGrainId);
 }
