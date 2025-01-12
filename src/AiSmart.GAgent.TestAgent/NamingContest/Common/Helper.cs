@@ -10,6 +10,11 @@ public static class Helper
         return ConvertStringToGuid(string.Concat("AI-Most-Charming-Naming-Contest","-",round));
     }
     
+    public static Guid GetHostGroupGrainId()
+    {
+        return ConvertStringToGuid(string.Concat("AI-Most-Charming-Naming-Contest-Host-Group"));
+    }
+    
     private static Guid ConvertStringToGuid(string input)
     {
         using (MD5 md5 = MD5.Create())

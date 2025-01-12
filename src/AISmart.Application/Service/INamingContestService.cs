@@ -243,14 +243,8 @@ public class NamingContestService : INamingContestService
                 await groupAgent.RegisterAsync(judgeAgent);
             }
 
-            foreach (var agentId in network.HostList)
-            {
-                var hostGAgent = _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId));
+            await RegisterHostGroupGAgent(network, trafficAgent);
 
-                await trafficAgent.AddHostAgent(hostGAgent.GetPrimaryKey());
-
-                await groupAgent.RegisterAsync(hostGAgent);
-            }
 
             var groupDetail = new GroupDetail()
             {
@@ -306,6 +300,48 @@ public class NamingContestService : INamingContestService
 
 
         return groupResponse;
+    }
+
+    private async Task RegisterHostGroupGAgent(Network network, ITrafficGAgent trafficAgent)
+    {
+        var hostGroupGAgentId = Helper.GetHostGroupGrainId();
+        var hostGroupGAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(hostGroupGAgentId);
+
+        var grainIds = await hostGroupGAgent.GetChildrenAsync();
+
+        if (grainIds.IsNullOrEmpty())
+        {
+            foreach (var hostGAgent in network.HostList
+                         .Select(agentId => _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId))))
+            {
+                await trafficAgent.AddHostAgent(hostGAgent.GetPrimaryKey());
+                await hostGroupGAgent.RegisterAsync(hostGAgent);
+            }
+        }
+        else
+        {
+            // Convert List<GrainId> to List<string>
+            var grainIdStrings = grainIds.Select(grainId => grainId.ToString()).ToList();
+            // Assuming GrainId, agentId, and HostList are similar types or can be compared
+            var areEqual = grainIdStrings.All(grainId => network.HostList.Any(host => host == grainId))
+                           && network.HostList.All(host => grainIdStrings.Any(grainId => host == grainId));
+
+            if (!areEqual)
+            {
+                foreach (var subGAgent in grainIds
+                             .Select(grainId => _clusterClient.GetGrain<IGAgent>(grainId)))
+                {
+                    await hostGroupGAgent.UnregisterAsync(subGAgent);
+                }
+
+                foreach (var hostGAgent in network.HostList
+                             .Select(agentId => _clusterClient.GetGrain<IHostGAgent>(Guid.Parse(agentId))))
+                {
+                    await trafficAgent.AddHostAgent(hostGAgent.GetPrimaryKey());
+                    await hostGroupGAgent.RegisterAsync(hostGAgent);
+                }
+            }
+        }
     }
 
     public async Task<List<string>> LoadTest()
