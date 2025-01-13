@@ -131,7 +131,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         var random = new Random();
         var basicDenominator = Math.Ceiling((double)State.TotalGroupCount / 2);
         var basicNumerator = Math.Abs(basicDenominator - State.GroupList.Count);
-        if (basicNumerator / 2 > random.Next(0, (int)basicNumerator))
+        if (basicNumerator / 2 >= random.Next(0, (int)basicNumerator))
         {
             return result;
         }

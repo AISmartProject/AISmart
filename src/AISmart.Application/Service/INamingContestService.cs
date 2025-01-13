@@ -21,11 +21,8 @@ using AISmart.Options;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
 using Orleans;
 using Orleans.Runtime;
-using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Service;
@@ -173,6 +170,7 @@ public class NamingContestService : INamingContestService
         await publishingAgent.RegisterAsync(voteCharmingGAgent);
         
         var groupList = new List<Guid>();
+        
         foreach (var network in networksDto.Networks)
         {
             Guid groupAgentId = Guid.NewGuid();
@@ -216,16 +214,18 @@ public class NamingContestService : INamingContestService
 
             foreach (var agentId in network.ConstentList)
             {
-                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
-
+                var grainId = Guid.Parse(agentId);
+                await UnSubscribeGroupAsync<CreativeState>(grainId);
+                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(grainId);
+                
                 _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(), creativeAgent.GetPrimaryKey());
-
                 await groupAgent.RegisterAsync(creativeAgent);
             }
 
             foreach (var agentId in network.JudgeList)
             {
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
+                var grainId = Guid.Parse(agentId);
+                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(grainId);
                 if (judgeDic[agentId])
                 {
                     judgeAgent = await judgeAgent.Clone();
@@ -233,6 +233,7 @@ public class NamingContestService : INamingContestService
                 else
                 {
                     judgeDic[agentId] = true;
+                    await UnSubscribeGroupAsync<JudgeState>(grainId);
                 }
 
                 _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
@@ -379,6 +380,17 @@ public class NamingContestService : INamingContestService
         {
             groupStartResponse.FailGroupIdList.Add(groupId);
             _logger.LogError(e, "groupId:{groupId} StartOneGroupAsync error,", groupId);
+        }
+    }
+
+    private async Task UnSubscribeGroupAsync<T>(Guid grainId)
+    {
+        var agent = _clusterClient.GetGrain<IStateGAgent<T>>(grainId);
+        var parentAgentId = await agent.GetParentAsync();
+        if (!parentAgentId.IsDefault)
+        {
+            var parentAgent =  _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(parentAgentId);
+            await parentAgent.UnregisterAsync(agent);
         }
     }
 }

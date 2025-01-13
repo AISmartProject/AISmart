@@ -22,6 +22,7 @@ public class VoteCharmingState : StateBase
         VoterIdTypeDictionary = @event.GrainGuidTypeDictionary;
         GroupList = @event.GroupList;
         TotalGroupCount = @event.TotalGroupCount;
+        GroupHasVoteCount = 0;
     }
 
     public void Apply(VoteCharmingGEvent @event)
@@ -37,11 +38,13 @@ public class VoteCharmingState : StateBase
 
     public void Apply(GroupVoteCompleteSEvent @event)
     {
-        foreach (var traffic in @event.VoteGroupList)
+        var list = GroupList.Slice(0, GroupList.Count);
+        foreach (var t in @event.VoteGroupList)
         {
-            GroupList.Remove(traffic);
+            list.RemoveAll(f => f == t);
         }
 
+        GroupList = list;
         GroupHasVoteCount += 1;
     }
 }

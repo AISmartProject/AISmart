@@ -83,32 +83,32 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
             .SendMessageAsync(State.MostCharmingGroupId, @event, State.MostCharmingBackUrl);
     }
-
-    [EventHandler]
-    public async Task HandleGroupCleanEventAsync(NamingLogEvent @event)
-    {
-        if (@event.Step == NamingContestStepEnum.HostSummaryComplete)
-        {
-            _logger.LogInformation("HandleGroupCleanEventAsync " +
-                                   JsonConvert.SerializeObject(@event));
-            var groupId = State.groupId;
-            var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
-            List<GrainId> subGAgentIdList = await groupGAgent.GetChildrenAsync();
-            _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList" +
-                                   JsonConvert.SerializeObject(subGAgentIdList));
-            foreach (var grainId in subGAgentIdList)
-            {
-                var subGAgent = GrainFactory.GetGrain<IGAgent>(grainId);
-                await groupGAgent.UnregisterAsync(subGAgent);
-            }
-
-            subGAgentIdList = await groupGAgent.GetChildrenAsync();
-            _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList end" +
-                                   JsonConvert.SerializeObject(subGAgentIdList));
-            _logger.LogInformation("HandleGroupCleanEventAsync end: " +
-                                   JsonConvert.SerializeObject(@event));
-        }
-    }
+    //
+    // [EventHandler]
+    // public async Task HandleGroupCleanEventAsync(NamingLogEvent @event)
+    // {
+    //     if (@event.Step == NamingContestStepEnum.HostSummaryComplete)
+    //     {
+    //         _logger.LogInformation("HandleGroupCleanEventAsync " +
+    //                                JsonConvert.SerializeObject(@event));
+    //         var groupId = State.groupId;
+    //         var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
+    //         List<GrainId> subGAgentIdList = await groupGAgent.GetChildrenAsync();
+    //         _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList" +
+    //                                JsonConvert.SerializeObject(subGAgentIdList));
+    //         foreach (var grainId in subGAgentIdList)
+    //         {
+    //             var subGAgent = GrainFactory.GetGrain<IGAgent>(grainId);
+    //             await groupGAgent.UnregisterAsync(subGAgent);
+    //         }
+    //
+    //         subGAgentIdList = await groupGAgent.GetChildrenAsync();
+    //         _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList end" +
+    //                                JsonConvert.SerializeObject(subGAgentIdList));
+    //         _logger.LogInformation("HandleGroupCleanEventAsync end: " +
+    //                                JsonConvert.SerializeObject(@event));
+    //     }
+    // }
 }
 
 public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
