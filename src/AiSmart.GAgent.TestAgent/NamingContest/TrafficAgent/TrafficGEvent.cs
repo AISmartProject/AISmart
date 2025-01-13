@@ -91,6 +91,8 @@ public class HostSummaryGEvent : EventBase
     
     [Id(1)] public List<MicroAIMessage> History { get; set; } = new List<MicroAIMessage>();
     
+    [Id(2)] public GrainId GroupId { get; set; }
+    
     
 }
 

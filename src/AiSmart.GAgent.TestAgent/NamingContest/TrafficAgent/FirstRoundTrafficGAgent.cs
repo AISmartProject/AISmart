@@ -1,6 +1,7 @@
 using AISmart.Agent;
 using AISmart.Agent.GEvents;
 using AISmart.Agents;
+using AISmart.Agents.Group;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
@@ -329,8 +330,34 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         var selectedId = hostAgentList[index];
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
+        
+        await PublishToHostGAgentGroup(selectedId);
 
-        await PublishAsync(new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory });
+
+        // await PublishAsync(new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory });
+    }
+
+    private async Task PublishToHostGAgentGroup(Guid selectedId)
+    {
+        var hostGroupGAgentId = Helper.GetHostGroupGrainId();
+        var hostGroupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(hostGroupGAgentId);
+
+        GrainId grainId = await hostGroupGAgent.GetParentAsync();
+
+        IPublishingGAgent publishingAgent;
+
+        if (grainId != null && grainId.ToString().StartsWith("publishinggagent"))
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(grainId);
+        }
+        else
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(hostGroupGAgent);
+        }
+
+        await publishingAgent.PublishEventAsync(
+            new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory,GroupId = await this.GetParentAsync()});
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)
