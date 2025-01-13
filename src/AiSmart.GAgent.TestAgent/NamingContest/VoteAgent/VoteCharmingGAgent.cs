@@ -26,36 +26,35 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
             return;
         }
 
-        var random = new Random();
-        var list = new List<Guid>();
-        list.AddRange(@event.CreativeGuidList);
-        list.AddRange(@event.JudgeGuidList);
-
-        for (var i = list.Count - 1; i > 0; i--)
-        {
-            var j = random.Next(0, i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-
-        var grainGuidTypeDictionary = new Dictionary<Guid, string>();
-        foreach (var agentId in @event.CreativeGuidList)
-        {
-            grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixCreative);
-        }
-
-        foreach (var agentId in @event.JudgeGuidList)
-        {
-            grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixJudge);
-        }
+        // var random = new Random();
+        // var list = new List<Guid>();
+        // list.AddRange(@event.CreativeGuidList);
+        // list.AddRange(@event.JudgeGuidList);
+        //
+        // for (var i = list.Count - 1; i > 0; i--)
+        // {
+        //     var j = random.Next(0, i + 1);
+        //     (list[i], list[j]) = (list[j], list[i]);
+        // }
+        //
+        // var grainGuidTypeDictionary = new Dictionary<Guid, string>();
+        // foreach (var agentId in @event.CreativeGuidList)
+        // {
+        //     grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixCreative);
+        // }
+        //
+        // foreach (var agentId in @event.JudgeGuidList)
+        // {
+        //     grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixJudge);
+        // }
 
         RaiseEvent(new InitVoteCharmingGEvent
         {
-            GrainGuidList = list,
+            GrainGuidList = new List<Guid>(),
             TotalBatches = @event.TotalBatches,
             Round = @event.Round,
-            GrainGuidTypeDictionary = grainGuidTypeDictionary,
+            GrainGuidTypeDictionary = new Dictionary<Guid, string>(),
             GroupList = @event.groupList,
-            TotalGroupCount = @event.TotalGroupCount,
         });
 
         await ConfirmEvents();
@@ -120,9 +119,9 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
             "Represents an agent responsible for voting charming agents.");
     }
 
-    public List<Guid> GetVoteGroupList()
+    private List<Guid> GetVoteGroupList()
     {
-        if (State.TotalGroupCount == State.GroupHasVoteCount + 1)
+        if (State.TotalGroupCount <= State.GroupHasVoteCount + 1)
         {
             return State.GroupList;
         }

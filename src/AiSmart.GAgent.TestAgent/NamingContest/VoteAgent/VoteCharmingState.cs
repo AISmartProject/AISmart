@@ -20,9 +20,16 @@ public class VoteCharmingState : StateBase
         TotalBatches = @event.TotalBatches;
         Round = @event.Round;
         VoterIdTypeDictionary = @event.GrainGuidTypeDictionary;
-        GroupList = @event.GroupList;
-        TotalGroupCount = @event.TotalGroupCount;
-        GroupHasVoteCount = 0;
+        var group = GroupList.Slice(0, GroupList.Count);
+        var addGroup = 0;
+        foreach (var item in @event.GroupList.Where(item => group.Contains(item) == false))
+        {
+            group.Add(item);
+            addGroup += 1;
+        }
+
+        GroupList = group;
+        TotalGroupCount += addGroup;
     }
 
     public void Apply(VoteCharmingGEvent @event)
@@ -38,13 +45,25 @@ public class VoteCharmingState : StateBase
 
     public void Apply(GroupVoteCompleteSEvent @event)
     {
-        var list = GroupList.Slice(0, GroupList.Count);
-        foreach (var t in @event.VoteGroupList)
+        if (@event.VoteGroupList.Count > 0)
         {
-            list.RemoveAll(f => f == t);
+            var list = GroupList.Slice(0, GroupList.Count);
+            foreach (var t in @event.VoteGroupList)
+            {
+                list.RemoveAll(f => f == t);
+            }
+
+            GroupList = list;
         }
 
-        GroupList = list;
-        GroupHasVoteCount += 1;
+        if (GroupList.Count == 0)
+        {
+            GroupHasVoteCount = 0;
+            TotalGroupCount = 0;
+        }
+        else
+        {
+            GroupHasVoteCount += 1;
+        }
     }
 }

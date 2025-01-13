@@ -24,6 +24,12 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
+        if ((int)State.NamingStep >= (int)NamingContestStepEnum.Naming)
+        {
+            Logger.LogWarning("[FirstRoundTrafficGAgent] GroupStartEvent has processed");
+            return;
+        }
+
         Logger.LogInformation($"{this.GetGrainId().ToString()}: [FirstRoundTrafficGAgent] GroupStartEvent Start");
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
@@ -330,7 +336,7 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         var selectedId = hostAgentList[index];
         RaiseEvent(new TrafficCallSelectGrainIdSEvent() { GrainId = selectedId });
         await base.ConfirmEvents();
-        
+
         await PublishToHostGAgentGroup(selectedId);
 
 
@@ -357,7 +363,8 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         }
 
         await publishingAgent.PublishEventAsync(
-            new HostSummaryGEvent() { HostId = selectedId, History = State.ChatHistory,GroupId = await this.GetParentAsync()});
+            new HostSummaryGEvent()
+                { HostId = selectedId, History = State.ChatHistory, GroupId = await this.GetParentAsync() });
     }
 
     public async Task SetAgent(string agentName, string agentResponsibility)

@@ -113,6 +113,8 @@ public class GroupResponse
 
 public class GroupStartDto
 {
+    public int Round { get; set; }
+    public int Step { get; set; }
     public List<string> GroupIdList { get; set; } = new List<string>();
 }
 

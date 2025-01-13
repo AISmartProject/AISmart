@@ -17,7 +17,6 @@ public class InitVoteCharmingGEvent:GEventBase
     [Id(2)] public int Round { get; set; }
     [Id(3)] public Dictionary<Guid, string> GrainGuidTypeDictionary { get; set; }
     [Id(4)] public List<Guid> GroupList { get; set; } = new List<Guid>();
-    [Id(5)] public int TotalGroupCount { get; set; } = 0;
 }
 
 [GenerateSerializer]

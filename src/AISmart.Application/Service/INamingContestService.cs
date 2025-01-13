@@ -162,15 +162,10 @@ public class NamingContestService : INamingContestService
         GroupResponse groupResponse = new GroupResponse();
         Dictionary<string, bool> judgeDic = networksDto.Networks.SelectMany(network => network.JudgeList)
             .ToDictionary(judge => judge, judge => false);
-        
+
         var voteCharmingGAgent =
             _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(networksDto.Round,
                 networksDto.Step));
-        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-        await publishingAgent.RegisterAsync(voteCharmingGAgent);
-        
-        var groupList = new List<Guid>();
-        
         foreach (var network in networksDto.Networks)
         {
             Guid groupAgentId = Guid.NewGuid();
@@ -192,7 +187,6 @@ public class NamingContestService : INamingContestService
             }
 
             await trafficAgent.SetStepCount(network.Step);
-            groupList.Add(groupAgent.GetPrimaryKey());
             var namingContestGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
 
             await groupAgent.RegisterAsync(trafficAgent);
@@ -217,40 +211,21 @@ public class NamingContestService : INamingContestService
                 var grainId = Guid.Parse(agentId);
                 await UnSubscribeGroupAsync<CreativeState>(grainId);
                 var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(grainId);
-                
+
                 _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(), creativeAgent.GetPrimaryKey());
                 await groupAgent.RegisterAsync(creativeAgent);
             }
 
             foreach (var agentId in network.JudgeList)
             {
-                var grainId = Guid.Parse(agentId);
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(grainId);
-                if (judgeDic[agentId])
-                {
-                    judgeAgent = await judgeAgent.Clone();
-                }
-                else
-                {
-                    judgeDic[agentId] = true;
-                    await UnSubscribeGroupAsync<JudgeState>(grainId);
-                }
-
-                _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
-
-                await groupAgent.RegisterAsync(judgeAgent);
+                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
             }
 
             var scoreListExcludingJudgeList = network.ScoreList.Except(network.JudgeList);
 
-
             foreach (var agentId in scoreListExcludingJudgeList)
             {
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
-
-                // await trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
-
-                await groupAgent.RegisterAsync(judgeAgent);
+                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
             }
 
             await RegisterHostGroupGAgent(network, trafficAgent);
@@ -284,16 +259,6 @@ public class NamingContestService : INamingContestService
         {
             totalBatches = NamingConstants.DefaultTotalTotalBatches;
         }
-
-        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
-        {
-            CreativeGuidList = new List<Guid>(),
-            JudgeGuidList = new List<Guid>(),
-            Round = Convert.ToInt32(round),
-            TotalBatches = totalBatches,
-            groupList = groupList,
-            TotalGroupCount = groupList.Count,
-        });
 
         return groupResponse;
     }
@@ -394,6 +359,7 @@ public class NamingContestService : INamingContestService
             await StartOneGroupAsync(groupId, groupStartResponse);
         }
 
+        await SetTaskList(groupStartDto, groupStartResponse);
         return groupStartResponse;
     }
 
@@ -425,8 +391,55 @@ public class NamingContestService : INamingContestService
         var parentAgentId = await agent.GetParentAsync();
         if (!parentAgentId.IsDefault)
         {
-            var parentAgent =  _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(parentAgentId);
+            var parentAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(parentAgentId);
             await parentAgent.UnregisterAsync(agent);
         }
+    }
+
+    private async Task SetTaskList(GroupStartDto groupStartDto, GroupStartResponse response)
+    {
+        var voteCharmingGAgent =
+            _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(groupStartDto.Round,
+                groupStartDto.Step));
+        var parentGrainId = await voteCharmingGAgent.GetParentAsync();
+        IPublishingGAgent publishingAgent;
+        if (parentGrainId.IsDefault || !parentGrainId.ToString().StartsWith("publishinggagent"))
+        {
+            publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        }
+        else
+        {
+            publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(parentGrainId);
+        }
+
+        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
+        {
+            CreativeGuidList = new List<Guid>(),
+            JudgeGuidList = new List<Guid>(),
+            Round = groupStartDto.Round,
+            TotalBatches = 0,
+            groupList = response.SuccessGroupIdList.Select(Guid.Parse).ToList(),
+        });
+    }
+
+    private async Task AddJudgeToGroup(Dictionary<string, bool> judgeDic, string agentId,
+        IStateGAgent<GroupAgentState> groupAgent, ITrafficGAgent trafficAgent)
+    {
+        var grainId = Guid.Parse(agentId);
+        var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(grainId);
+        if (judgeDic[agentId])
+        {
+            judgeAgent = await judgeAgent.Clone();
+        }
+        else
+        {
+            judgeDic[agentId] = true;
+            await UnSubscribeGroupAsync<JudgeState>(grainId);
+        }
+
+        _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
+
+        await groupAgent.RegisterAsync(judgeAgent);
     }
 }
