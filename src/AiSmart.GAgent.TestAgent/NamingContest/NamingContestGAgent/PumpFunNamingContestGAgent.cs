@@ -24,7 +24,8 @@ namespace AISmart.Agent;
 [Description("Handle NamingContest")]
 [StorageProvider(ProviderName = "PubSubStore")]
 [LogConsistencyProvider(ProviderName = "LogStorage")]
-public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestSEvent>, IPumpFunNamingContestGAgent
+public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContestGAgentState, PumpFunNameContestSEvent>,
+    IPumpFunNamingContestGAgent
 {
     private readonly ILogger<PumpFunPumpFunNamingContestGAgent> _logger;
 
@@ -41,7 +42,7 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
     public Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent)
     {
         RaiseEvent(iniNetWorkMessageSEvent);
-        base.ConfirmEvents();
+        ConfirmEvents();
         return Task.CompletedTask;
     }
 
@@ -50,12 +51,11 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
         return Task.FromResult(
             "Represents an agent responsible for informing other agents when a PumpFun thread is published.");
     }
-    
+
 
     [AllEventHandler]
     public async Task HandleRequestAllEventAsync(EventWrapperBase @event)
     {
-        
         _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
                                JsonConvert.SerializeObject(@event));
         var eventWrapper = @event as EventWrapper<EventBase>;
@@ -64,59 +64,54 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
             if (eventWrapper.Event is NamingAILogEvent logEvent)
             {
                 await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-                    .SendMessageAsync(State.groupId,logEvent, State.CallBackUrl);
+                    .SendMessageAsync(State.groupId, logEvent, State.CallBackUrl);
             }
             else if (eventWrapper.Event is NamingLogEvent namingLogEvent)
             {
                 await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-                    .SendMessageAsync(State.groupId,namingLogEvent, State.CallBackUrl);
+                    .SendMessageAsync(State.groupId, namingLogEvent, State.CallBackUrl);
             }
-
         }
     }
 
     [EventHandler]
     public async Task HandleRequestEventAsync(VoteCharmingCompleteEvent @event)
     {
-        
         _logger.LogInformation("NamingContestGAgent HandleRequestEventAsync VoteCharmingCompleteEvent:" +
                                JsonConvert.SerializeObject(@event));
 
         await GrainFactory.GetGrain<INamingContestGrain>("NamingContestGrain")
-            .SendMessageAsync(State.groupId,@event, State.CallBackUrl);
+            .SendMessageAsync(State.MostCharmingGroupId, @event, State.MostCharmingBackUrl);
     }
-    
+
     [EventHandler]
     public async Task HandleGroupCleanEventAsync(NamingLogEvent @event)
     {
-
         if (@event.Step == NamingContestStepEnum.HostSummaryComplete)
         {
             _logger.LogInformation("HandleGroupCleanEventAsync " +
                                    JsonConvert.SerializeObject(@event));
             var groupId = State.groupId;
             var groupGAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
-            List<GrainId> subGAgentIdList =  await groupGAgent.GetChildrenAsync();
+            List<GrainId> subGAgentIdList = await groupGAgent.GetChildrenAsync();
             _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList" +
                                    JsonConvert.SerializeObject(subGAgentIdList));
             foreach (var grainId in subGAgentIdList)
             {
                 var subGAgent = GrainFactory.GetGrain<IGAgent>(grainId);
                 await groupGAgent.UnregisterAsync(subGAgent);
-
             }
-            subGAgentIdList =  await groupGAgent.GetChildrenAsync();
+
+            subGAgentIdList = await groupGAgent.GetChildrenAsync();
             _logger.LogInformation("HandleGroupCleanEventAsync subGAgentIdList end" +
                                    JsonConvert.SerializeObject(subGAgentIdList));
             _logger.LogInformation("HandleGroupCleanEventAsync end: " +
                                    JsonConvert.SerializeObject(@event));
         }
-        
     }
 }
 
 public interface IPumpFunNamingContestGAgent : IStateGAgent<PumpFunNamingContestGAgentState>
-{ 
+{
     Task InitGroupInfoAsync(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent);
- 
 }

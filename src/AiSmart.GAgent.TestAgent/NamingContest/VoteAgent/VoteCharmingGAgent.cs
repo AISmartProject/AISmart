@@ -1,9 +1,12 @@
 using AISmart.Agent;
 using AISmart.Agents;
+using AISmart.Agents.Group;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
+using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
+using AISmart.Sender;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -11,11 +14,10 @@ namespace AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 
 public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVoteCharmingGAgent
 {
-
-    public VoteCharmingGAgent( ILogger<VoteCharmingGAgent> logger) : base(logger)
+    public VoteCharmingGAgent(ILogger<VoteCharmingGAgent> logger) : base(logger)
     {
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(InitVoteCharmingEvent @event)
     {
@@ -40,6 +42,7 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         {
             grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixCreative);
         }
+
         foreach (var agentId in @event.JudgeGuidList)
         {
             grainGuidTypeDictionary.TryAdd(agentId, NamingConstants.AgentPrefixJudge);
@@ -48,84 +51,100 @@ public class VoteCharmingGAgent : GAgentBase<VoteCharmingState, GEventBase>, IVo
         RaiseEvent(new InitVoteCharmingGEvent
         {
             GrainGuidList = list,
-            TotalBatches =  @event.TotalBatches,
+            TotalBatches = @event.TotalBatches,
             Round = @event.Round,
-            GrainGuidTypeDictionary = grainGuidTypeDictionary
+            GrainGuidTypeDictionary = grainGuidTypeDictionary,
+            GroupList = @event.groupList,
+            TotalGroupCount = @event.TotalGroupCount,
         });
+
         await ConfirmEvents();
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(VoteCharmingEvent @event)
     {
-        Logger.LogInformation("VoteCharmingEvent recieve {info},TotalBatches:{TotalBatches},CurrentBatch:{CurrentBatch}", 
+        Logger.LogInformation(
+            "VoteCharmingEvent recieve {info},TotalBatches:{TotalBatches},CurrentBatch:{CurrentBatch}",
             JsonConvert.SerializeObject(@event), State.TotalBatches, State.CurrentBatch);
 
-        if (State.TotalBatches == State.CurrentBatch)
+        if (State.GroupList.Count == 0)
         {
             return;
         }
 
-        var actualBatchSize = 0;
-        if (State.TotalBatches == State.CurrentBatch + 1)
+        var voteGroupList = GetVoteGroupList();
+        if (voteGroupList.Count == 0)
         {
-            actualBatchSize = State.VoterIds.Count;
-        }
-        else
-        {
-            var averageBatchSize = Math.Max(1, State.VoterIds.Count / State.TotalBatches); 
-            var minBatchSize = Math.Max(1, (int)(averageBatchSize * 0.6)); 
-            var maxBatchSize = Math.Min(State.VoterIds.Count, (int)(averageBatchSize * 1.5)); 
-            var random = new Random();
-            actualBatchSize = random.Next(minBatchSize, maxBatchSize);
+            Logger.LogInformation("[VoteCharmingGAgent] VoteCharmingEvent trafficList.Count == 0 ");
         }
 
-        var selectedVoteIds = State.VoterIds.GetRange(0, actualBatchSize);
-        foreach (var voteId in selectedVoteIds)
+        foreach (var groupId in voteGroupList)
         {
-            if (!State.VoterIdTypeDictionary.TryGetValue(voteId, out var grainClassNamePrefix))
+            var groupAgent = GrainFactory.GetGrain<IStateGAgent<GroupAgentState>>(groupId);
+            var childrenAgent = await groupAgent.GetChildrenAsync();
+            var publishAgentId = childrenAgent.FirstOrDefault(f => f.ToString().StartsWith("publishinggagent"));
+            IPublishingGAgent publishAgent;
+            if (!publishAgentId.IsDefault)
             {
-                continue;
+                publishAgent = GrainFactory.GetGrain<IPublishingGAgent>(publishAgentId);
+            }
+            else
+            {
+                publishAgent = GrainFactory.GetGrain<IPublishingGAgent>(new Guid());
+                await groupAgent.RegisterAsync(publishAgent);
             }
 
-            switch (grainClassNamePrefix)
+            await publishAgent.PublishEventAsync(new SingleVoteCharmingEvent
             {
-                case NamingConstants.AgentPrefixCreative:
-                    await  RegisterAsync(GrainFactory.GetGrain<ICreativeGAgent>(voteId));
-                    break;
-                case NamingConstants.AgentPrefixJudge:
-                    await  RegisterAsync(GrainFactory.GetGrain<IJudgeGAgent>(voteId));
-                    break;
-            }
+                AgentIdNameDictionary = @event.AgentIdNameDictionary,
+                VoteMessage = @event.VoteMessage,
+                Round = @event.Round,
+                VoteCharmingGrainId = this.GetPrimaryKey()
+            });
+
+            Logger.LogInformation("SingleVoteCharmingEvent send");
         }
 
-        await PublishAsync(new SingleVoteCharmingEvent
+        RaiseEvent(new GroupVoteCompleteSEvent
         {
-            AgentIdNameDictionary = @event.AgentIdNameDictionary,
-            VoteMessage = @event.VoteMessage,
-            Round = @event.Round
-        });
-        Logger.LogInformation("SingleVoteCharmingEvent send");
-
-        RaiseEvent(new VoteCharmingGEvent
-        {
-            GrainGuidList = selectedVoteIds
+            VoteGroupList = voteGroupList,
         });
 
         await ConfirmEvents();
-    }
-    
-    
-    
-    [EventHandler]
-    public async Task HandleEventAsync(VoteCharmingCompleteEvent @event)
-    {
-        await  UnregisterAsync(GrainFactory.GetGrain<IMicroAIGAgent>(@event.VoterId));
     }
 
     public override Task<string> GetDescriptionAsync()
     {
         return Task.FromResult(
             "Represents an agent responsible for voting charming agents.");
+    }
+
+    public List<Guid> GetVoteGroupList()
+    {
+        if (State.TotalGroupCount == State.GroupHasVoteCount + 1)
+        {
+            return State.GroupList;
+        }
+
+        var result = new List<Guid>();
+        var random = new Random();
+        var basicDenominator = Math.Ceiling((double)State.TotalGroupCount / 2);
+        var basicNumerator = Math.Abs(basicDenominator - State.GroupList.Count);
+        if (basicNumerator / 2 > random.Next(0, (int)basicNumerator))
+        {
+            return result;
+        }
+
+        var basis = (double)basicNumerator / (double)basicDenominator;
+        int randomCount = (int)Math.Ceiling(State.GroupList.Count * (1 - basis));
+        randomCount = Math.Max(randomCount / 2, randomCount);
+        if (randomCount == 0)
+        {
+            return result;
+        }
+
+        result = State.GroupList.OrderBy(x => random.Next()).Take(randomCount).ToList();
+        return result;
     }
 }

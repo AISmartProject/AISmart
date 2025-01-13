@@ -21,6 +21,7 @@ public class FirstTrafficState : StateBase
     [Id(10)] public List<MicroAIMessage> ChatHistory { get; set; } = new List<MicroAIMessage>();
     
     [Id(11)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
+    [Id(12)] public int Step { get; set; }
 
     public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
     {
@@ -97,6 +98,11 @@ public class FirstTrafficState : StateBase
         {
             creativeInfo.Naming = @event.Naming;
         }
+    }
+
+    public void Apply(SetStepNumberSEvent @event)
+    {
+        Step = @event.StepCount;
     }
 }
 

@@ -71,13 +71,14 @@ public class Network
     public List<string> HostList { get; set; }
     public string CallbackAddress { get; set; }
     public string Name { get; set; }
-    
     public string Round { get; set; }
-    
+    public int Step { get; set; }
 }
 
 public class NetworksDto
 {
+    public int Round { get; set; }
+    public int Step { get; set; }
     public List<Network> Networks { get; set; }
 }
 
