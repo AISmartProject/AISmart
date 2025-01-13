@@ -94,7 +94,7 @@ public class TwitterProvider : ITwitterProvider, ISingletonDependency
         accessTokenSecret = GetDecryptedData(accessTokenSecret);
         string authHeader = GenerateOAuthHeader("POST", url, accessToken, accessTokenSecret);
 
-        var jsonBody = JsonConvert.SerializeObject(new { text = message });
+        var jsonBody = JsonConvert.SerializeObject(new { text = message.Trim('"') });
 
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
         {

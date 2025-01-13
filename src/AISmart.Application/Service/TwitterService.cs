@@ -70,7 +70,7 @@ public class TwitterService : ApplicationService, ITwitterService
 
     public async Task PostTweetAsync(PostTweetDto postTweetDto)
     {
-        _logger.LogInformation("PostTweetAsync，postTweetDto: " + JsonConvert.SerializeObject(postTweetDto));
+        _logger.LogInformation("PostTweetAsync，userId: {userId}", postTweetDto.UserId);
         var socialAgent = _clusterClient.GetGrain<ISocialGAgent>(GuidUtil.StringToGuid(postTweetDto.UserId+SocialAgentName));
         // await socialAgent.SetAgent(postTweetDto.UserId, Role);
         
