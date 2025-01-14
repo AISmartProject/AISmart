@@ -128,6 +128,11 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase
     {
+        if (gEvent.Id == null || gEvent.Id == Guid.Empty)
+        {
+            gEvent.Id = Guid.NewGuid();
+        }
+
         var indexName = gEvent.GetType().Name.ToLower() + IndexSuffix;
         var properties = gEvent.GetType().GetProperties();
         var document = new Dictionary<string, object>();
@@ -232,6 +237,10 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateChatLogIndexAsync(AIChatLogIndex index)
     {
+        if (index.Id == null || index.Id == Guid.Empty.ToString())
+        {
+            index.Id = Guid.NewGuid().ToString();
+        }
         var indexName = index.GetType().Name.ToLower();
         var response = await _elasticClient.IndexAsync(index, i => i
             .Index(indexName)
