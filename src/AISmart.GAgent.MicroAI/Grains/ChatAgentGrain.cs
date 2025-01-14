@@ -7,6 +7,7 @@ using AISmart.Agent.GEvents;
 using AISmart.Dapr;
 using AISmart.CQRS.Dto;
 using AISmart.CQRS.Provider;
+using AISmart.GAgent.Core;
 using AISmart.Options;
 using AutoGen.Core;
 using AutoGen.SemanticKernel;
@@ -23,7 +24,7 @@ using Orleans.Streams;
 namespace AISmart.Grains;
 
 [StorageProvider(ProviderName = "PubSubStore")]
-public class ChatAgentGrain : Grain, IChatAgentGrain
+public class ChatAgentGrain : GAgentBase<ChatAgentState, ChatAgentSEvent>, IChatAgentGrain
 {
     private MiddlewareStreamingAgent<SemanticKernelAgent>? _agent;
     private readonly MicroAIOptions _options;
@@ -32,12 +33,16 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
     private readonly ICQRSProvider _cqrsProvider;
 
     private IStreamProvider StreamProvider => this.GetStreamProvider(CommonConstants.StreamProvider);
-    
 
-    public ChatAgentGrain(IOptions<MicroAIOptions> options, 
-        IOptions<AIModelOptions> aiModelOptions, 
+    public override Task<string> GetDescriptionAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public ChatAgentGrain(IOptions<MicroAIOptions> options,
+        IOptions<AIModelOptions> aiModelOptions,
         ILogger<ChatAgentGrain> logger,
-        ICQRSProvider cqrsProvider)
+        ICQRSProvider cqrsProvider) : base(logger)
 
     {
         _options = options.Value;
@@ -48,18 +53,13 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
     public async Task<MicroAIMessage?> SendAsync(string message, List<MicroAIMessage>? chatHistory)
     {
-        if (_agent != null)
-        {
-            var history = ConvertMessage(chatHistory);
-            var imMessage = await _agent.SendAsync(message, history);
-            _ = SaveAIChatLogAsync(message, imMessage.GetContent());
-            return new MicroAIMessage("assistant", imMessage.GetContent()!);
-        }
-
-        _logger.LogWarning($"[ChatAgentGrain] Agent is not set");
-        return null;
+        var history = ConvertMessage(chatHistory);
+        var streamAgent = GetSteamingAgent();
+        var imMessage = await streamAgent.SendAsync(message, history);
+        _ = SaveAIChatLogAsync(message, imMessage.GetContent());
+        return new MicroAIMessage("assistant", imMessage.GetContent()!);
     }
-    
+
     private async Task SaveAIChatLogAsync(string message, string? response)
     {
         var command = new SaveLogCommand
@@ -73,7 +73,7 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         await _cqrsProvider.SendLogCommandAsync(command);
     }
 
-    public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory,object requestEvent)
+    public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory, object requestEvent)
     {
         var agentGuid = this.GetPrimaryKeyString();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
@@ -90,68 +90,36 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         }
 
         await stream.OnNextAsync(new MicroAIEventMessage(microAIMessage, requestEvent));
-
-        
-       
     }
 
-    public Task SetAgentAsync(string systemMessage)
+    public async Task SetAgentAsync(string systemMessage)
     {
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
-        var systemName = this.GetPrimaryKeyString();
-        var kernel = kernelBuilder.Build();
-        var kernelAgent = new SemanticKernelAgent(
-                kernel: kernel,
-                name: systemName,
-                systemMessage: systemMessage)
-            .RegisterMessageConnector();
+        RaiseEvent(new ChatAgentSEvent() { AgentResponsibility = systemMessage });
+        await ConfirmEvents();
 
-        _agent = kernelAgent;
-        return Task.CompletedTask;
+        SetStreamingAgent();
     }
 
-
-    public Task SetAgentWithRandomLLMAsync(string systemMessage)
+    public async Task SetAgentWithRandomLLMAsync(string systemMessage)
     {
         string llm = GetRandomLlmType();
-        return SetAgentAsync(systemMessage, llm);
+        RaiseEvent(new ChatAgentSEvent() { AgentResponsibility = systemMessage, LLM = llm });
+        await ConfirmEvents();
+        SetStreamingAgent();
     }
 
     public Task SetAgentAsync(string systemMessage, string llm)
     {
-        var kernelBuilder = Kernel.CreateBuilder();
-
-        ConfigureKernelBuilder(kernelBuilder, llm, _aiModelOptions);
-
-
-        var kernel = kernelBuilder.Build();
-        var systemName = this.GetPrimaryKeyString();
-        var kernelAgent = new SemanticKernelAgent(
-                kernel: kernel,
-                name: systemName,
-                systemMessage: systemMessage)
-            .RegisterMessageConnector();
-
-        _agent = kernelAgent;
         return Task.CompletedTask;
     }
 
-    public Task SetAgentWithTemperature(string systemMessage, float temperature, int? seed = null,
+    public async Task SetAgentWithTemperature(string systemMessage, float temperature, int? seed = null,
         int? maxTokens = null)
     {
-        var kernelBuilder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
-        var systemName = this.GetPrimaryKeyString();
-        var kernel = kernelBuilder.Build();
-        var kernelAgent = new SemanticKernelAgent(
-                kernel: kernel,
-                name: systemName,
-                systemMessage: systemMessage)
-            .RegisterMessageConnector();
+        RaiseEvent(new ChatAgentSEvent() { AgentResponsibility = systemMessage });
+        await ConfirmEvents();
 
-        _agent = kernelAgent;
-        return Task.CompletedTask;
+        SetStreamingAgent();
     }
 
     private List<IMessage> ConvertMessage(List<MicroAIMessage>? listAutoGenMessage)
@@ -211,14 +179,14 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
                 // Fetch Bedrock-specific configuration.
                 var bedrockOptions = aiModelOptions.Bedrock;
 
-                #pragma warning disable SKEXP0070
+#pragma warning disable SKEXP0070
 
                 // Add Bedrock Chat Completion to the KernelBuilder.
                 kernelBuilder.AddBedrockChatCompletionService(
                     modelId: bedrockOptions.Model,
                     serviceId: bedrockOptions.ServiceId
                 );
-                #pragma warning restore SKEXP0070
+#pragma warning restore SKEXP0070
 
                 break;
             }
@@ -228,7 +196,7 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
                 // Fetch Google Gemini-specific configuration.
                 var googleOptions = aiModelOptions.GoogleGemini;
 
-                #pragma warning disable SKEXP0070
+#pragma warning disable SKEXP0070
                 // Add Google Gemini Chat Completion to the KernelBuilder.
                 kernelBuilder.AddGoogleAIGeminiChatCompletion(
                     modelId: googleOptions.Model,
@@ -236,7 +204,7 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
                     apiVersion: GoogleAIVersion.V1, // Optional: API version.
                     serviceId: googleOptions.ServiceId // Optional: Target a specific service.
                 );
-                #pragma warning restore SKEXP0070
+#pragma warning restore SKEXP0070
 
                 break;
             }
@@ -245,13 +213,57 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
                 throw new ArgumentException($"Unsupported LLM type: {llm}");
         }
     }
+
+    private MiddlewareStreamingAgent<SemanticKernelAgent> GetSteamingAgent()
+    {
+        if (_agent != null)
+        {
+            return _agent;
+        }
+
+        SetStreamingAgent();
+        return _agent;
+    }
+
+    private void SetStreamingAgent()
+    {
+        if (State.LLm.IsNullOrEmpty())
+        {
+            var kernelBuilder = Kernel.CreateBuilder()
+                .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+
+            var systemName = this.GetPrimaryKeyString();
+            var kernel = kernelBuilder.Build();
+            var kernelAgent = new SemanticKernelAgent(
+                    kernel: kernel,
+                    name: systemName,
+                    systemMessage: State.AgentResponsibility)
+                .RegisterMessageConnector();
+
+            _agent = kernelAgent;
+        }
+        else
+        {
+            var kernelBuilder = Kernel.CreateBuilder();
+            ConfigureKernelBuilder(kernelBuilder, State.LLm, _aiModelOptions);
+            var kernel = kernelBuilder.Build();
+            var systemName = this.GetPrimaryKeyString();
+            var kernelAgent = new SemanticKernelAgent(
+                    kernel: kernel,
+                    name: systemName,
+                    systemMessage: State.AgentResponsibility)
+                .RegisterMessageConnector();
+
+            _agent = kernelAgent;
+        }
+    }
 }
 
 [GenerateSerializer]
 public class MicroAIEventMessage
 {
     [Id(0)] public MicroAIMessage MicroAIMessage { get; set; }
-    
+
     [Id(1)] public object Event { get; set; }
 
     public MicroAIEventMessage(MicroAIMessage microAIMessage, object @event)

@@ -64,7 +64,7 @@ public class SecondTrafficState : StateBase
     
     public void Apply(AddHostSEvent @event)
     {
-        this.JudgeAgentList.Add(@event.HostGrainId);
+        this.HostAgentList.Add(@event.HostGrainId);
     }
 
     public void Apply(ClearCalledGrainsSEvent @event)

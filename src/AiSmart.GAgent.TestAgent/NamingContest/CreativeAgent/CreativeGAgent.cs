@@ -93,17 +93,44 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         Logger.LogInformation(
             $"[CreativeGAgent] TrafficInformCreativeGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
 
-        var namingReply = string.Empty;
-        var prompt = NamingConstants.NamingPrompt;
+        var namingReply = NamingConstants.DefaultCreativeNaming;
         try
         {
-            _ = GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendEventAsync(prompt, State.RecentMessages.ToList(), @event);
+            IChatAgentGrain chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName);
+            var response = await chatAgentGrain.SendAsync(NamingConstants.NamingPrompt, State.RecentMessages.ToList());
+            if (response != null && !response.Content.IsNullOrEmpty())
+            {
+                namingReply = response.Content;
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[Creative] TrafficInformCreativeGEvent error");
-            namingReply = NamingConstants.DefaultCreativeNaming;
+        }
+        finally
+        {
+            await this.PublishAsync(new NamedCompleteGEvent()
+            {
+                Content = @event.NamingContent,
+                GrainGuid = this.GetPrimaryKey(),
+                NamingReply = namingReply,
+                CreativeName = State.AgentName,
+            });
+
+            await PublishAsync(new NamingAILogEvent(NamingContestStepEnum.Naming, this.GetPrimaryKey(),
+                NamingRoleType.Contestant, State.AgentName,
+                JsonConvert.SerializeObject(new NamingResponse(namingReply, string.Empty)),
+                NamingConstants.NamingPrompt));
+
+            RaiseEvent(new AddHistoryChatSEvent()
+            {
+                Message = new MicroAIMessage(Role.User.ToString(),
+                    AssembleMessageUtil.AssembleNamingContent(State.AgentName, namingReply))
+            });
+
+            RaiseEvent(new SetNamingSEvent { Naming = namingReply });
+
+            await base.ConfirmEvents();
         }
     }
 
@@ -483,10 +510,10 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         await chatAgentGrain.SetAgentAsync(agentResponsibility);
 
         //do stream subscription before calling this Long Running Task
-        var agentGuid = chatAgentGrain.GetPrimaryKeyString();
-        var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
-        var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
-        await stream.SubscribeAsync(ChatAgentGrainEventHandler);
+        // var agentGuid = chatAgentGrain.GetPrimaryKeyString();
+        // var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
+        // var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
+        // await stream.SubscribeAsync(ChatAgentGrainEventHandler);
     }
 
     private async Task ChatAgentGrainEventHandler(MicroAIEventMessage message, StreamSequenceToken token = null)
