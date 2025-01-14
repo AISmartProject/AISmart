@@ -35,11 +35,11 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating index {error}", createIndexResponse.ServerError?.Error);
+            _logger.LogError("Error creating state index {indexName} {error} {createIndexResponse}", indexName , createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
-            _logger.LogError("Index created successfully. {indexName}", indexName);
+            _logger.LogInformation("Index created state index successfully. {indexName}", indexName);
         }
     }
 
@@ -118,7 +118,7 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating gevent index {error}", createIndexResponse.ServerError?.Error);
+            _logger.LogError("Error creating gevent index {indexName} {error} {createIndexResponse}", indexName, createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
