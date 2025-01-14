@@ -128,6 +128,13 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateGEventIndexAsync<T>(T gEvent) where T : GEventBase
     {
+        _logger.LogInformation("SaveOrUpdateGEventIndexAsync request:{index}: " ,JsonConvert.SerializeObject(gEvent));
+
+        if (gEvent.Id == null || gEvent.Id == Guid.Empty)
+        {
+            gEvent.Id = Guid.NewGuid();
+        }
+
         var indexName = gEvent.GetType().Name.ToLower() + IndexSuffix;
         var properties = gEvent.GetType().GetProperties();
         var document = new Dictionary<string, object>();
@@ -146,11 +153,11 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save Error, indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
+            _logger.LogError("{indexName} save Error, gevent indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.",indexName);
+            _logger.LogInformation("{indexName} gevent save Successfully.",indexName);
         }
     }
     
@@ -232,6 +239,12 @@ public class ElasticIndexingService : IIndexingService
 
     public async Task SaveOrUpdateChatLogIndexAsync(AIChatLogIndex index)
     {
+        _logger.LogInformation("SaveOrUpdateChatLogIndexAsync request:{index}: " ,JsonConvert.SerializeObject(index));
+
+        if (index.Id == null || index.Id == Guid.Empty.ToString())
+        {
+            index.Id = Guid.NewGuid().ToString();
+        }
         var indexName = index.GetType().Name.ToLower();
         var response = await _elasticClient.IndexAsync(index, i => i
             .Index(indexName)
