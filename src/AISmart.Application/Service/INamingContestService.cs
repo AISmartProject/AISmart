@@ -56,8 +56,8 @@ public class NamingContestService : INamingContestService
 
     public async Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
-        IManagerGAgent managerGAgent =
-            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        // IManagerGAgent managerGAgent =
+        //     _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
 
         var random = new Random();
 
@@ -137,12 +137,12 @@ public class NamingContestService : INamingContestService
             .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId)
             .ToList();
 
-        await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
-        {
-            CreativeAgentIdList = creativeAgentIdList,
-            JudgeAgentIdList = judgeAgentIdList,
-            HostAgentIdList = hostAgentIdList
-        });
+        // await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
+        // {
+        //     CreativeAgentIdList = creativeAgentIdList,
+        //     JudgeAgentIdList = judgeAgentIdList,
+        //     HostAgentIdList = hostAgentIdList
+        // });
 
         return aiSmartInitResponse;
     }
@@ -156,8 +156,8 @@ public class NamingContestService : INamingContestService
 
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
-        IManagerGAgent managerGAgent =
-            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        // IManagerGAgent managerGAgent =
+        //     _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
 
         GroupResponse groupResponse = new GroupResponse();
         Dictionary<string, bool> judgeDic = networksDto.Networks.SelectMany(network => network.JudgeList)
@@ -240,25 +240,25 @@ public class NamingContestService : INamingContestService
             // Add the new agent to the  list
             groupResponse.GroupDetails.Add(groupDetail);
 
-            await managerGAgent.InitGroupInfoAsync(new InitNetWorkMessageSEvent()
-            {
-                CallBackUrl = network.CallbackAddress,
-                Name = network.Name,
-                Round = network.Round,
-                CreativeAgentIdList = network.ConstentList,
-                JudgeAgentIdList = network.JudgeList,
-                ScoreAgentIdList = network.ScoreList,
-                HostAgentIdList = network.HostList,
-                GroupAgentId = groupAgentId.ToString()
-            }, groupAgentId.ToString());
+            // await managerGAgent.InitGroupInfoAsync(new InitNetWorkMessageSEvent()
+            // {
+            //     CallBackUrl = network.CallbackAddress,
+            //     Name = network.Name,
+            //     Round = network.Round,
+            //     CreativeAgentIdList = network.ConstentList,
+            //     JudgeAgentIdList = network.JudgeList,
+            //     ScoreAgentIdList = network.ScoreList,
+            //     HostAgentIdList = network.HostList,
+            //     GroupAgentId = groupAgentId.ToString()
+            // }, groupAgentId.ToString());
         }
 
         // init vote mostcharming log
-        var round = networksDto.Networks.FirstOrDefault()!.Round;
-        if (!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
-        {
-            totalBatches = NamingConstants.DefaultTotalTotalBatches;
-        }
+        // var round = networksDto.Networks.FirstOrDefault()!.Round;
+        // if (!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
+        // {
+        //     totalBatches = NamingConstants.DefaultTotalTotalBatches;
+        // }
 
         return groupResponse;
     }
