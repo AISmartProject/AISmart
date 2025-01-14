@@ -153,11 +153,11 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save Error, indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
+            _logger.LogError("{indexName} save Error, gevent indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.",indexName);
+            _logger.LogInformation("{indexName} gevent save Successfully.",indexName);
         }
     }
     
