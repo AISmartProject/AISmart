@@ -97,9 +97,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         var prompt = NamingConstants.NamingPrompt;
         try
         {
-            _ =  GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-                .SendEventAsync(prompt, State.RecentMessages.ToList(),@event);
-            
+            _ = GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendEventAsync(prompt, State.RecentMessages.ToList(), @event);
         }
         catch (Exception ex)
         {
@@ -107,14 +106,13 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             namingReply = NamingConstants.DefaultCreativeNaming;
         }
     }
-    
-    public async Task HandleAIEventAsync(MicroAIMessage microAIMessage,TrafficInformCreativeGEvent @event)
+
+    public async Task HandleAIEventAsync(MicroAIMessage microAIMessage, TrafficInformCreativeGEvent @event)
     {
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
         try
         {
-
             if (microAIMessage != null && !microAIMessage.Content.IsNullOrEmpty())
             {
                 namingReply = microAIMessage.Content;
@@ -471,14 +469,14 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         IChatAgentGrain chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(agentName);
         await chatAgentGrain.SetAgentAsync(agentResponsibility);
-        
+
         //do stream subscription before calling this Long Running Task
         var agentGuid = chatAgentGrain.GetPrimaryKeyString();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
         await stream.SubscribeAsync(ChatAgentGrainEventHandler);
     }
-    
+
     private async Task ChatAgentGrainEventHandler(MicroAIEventMessage message, StreamSequenceToken token = null)
     {
         try
@@ -493,16 +491,14 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             {
                 // Step 2: Acknowledge or perform useful business logic
                 // Console.WriteLine($"Successfully processed message with ID: {message.Id}");
-                await HandleAIEventAsync(message.MicroAIMessage,@event);
+                await HandleAIEventAsync(message.MicroAIMessage, @event);
             }
-            
-           
         }
         catch (Exception ex)
         {
             // Step 3: Handle any exceptions gracefully
             _logger.LogError($"Error in processing message: {ex.Message}");
-        
+
             // Optional: Add error tracking or retry logic here
             throw; // Re-throw exception if you want to propagate it
         }
@@ -552,26 +548,31 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
     {
         Logger.LogInformation("SingleVoteCharmingEvent recieve {info}", JsonConvert.SerializeObject(@event));
         var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
-        var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(prompt, @event.VoteMessage);
-
-        if (message != null && !message.Content.IsNullOrEmpty())
+        try
         {
-            var namingReply = message.Content.Replace("\"", "").ToLower();
-            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
-            var winner = agent.Key;
+            var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
+            var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(prompt, @event.VoteMessage);
 
-            await PublishAsync(new VoteCharmingCompleteEvent()
+            if (message != null && !message.Content.IsNullOrEmpty())
             {
-                Winner = winner,
-                VoterId = this.GetPrimaryKey(),
-                Round = @event.Round
-            });
-            Logger.LogInformation("VoteCharmingCompleteEvent send");
-        }
+                var namingReply = message.Content.Replace("\"", "").ToLower();
+                var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+                var winner = agent.Key;
 
-        await base.ConfirmEvents();
+                await PublishAsync(new VoteCharmingCompleteEvent()
+                {
+                    Winner = winner,
+                    VoterId = this.GetPrimaryKey(),
+                    Round = @event.Round
+                });
+                Logger.LogInformation("VoteCharmingCompleteEvent send");
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "[CreativeGAgent] SingleVoteCharmingEvent error");
+        }
     }
 }
 

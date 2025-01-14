@@ -148,23 +148,28 @@ public class JudgeGAgent : GAgentBase<JudgeState, JudgeCloneSEvent>, IJudgeGAgen
     {
         var agentNames = string.Join(" and ", @event.AgentIdNameDictionary.Values);
         var prompt = NamingConstants.VotePrompt.Replace("$AgentNames$", agentNames);
-        var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
-            .SendAsync(prompt, @event.VoteMessage);
-
-        if (message != null && !message.Content.IsNullOrEmpty())
+        try
         {
-            var namingReply = message.Content.Replace("\"", "").ToLower();
-            var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
-            var winner = agent.Key;
-            await PublishAsync(new VoteCharmingCompleteEvent()
-            {
-                Winner = winner,
-                VoterId = this.GetPrimaryKey(),
-                Round = @event.Round
-            });
-        }
+            var message = await GrainFactory.GetGrain<IChatAgentGrain>(State.AgentName)
+                .SendAsync(prompt, @event.VoteMessage);
 
-        await base.ConfirmEvents();
+            if (message != null && !message.Content.IsNullOrEmpty())
+            {
+                var namingReply = message.Content.Replace("\"", "").ToLower();
+                var agent = @event.AgentIdNameDictionary.FirstOrDefault(x => x.Value.ToLower().Equals(namingReply));
+                var winner = agent.Key;
+                await PublishAsync(new VoteCharmingCompleteEvent()
+                {
+                    Winner = winner,
+                    VoterId = this.GetPrimaryKey(),
+                    Round = @event.Round
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[JudgeGAgent] SingleVoteCharmingEvent ");
+        }
     }
 
 
@@ -178,7 +183,7 @@ public class JudgeGAgent : GAgentBase<JudgeState, JudgeCloneSEvent>, IJudgeGAgen
         var judgeGAgent = GrainFactory.GetGrain<IJudgeGAgent>(Guid.NewGuid());
         await judgeGAgent.SetRealJudgeGrainId(this.GetPrimaryKey());
         await judgeGAgent.SetAgent(State.AgentName, State.AgentResponsibility);
-        
+
         return judgeGAgent;
     }
 
