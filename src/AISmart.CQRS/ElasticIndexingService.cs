@@ -46,6 +46,7 @@ public class ElasticIndexingService : IIndexingService
     public async Task SaveOrUpdateStateIndexAsync(string typeName, BaseStateIndex baseStateIndex)
     {
         var indexName = typeName.ToLower() + IndexSuffix;
+        _logger.LogInformation("{indexName} save state Successfully.",indexName);
         await _elasticClient.IndexAsync(baseStateIndex, i => i
             .Index(indexName)
             .Id(baseStateIndex.Id)
@@ -151,11 +152,20 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save Error, gevent indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
+            try
+            {
+                _logger.LogError("{indexName} save gevent Error, gevent indexing document error:{error} ,response:{response}, document:{document}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response), JsonConvert.SerializeObject(document));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "{indexName} save gevent Exception");
+
+            }
+
         }
         else
         {
-            _logger.LogInformation("{indexName} gevent save Successfully.",indexName);
+            _logger.LogInformation("{indexName} save gevent Successfully.",indexName);
         }
     }
     
@@ -249,11 +259,11 @@ public class ElasticIndexingService : IIndexingService
         
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save Error, indexing document error:{error} response:{response}: " ,indexName, response.ServerError,JsonConvert.SerializeObject(response));
+            _logger.LogError("{indexName} save log Error, indexing document error:{error} response:{response}: " ,indexName, response.ServerError,JsonConvert.SerializeObject(response));
         }
         else
         {
-            _logger.LogInformation("{indexName} save Successfully.",indexName);
+            _logger.LogInformation("{indexName} save log Successfully.",indexName);
         }
     }
 
