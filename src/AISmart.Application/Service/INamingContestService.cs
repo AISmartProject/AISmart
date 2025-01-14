@@ -193,7 +193,7 @@ public class NamingContestService : INamingContestService
             else
             {
                 trafficAgent = _clusterClient.GetGrain<ISecondTrafficGAgent>(Guid.NewGuid());
-                _ = ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(20);
+                _ = ((ISecondTrafficGAgent)trafficAgent).SetAskJudgeNumber(network.ScoreList.Count);
                 _ = ((ISecondTrafficGAgent)trafficAgent).SetRoundNumber(Convert.ToInt32(network.Round));
             }
 

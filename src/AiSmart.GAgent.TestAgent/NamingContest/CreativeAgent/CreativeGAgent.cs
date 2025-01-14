@@ -106,8 +106,8 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             namingReply = NamingConstants.DefaultCreativeNaming;
         }
     }
-    
-    private async Task HandleAIEventAsync(MicroAIMessage? microAIMessage,TrafficInformCreativeGEvent @event)
+
+    private async Task HandleAIEventAsync(MicroAIMessage? microAIMessage, TrafficInformCreativeGEvent @event)
     {
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
@@ -338,10 +338,18 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         {
             if (summary.Name.IsNullOrEmpty())
             {
-                var random = new Random();
-                var index = random.Next(0, @event.CreativeNames.Count);
-                var findCreative = @event.CreativeNames[index];
-                summary.Name = findCreative.Item2;
+                if (@event.CreativeNames is { Count: > 0 })
+                {
+                    var random = new Random();
+                    var index = random.Next(0, @event.CreativeNames.Count);
+                    var findCreative = @event.CreativeNames[index];
+                    summary.Name = findCreative.Item2;
+                }
+                else
+                {
+                    summary.Name = NamingConstants.DefaultCreativeNaming;
+                }
+
                 summary.Reason = NamingConstants.CreativeGroupSummaryReason;
             }
 
@@ -473,14 +481,14 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         IChatAgentGrain chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(agentName);
         await chatAgentGrain.SetAgentAsync(agentResponsibility);
-        
+
         //do stream subscription before calling this Long Running Task
         var agentGuid = chatAgentGrain.GetPrimaryKeyString();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
         await stream.SubscribeAsync(ChatAgentGrainEventHandler);
     }
-    
+
     private async Task ChatAgentGrainEventHandler(MicroAIEventMessage message, StreamSequenceToken token = null)
     {
         try
@@ -495,16 +503,14 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             {
                 // Step 2: Acknowledge or perform useful business logic
                 // Console.WriteLine($"Successfully processed message with ID: {message.Id}");
-                await HandleAIEventAsync(message.MicroAIMessage,@event);
+                await HandleAIEventAsync(message.MicroAIMessage, @event);
             }
-            
-           
         }
         catch (Exception ex)
         {
             // Step 3: Handle any exceptions gracefully
             _logger.LogError($"Error in processing message: {ex.Message}");
-        
+
             // Optional: Add error tracking or retry logic here
             throw; // Re-throw exception if you want to propagate it
         }
