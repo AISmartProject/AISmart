@@ -29,7 +29,8 @@ public class PumpFunNamingContestGAgentState : StateBase
     
     [Id(8)] public Guid groupId { get; set; }
 
-    
+    [Id(9)] public String MostCharmingBackUrl { get; set; }
+    [Id(10)] public Guid MostCharmingGroupId { get; set; }
 
 
     public void Apply(IniNetWorkMessagePumpFunSEvent iniNetWorkMessageSEvent)
@@ -42,6 +43,8 @@ public class PumpFunNamingContestGAgentState : StateBase
         JudgeScoreAgentIdList = iniNetWorkMessageSEvent.ScoreAgentIdList;
         HostAgentIdList = iniNetWorkMessageSEvent.HostAgentIdList;
         groupId = iniNetWorkMessageSEvent.GroupId;
+        MostCharmingBackUrl = iniNetWorkMessageSEvent.MostCharmingBackUrl;
+        MostCharmingGroupId = iniNetWorkMessageSEvent.MostCharmingGroupId;
     }
 
 }

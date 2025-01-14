@@ -6,15 +6,11 @@ using AISmart.Agents.Group;
 using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.Common;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
-using AiSmart.GAgent.TestAgent.NamingContest.JudgeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.VoteAgent;
 using AISmart.Grains;
 using AISmart.Sender;
 using AutoGen.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Nest;
-using Newtonsoft.Json;
 
 namespace AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 
@@ -27,12 +23,18 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     [EventHandler]
     public async Task HandleEventAsync(GroupStartEvent @event)
     {
+        if ((int)State.NamingStep >= (int)NamingContestStepEnum.DiscussionStart)
+        {
+            Logger.LogWarning("[SecondRoundTrafficGAgent] GroupStartEvent has processed");
+            return;
+        }
+        
         RaiseEvent(new TrafficNameStartSEvent { Content = @event.Message });
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.NamingStart });
         RaiseEvent(new AddChatHistorySEvent()
             { ChatMessage = new MicroAIMessage(Role.User.ToString(), @event.Message) });
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.NamingStart, Guid.Empty));
-        
+
         List<Tuple<string, string>> creativeNaming = State.CreativeList.Select(creativeInfo =>
             new Tuple<string, string>(creativeInfo.CreativeName, creativeInfo.Naming)).ToList();
 
@@ -85,12 +87,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
             ChatMessage = new MicroAIMessage(Role.User.ToString(),
                 AssembleMessageUtil.AssembleDiscussionSummary(@event.SummaryName, @event.Reason))
         });
-        
+
         await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeStartAsking, Guid.Empty));
 
         RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.JudgeAsking });
         await ConfirmEvents();
-        
+
         await DispatchJudgeAsking();
     }
 
@@ -143,13 +145,13 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
         {
             await PublishAsync(new NamingLogEvent(NamingContestStepEnum.Complete, Guid.Empty));
             await PublishAsync(new NamingContestComplete());
-            
+
             RaiseEvent(new ChangeNamingStepSEvent { Step = NamingContestStepEnum.Complete });
-            
+
             await PublishMostCharmingEventAsync();
         }
     }
-    
+
     [EventHandler]
     public async Task HandleEventAsync(HostSummaryCompleteGEvent @event)
     {
@@ -183,9 +185,9 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     private async Task DispatchCreativeDiscussion()
     {
         var random = new Random();
-        var probility = random.Next(0, 10);
-        var creativeList = new List<CreativeInfo>();
-        if (probility > 7)
+        var probability = random.Next(0, 10);
+        List<CreativeInfo> creativeList;
+        if (probability > 7)
         {
             creativeList = State.CreativeList;
         }
@@ -222,9 +224,19 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     private async Task PublishMostCharmingEventAsync()
     {
         IVoteCharmingGAgent voteCharmingGAgent =
-            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(NamingConstants.SecondRound));
-        var publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-        await publishingAgent.RegisterAsync(voteCharmingGAgent);
+            GrainFactory.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(State.Round, State.Step));
+
+        GrainId grainId = await voteCharmingGAgent.GetParentAsync();
+        IPublishingGAgent publishingAgent;
+        if (grainId != null && grainId.ToString().StartsWith("publishinggagent"))
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(grainId);
+        }
+        else
+        {
+            publishingAgent = GrainFactory.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        }
 
         await publishingAgent.PublishEventAsync(new VoteCharmingEvent()
         {
@@ -306,7 +318,7 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
 
         await PublishAsync(new CreativeAnswerQuestionGEvent() { CreativeId = selectedCreative.CreativeGrainId });
     }
-    
+
     private async Task DispatchHostAgent()
     {
         var hostAgentList = State.HostAgentList.FindAll(f => State.CalledGrainIdList.Contains(f) == false).ToList();
@@ -410,6 +422,12 @@ public class SecondRoundTrafficGAgent : GAgentBase<SecondTrafficState, TrafficEv
     public async Task SetRoundNumber(int round)
     {
         RaiseEvent(new SetRoundNumberSEvent() { RoundCount = round });
+        await ConfirmEvents();
+    }
+
+    public async Task SetStepCount(int step)
+    {
+        RaiseEvent(new SetStepNumberSEvent() { StepCount = step });
         await ConfirmEvents();
     }
 

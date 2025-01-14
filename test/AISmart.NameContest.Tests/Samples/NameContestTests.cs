@@ -234,7 +234,7 @@ namespace AISmart.Samples
                                 "kob is a renowned NBA superstar known for his exceptional skills on the basketball court, his leadership abilities, and his contributions to the game. With a career spanning over multiple years, he has won numerous awards, including MVP titles and championship rings. Off the court, James is admired for his philanthropy, community involvement, and dedication to inspiring the next generation of athletes."
                         }),
                     },
-                    
+
                     new CommonAgent()
                     {
                         Name = "jamesHost",
@@ -573,10 +573,10 @@ namespace AISmart.Samples
         [Fact]
         public async Task Init_VoteCharmingGAgento_Test()
         {
-            var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId("1"));
+            var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(1, 1));
             var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
             await publishingAgent.RegisterAsync(voteCharmingGAgent);
-        
+
             var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
 
             await pumpFunMostCharmingGAgent.RegisterAsync(voteCharmingGAgent);

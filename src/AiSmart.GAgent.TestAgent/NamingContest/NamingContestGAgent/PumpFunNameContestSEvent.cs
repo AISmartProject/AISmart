@@ -23,7 +23,6 @@ public class IniNetWorkMessagePumpFunSEvent : PumpFunNameContestSEvent
     
     [Id(3)] public List<string> HostAgentIdList { get; set; } 
     
-    
     [Id(4)] public string CallBackUrl { get; set; }
     
     [Id(5)] public string Name { get; set; }
@@ -31,5 +30,6 @@ public class IniNetWorkMessagePumpFunSEvent : PumpFunNameContestSEvent
     [Id(6)] public string Round { get; set; }
     
     [Id(7)] public Guid GroupId { get; set; }
- 
+    [Id(8)] public String MostCharmingBackUrl { get; set; }
+    [Id(9)] public Guid MostCharmingGroupId { get; set; }
 }

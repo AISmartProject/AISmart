@@ -21,11 +21,8 @@ using AISmart.Options;
 using AISmart.Sender;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
 using Orleans;
 using Orleans.Runtime;
-using Volo.Abp.Application.Services;
 using Volo.Abp.DependencyInjection;
 
 namespace AISmart.Service;
@@ -59,8 +56,8 @@ public class NamingContestService : INamingContestService
 
     public async Task<AiSmartInitResponse> InitAgentsAsync(ContestAgentsDto contestAgentsDto)
     {
-        IManagerGAgent managerGAgent =
-            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        // IManagerGAgent managerGAgent =
+        //     _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
 
         var random = new Random();
 
@@ -140,12 +137,12 @@ public class NamingContestService : INamingContestService
             .FindAll(agent => agent.Label == NamingContestConstant.AgentLabelHost).Select(agent => agent.AgentId)
             .ToList();
 
-        await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
-        {
-            CreativeAgentIdList = creativeAgentIdList,
-            JudgeAgentIdList = judgeAgentIdList,
-            HostAgentIdList = hostAgentIdList
-        });
+        // await managerGAgent.InitAgentsAsync(new InitAgentMessageSEvent()
+        // {
+        //     CreativeAgentIdList = creativeAgentIdList,
+        //     JudgeAgentIdList = judgeAgentIdList,
+        //     HostAgentIdList = hostAgentIdList
+        // });
 
         return aiSmartInitResponse;
     }
@@ -159,13 +156,16 @@ public class NamingContestService : INamingContestService
 
     public async Task<GroupResponse> InitNetworksAsync(NetworksDto networksDto)
     {
-        IManagerGAgent managerGAgent =
-            _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
+        // IManagerGAgent managerGAgent =
+        //     _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
 
         GroupResponse groupResponse = new GroupResponse();
         Dictionary<string, bool> judgeDic = networksDto.Networks.SelectMany(network => network.JudgeList)
             .ToDictionary(judge => judge, judge => false);
 
+        var voteCharmingGAgent =
+            _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(networksDto.Round,
+                networksDto.Step));
         foreach (var network in networksDto.Networks)
         {
             Guid groupAgentId = Guid.NewGuid();
@@ -186,8 +186,8 @@ public class NamingContestService : INamingContestService
                 _ = ((ISecondTrafficGAgent)trafficAgent).SetRoundNumber(Convert.ToInt32(network.Round));
             }
 
+            await trafficAgent.SetStepCount(network.Step);
             var namingContestGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
-
 
             await groupAgent.RegisterAsync(trafficAgent);
             await groupAgent.RegisterAsync(namingContestGAgent);
@@ -201,46 +201,31 @@ public class NamingContestService : INamingContestService
                 JudgeAgentIdList = network.JudgeList,
                 ScoreAgentIdList = network.ScoreList,
                 HostAgentIdList = network.HostList,
-                GroupId = groupAgent.GetPrimaryKey()
+                GroupId = groupAgent.GetPrimaryKey(),
+                MostCharmingBackUrl = _nameContestOptions.MostCharmingCallback,
+                MostCharmingGroupId = voteCharmingGAgent.GetPrimaryKey(),
             });
-
 
             foreach (var agentId in network.ConstentList)
             {
-                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(Guid.Parse(agentId));
+                var grainId = Guid.Parse(agentId);
+                await UnSubscribeGroupAsync<CreativeState>(grainId);
+                var creativeAgent = _clusterClient.GetGrain<ICreativeGAgent>(grainId);
 
                 _ = trafficAgent.AddCreativeAgent(await creativeAgent.GetCreativeName(), creativeAgent.GetPrimaryKey());
-
                 await groupAgent.RegisterAsync(creativeAgent);
             }
 
             foreach (var agentId in network.JudgeList)
             {
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
-                if (judgeDic[agentId])
-                {
-                    judgeAgent = await judgeAgent.Clone();
-                }
-                else
-                {
-                    judgeDic[agentId] = true;
-                }
-
-                _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
-
-                await groupAgent.RegisterAsync(judgeAgent);
+                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
             }
 
             var scoreListExcludingJudgeList = network.ScoreList.Except(network.JudgeList);
 
-
             foreach (var agentId in scoreListExcludingJudgeList)
             {
-                var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(Guid.Parse(agentId));
-
-                // await trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
-
-                await groupAgent.RegisterAsync(judgeAgent);
+                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
             }
 
             await RegisterHostGroupGAgent(network, trafficAgent);
@@ -255,49 +240,25 @@ public class NamingContestService : INamingContestService
             // Add the new agent to the  list
             groupResponse.GroupDetails.Add(groupDetail);
 
-            await managerGAgent.InitGroupInfoAsync(new InitNetWorkMessageSEvent()
-            {
-                CallBackUrl = network.CallbackAddress,
-                Name = network.Name,
-                Round = network.Round,
-                CreativeAgentIdList = network.ConstentList,
-                JudgeAgentIdList = network.JudgeList,
-                ScoreAgentIdList = network.ScoreList,
-                HostAgentIdList = network.HostList,
-                GroupAgentId = groupAgentId.ToString()
-            }, groupAgentId.ToString());
+            // await managerGAgent.InitGroupInfoAsync(new InitNetWorkMessageSEvent()
+            // {
+            //     CallBackUrl = network.CallbackAddress,
+            //     Name = network.Name,
+            //     Round = network.Round,
+            //     CreativeAgentIdList = network.ConstentList,
+            //     JudgeAgentIdList = network.JudgeList,
+            //     ScoreAgentIdList = network.ScoreList,
+            //     HostAgentIdList = network.HostList,
+            //     GroupAgentId = groupAgentId.ToString()
+            // }, groupAgentId.ToString());
         }
 
-        var round = networksDto.Networks.FirstOrDefault()!.Round;
-        var voteCharmingGAgent = _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(round));
-        var publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
-        await publishingAgent.RegisterAsync(voteCharmingGAgent);
-
-        var pumpFunMostCharmingGAgent = _clusterClient.GetGrain<IPumpFunNamingContestGAgent>(Guid.NewGuid());
-
-
-        await pumpFunMostCharmingGAgent.InitGroupInfoAsync(new IniNetWorkMessagePumpFunSEvent()
-        {
-            CallBackUrl = _nameContestOptions.MostCharmingCallback,
-            GroupId = voteCharmingGAgent.GetPrimaryKey()
-        });
-
-        await voteCharmingGAgent.RegisterAsync(pumpFunMostCharmingGAgent);
-
-        var managerAgentState = await managerGAgent.GetManagerAgentStateAsync();
-        if (!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
-        {
-            totalBatches = NamingConstants.DefaultTotalTotalBatches;
-        }
-
-        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
-        {
-            CreativeGuidList = managerAgentState.CreativeAgentIdList.Select(Guid.Parse).ToList(),
-            JudgeGuidList = managerAgentState.JudgeAgentIdList.Select(Guid.Parse).ToList(),
-            Round = Convert.ToInt32(round),
-            TotalBatches = totalBatches
-        });
-
+        // init vote mostcharming log
+        // var round = networksDto.Networks.FirstOrDefault()!.Round;
+        // if (!NamingConstants.RoundTotalBatchesMap.TryGetValue(round, out var totalBatches))
+        // {
+        //     totalBatches = NamingConstants.DefaultTotalTotalBatches;
+        // }
 
         return groupResponse;
     }
@@ -398,6 +359,7 @@ public class NamingContestService : INamingContestService
             await StartOneGroupAsync(groupId, groupStartResponse);
         }
 
+        await SetTaskList(groupStartDto, groupStartResponse);
         return groupStartResponse;
     }
 
@@ -421,5 +383,63 @@ public class NamingContestService : INamingContestService
             groupStartResponse.FailGroupIdList.Add(groupId);
             _logger.LogError(e, "groupId:{groupId} StartOneGroupAsync error,", groupId);
         }
+    }
+
+    private async Task UnSubscribeGroupAsync<T>(Guid grainId)
+    {
+        var agent = _clusterClient.GetGrain<IStateGAgent<T>>(grainId);
+        var parentAgentId = await agent.GetParentAsync();
+        if (!parentAgentId.IsDefault)
+        {
+            var parentAgent = _clusterClient.GetGrain<IStateGAgent<GroupAgentState>>(parentAgentId);
+            await parentAgent.UnregisterAsync(agent);
+        }
+    }
+
+    private async Task SetTaskList(GroupStartDto groupStartDto, GroupStartResponse response)
+    {
+        var voteCharmingGAgent =
+            _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(groupStartDto.Round,
+                groupStartDto.Step));
+        var parentGrainId = await voteCharmingGAgent.GetParentAsync();
+        IPublishingGAgent publishingAgent;
+        if (parentGrainId.IsDefault || !parentGrainId.ToString().StartsWith("publishinggagent"))
+        {
+            publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(Guid.NewGuid());
+            await publishingAgent.RegisterAsync(voteCharmingGAgent);
+        }
+        else
+        {
+            publishingAgent = _clusterClient.GetGrain<IPublishingGAgent>(parentGrainId);
+        }
+
+        await publishingAgent.PublishEventAsync(new InitVoteCharmingEvent()
+        {
+            CreativeGuidList = new List<Guid>(),
+            JudgeGuidList = new List<Guid>(),
+            Round = groupStartDto.Round,
+            TotalBatches = 0,
+            groupList = response.SuccessGroupIdList.Select(Guid.Parse).ToList(),
+        });
+    }
+
+    private async Task AddJudgeToGroup(Dictionary<string, bool> judgeDic, string agentId,
+        IStateGAgent<GroupAgentState> groupAgent, ITrafficGAgent trafficAgent)
+    {
+        var grainId = Guid.Parse(agentId);
+        var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(grainId);
+        if (judgeDic[agentId])
+        {
+            judgeAgent = await judgeAgent.Clone();
+        }
+        else
+        {
+            judgeDic[agentId] = true;
+            await UnSubscribeGroupAsync<JudgeState>(grainId);
+        }
+
+        _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());
+
+        await groupAgent.RegisterAsync(judgeAgent);
     }
 }

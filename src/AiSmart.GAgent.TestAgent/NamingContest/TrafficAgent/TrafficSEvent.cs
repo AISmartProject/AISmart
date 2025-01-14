@@ -138,3 +138,9 @@ public class SetRoundNumberSEvent : TrafficEventSourcingBase
 {
     [Id(0)] public int RoundCount { get; set; }
 }
+
+[GenerateSerializer]
+public class SetStepNumberSEvent : TrafficEventSourcingBase
+{
+    [Id(0)] public int StepCount { get; set; }
+}
