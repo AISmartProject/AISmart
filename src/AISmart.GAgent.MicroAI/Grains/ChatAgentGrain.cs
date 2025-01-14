@@ -15,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Google;
-using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
 using Orleans.Runtime;
@@ -76,12 +75,24 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
 
     public async Task SendEventAsync(string message, List<MicroAIMessage>? chatHistory,object requestEvent)
     {
-        MicroAIMessage microAIMessage = (await SendAsync(message, chatHistory))!;
-        Debug.Assert(microAIMessage != null, nameof(microAIMessage) + " != null");
         var agentGuid = this.GetPrimaryKeyString();
         var streamId = StreamId.Create(CommonConstants.StreamNamespace, agentGuid);
         var stream = StreamProvider.GetStream<MicroAIEventMessage>(streamId);
+        MicroAIMessage? microAIMessage = null;
+
+        try
+        {
+            microAIMessage = (await SendAsync(message, chatHistory))!;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "[ChatAgentGrain] SendEventAsync error");
+        }
+
         await stream.OnNextAsync(new MicroAIEventMessage(microAIMessage, requestEvent));
+
+        
+       
     }
 
     public Task SetAgentAsync(string systemMessage)

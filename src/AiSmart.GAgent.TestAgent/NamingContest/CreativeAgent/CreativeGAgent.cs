@@ -108,7 +108,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         }
     }
     
-    public async Task HandleAIEventAsync(MicroAIMessage microAIMessage,TrafficInformCreativeGEvent @event)
+    private async Task HandleAIEventAsync(MicroAIMessage? microAIMessage,TrafficInformCreativeGEvent @event)
     {
         var namingReply = string.Empty;
         var prompt = NamingConstants.NamingPrompt;
@@ -118,6 +118,10 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             if (microAIMessage != null && !microAIMessage.Content.IsNullOrEmpty())
             {
                 namingReply = microAIMessage.Content;
+            }
+            else
+            {
+                namingReply = NamingConstants.DefaultCreativeNaming;
             }
         }
         catch (Exception ex)
