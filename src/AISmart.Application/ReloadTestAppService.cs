@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AISmart.Agent;
 using AISmart.Agents;
 using AISmart.Agents.Group;
 using AISmart.Application.Grains.Agents.Group;
+using AISmart.GAgent.Core;
 using AiSmart.GAgent.TestAgent.NamingContest.CreativeAgent;
 using AiSmart.GAgent.TestAgent.NamingContest.TrafficAgent;
 using AISmart.Sender;
 using Orleans;
+using Orleans.Runtime;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -148,5 +151,12 @@ public class ReloadTestAppService : ApplicationService, IReloadTestAppService
         }
 
         return result;
+    }
+    
+    public async Task<string?> GetState(string groupId)
+    {
+        var gAgent = _clusterClient.GetGrain<IFirstTrafficGAgent>(Guid.Parse(groupId));
+
+        return gAgent.GetStateAsync().ToString();
     }
 }
