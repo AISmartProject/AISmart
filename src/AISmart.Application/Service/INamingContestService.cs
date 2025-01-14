@@ -160,8 +160,19 @@ public class NamingContestService : INamingContestService
         //     _clusterClient.GetGrain<IManagerGAgent>(GuidUtil.StringToGuid("AI-Naming-Contest"));
 
         GroupResponse groupResponse = new GroupResponse();
-        Dictionary<string, bool> judgeDic = networksDto.Networks.SelectMany(network => network.JudgeList)
-            .ToDictionary(judge => judge, judge => false);
+        // var judgeDic = new Dictionary<string, bool>();
+        // foreach (var network in networksDto.Networks)
+        // {
+        //     foreach (var judge in network.JudgeList)
+        //     {
+        //         judgeDic[judge] = false;
+        //     }
+        //
+        //     foreach (var scoreJudge in network.ScoreList)
+        //     {
+        //         judgeDic[scoreJudge] = false;
+        //     }
+        // }
 
         var voteCharmingGAgent =
             _clusterClient.GetGrain<IVoteCharmingGAgent>(Helper.GetVoteCharmingGrainId(networksDto.Round,
@@ -218,14 +229,14 @@ public class NamingContestService : INamingContestService
 
             foreach (var agentId in network.JudgeList)
             {
-                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
+                await AddJudgeToGroup(agentId, groupAgent, trafficAgent);
             }
 
             var scoreListExcludingJudgeList = network.ScoreList.Except(network.JudgeList);
 
             foreach (var agentId in scoreListExcludingJudgeList)
             {
-                await AddJudgeToGroup(judgeDic, agentId, groupAgent, trafficAgent);
+                await AddJudgeToGroup(agentId, groupAgent, trafficAgent);
             }
 
             await RegisterHostGroupGAgent(network, trafficAgent);
@@ -423,19 +434,15 @@ public class NamingContestService : INamingContestService
         });
     }
 
-    private async Task AddJudgeToGroup(Dictionary<string, bool> judgeDic, string agentId,
+    private async Task AddJudgeToGroup(string agentId,
         IStateGAgent<GroupAgentState> groupAgent, ITrafficGAgent trafficAgent)
     {
         var grainId = Guid.Parse(agentId);
         var judgeAgent = _clusterClient.GetGrain<IJudgeGAgent>(grainId);
-        if (judgeDic[agentId])
+        var parentAgent = await judgeAgent.GetParentAsync();
+        if (!parentAgent.IsDefault)
         {
             judgeAgent = await judgeAgent.Clone();
-        }
-        else
-        {
-            judgeDic[agentId] = true;
-            await UnSubscribeGroupAsync<JudgeState>(grainId);
         }
 
         _ = trafficAgent.AddJudgeAgent(judgeAgent.GetPrimaryKey());

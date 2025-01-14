@@ -146,7 +146,7 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save Error, indexing document error:{error}: " ,indexName, response.ServerError);
+            _logger.LogError("{indexName} save Error, indexing document error:{error} ,response:{response}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response));
         }
         else
         {
@@ -222,7 +222,7 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating index. {indexName} ,{error}",indexName, createIndexResponse.ServerError?.Error);
+            _logger.LogError("Error creating index. {indexName} ,{error} ,{createIndexResponse}",indexName, createIndexResponse.ServerError?.Error,JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
@@ -240,7 +240,7 @@ public class ElasticIndexingService : IIndexingService
         
         if (!response.IsValid)
         {
-            _logger.LogInformation("{indexName} save Error, indexing document error:{error}: " ,indexName, response.ServerError);
+            _logger.LogInformation("{indexName} save Error, indexing document error:{error} response:{response}: " ,indexName, response.ServerError,JsonConvert.SerializeObject(response));
         }
         else
         {
