@@ -15,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Google;
-using OpenAI.Chat;
 using Orleans;
 using Orleans.Providers;
 using Orleans.Runtime;
@@ -84,10 +83,15 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         await stream.OnNextAsync(new MicroAIEventMessage(microAIMessage, requestEvent));
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "SKEXP0010")]
     public Task SetAgentAsync(string systemMessage)
     {
+        #pragma warning disable SKEXP0010
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+            .AddOpenAIChatCompletion("deepseek-chat",new Uri("https://api.deepseek.com") ,"xxx");
+        #pragma warning restore SKEXP0010
+
+        
         var systemName = this.GetPrimaryKeyString();
         var kernel = kernelBuilder.Build();
         var kernelAgent = new SemanticKernelAgent(
@@ -126,11 +130,18 @@ public class ChatAgentGrain : Grain, IChatAgentGrain
         return Task.CompletedTask;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "SKEXP0010")]
     public Task SetAgentWithTemperature(string systemMessage, float temperature, int? seed = null,
         int? maxTokens = null)
     {
+        // var kernelBuilder = Kernel.CreateBuilder()
+        //     .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+        
+        #pragma warning disable SKEXP0010
         var kernelBuilder = Kernel.CreateBuilder()
-            .AddAzureOpenAIChatCompletion(_options.Model, _options.Endpoint, _options.ApiKey);
+            .AddOpenAIChatCompletion("deepseek-chat",new Uri("https://api.deepseek.com") ,"xxx");
+        #pragma warning restore SKEXP0010
+        
         var systemName = this.GetPrimaryKeyString();
         var kernel = kernelBuilder.Build();
         var kernelAgent = new SemanticKernelAgent(
