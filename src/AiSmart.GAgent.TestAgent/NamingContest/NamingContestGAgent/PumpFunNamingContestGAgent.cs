@@ -56,8 +56,6 @@ public class PumpFunPumpFunNamingContestGAgent : GAgentBase<PumpFunNamingContest
     [AllEventHandler]
     public async Task HandleRequestAllEventAsync(EventWrapperBase @event)
     {
-        _logger.LogInformation("NamingContestGAgent HandleRequestAllEventAsync :" +
-                               JsonConvert.SerializeObject(@event));
         var eventWrapper = @event as EventWrapper<EventBase>;
         if (eventWrapper?.Event != null)
         {

@@ -64,7 +64,7 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request NameContest callback url error: {e.Message}");
+            _logger.LogError($"request NamingLogEvent NameContest callback url error: {e.Message}, callbackUrl:{callBackUrl} ");
         }
     }
 
@@ -76,8 +76,6 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
             NullValueHandling = NullValueHandling.Ignore
         });
         
-        
-
         try
         {
             JsonNode? jsonObject = JsonNode.Parse(json);
@@ -101,7 +99,7 @@ public class NameContestProvider : INameContestProvider,ISingletonDependency
         }
         catch (HttpRequestException e)
         {
-            _logger.LogError($"request NameContest VoteCharmingCompleteEvent  callback url error: {e.Message}");
+            _logger.LogError($"request NameContest VoteCharmingCompleteEvent  callback url error: {e.Message}, callbackUrl:{callBackUrl}");
         }
     }
 }
