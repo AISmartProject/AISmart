@@ -51,6 +51,8 @@ public class AISmartCQRSModule : AbpModule
            context.Services.AddSingleton<IElasticClient>(provider =>
            {
                var settings =new ConnectionSettings(new Uri("http://127.0.0.1:9200"))
+                   .DisablePing()
+                   .DisableDirectStreaming()
                    .DefaultIndex("cqrs").DefaultFieldNameInferrer(fieldName => 
                        char.ToLowerInvariant(fieldName[0]) + fieldName[1..]);
                return new ElasticClient(settings);
