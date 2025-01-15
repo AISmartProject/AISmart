@@ -38,8 +38,8 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating state index {indexName} {error} {createIndexResponse}", indexName,
-                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating state index {indexName} {error} {createIndexResponse} DebugInfo{DebugInfo}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse), JsonConvert.SerializeObject(createIndexResponse.DebugInformation));
         }
         else
         {
@@ -123,8 +123,8 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating gevent index {indexName} {error} {createIndexResponse}", indexName,
-                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating gevent index {indexName} {error} {createIndexResponse} DebugInfo{DebugInfo}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse),JsonConvert.SerializeObject(createIndexResponse.DebugInformation));
         }
         else
         {
@@ -161,9 +161,9 @@ public class ElasticIndexingService : IIndexingService
             try
             {
                 _logger.LogError(
-                    "{indexName} save gevent Error, gevent indexing document error:{error} ,response:{response}, document:{document}",
+                    "{indexName} save gevent Error, gevent indexing document error:{error} ,response:{response}, document:{document} ,DebugInfo{DebugInfo}",
                     indexName, response.ServerError, JsonConvert.SerializeObject(response),
-                    JsonConvert.SerializeObject(document));
+                    JsonConvert.SerializeObject(document),JsonConvert.SerializeObject(response.DebugInformation));
             }
             catch (Exception e)
             {
@@ -213,8 +213,8 @@ public class ElasticIndexingService : IIndexingService
             );
             if (!response.IsValid)
             {
-                _logger.LogError("Error QueryEventIndexAsync index. {indexName} ,{error}", indexName,
-                    response.ServerError?.Error);
+                _logger.LogError("Error QueryEventIndexAsync index. {indexName} ,{error},DebugInfo{DebugInfo}", indexName,
+                    response.ServerError?.Error,JsonConvert.SerializeObject(response.DebugInformation));
             }
 
             var source = response.Documents;
@@ -249,8 +249,8 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating index. {indexName} ,{error} ,{createIndexResponse}", indexName,
-                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating index. {indexName} ,{error} ,{createIndexResponse} ,DebugInfo{DebugInfo}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse),JsonConvert.SerializeObject(createIndexResponse.DebugInformation));
         }
         else
         {
@@ -273,8 +273,8 @@ public class ElasticIndexingService : IIndexingService
 
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save log Error, indexing document error:{error} response:{response}: ",
-                indexName, response.ServerError, JsonConvert.SerializeObject(response));
+            _logger.LogError("{indexName} save log Error, indexing document error:{error} response:{response} ,DebugInfo{DebugInfo}",
+                indexName, response.ServerError, JsonConvert.SerializeObject(response),JsonConvert.SerializeObject(response.DebugInformation));
         }
         else
         {
@@ -362,7 +362,7 @@ public class ElasticIndexingService : IIndexingService
                     return (searchResponse.Total, chatLogIndexList);
                 }
                 default:
-                    _logger.LogInformation("QueryChatLogListAsync fail errMsg:{errMsg}.", searchResponse.ServerError);
+                    _logger.LogInformation("QueryChatLogListAsync fail errMsg:{errMsg}. ,DebugInfo{DebugInfo}", searchResponse.ServerError,JsonConvert.SerializeObject(searchResponse.DebugInformation));
                     break;
             }
         }
