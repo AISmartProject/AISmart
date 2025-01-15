@@ -121,22 +121,28 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
         Logger.LogInformation(
             $"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent Start GrainId:{this.GetPrimaryKey().ToString()} ");
         var creativeInfo = State.CreativeList.FirstOrDefault(f => f.Naming == @event.VoteName);
+        JudgeVoteInfo voteInfo;
         if (creativeInfo != null)
         {
-            var voteInfoStr = JsonConvert.SerializeObject(new JudgeVoteInfo()
+            voteInfo = new JudgeVoteInfo()
             {
                 AgentId = creativeInfo.CreativeGrainId, AgentName = creativeInfo.CreativeName,
                 Nameing = @event.VoteName, Reason = @event.Reason
-            });
-
-            await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.RealJudgeGrainId,
-                NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
+            };
         }
         else
         {
-            Logger.LogInformation(
-                $"[FirstRoundTrafficGAgent] JudgeVoteResultGEvent null GrainId:{this.GetPrimaryKey().ToString()} ");
+            creativeInfo = State.CreativeList[0];
+            voteInfo = new JudgeVoteInfo()
+            {
+                AgentId = creativeInfo.CreativeGrainId, AgentName = creativeInfo.CreativeName,
+                Nameing = creativeInfo.Naming, Reason = NamingConstants.CreativeGroupSummaryReason
+            };
         }
+
+        var voteInfoStr = JsonConvert.SerializeObject(voteInfo);
+        await PublishAsync(new NamingLogEvent(NamingContestStepEnum.JudgeVote, @event.RealJudgeGrainId,
+            NamingRoleType.Judge, @event.JudgeName, voteInfoStr));
 
         base.RaiseEvent(new TrafficGrainCompleteSEvent()
         {
