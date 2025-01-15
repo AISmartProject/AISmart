@@ -23,21 +23,21 @@ public class FirstTrafficState : StateBase
     [Id(11)] public List<Guid> HostAgentList { get; set; } = new List<Guid>();
     [Id(12)] public int Step { get; set; }
 
-    public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
-    {
-        CurrentGrainId = sEvent.GrainId;
-    }
+    // public void Apply(TrafficCallSelectGrainIdSEvent sEvent)
+    // {
+    //     CurrentGrainId = sEvent.GrainId;
+    // }
 
-    public void Apply(TrafficNameStartSEvent @event)
-    {
-        NamingContent = @event.Content;
-    }
+    // public void Apply(TrafficNameStartSEvent @event)
+    // {
+    //     NamingContent = @event.Content;
+    // }
 
-    public void Apply(TrafficGrainCompleteSEvent sEvent)
-    {
-        CalledGrainIdList.Add(sEvent.CompleteGrainId);
-        CurrentGrainId = Guid.Empty;
-    }
+    // public void Apply(TrafficGrainCompleteSEvent sEvent)
+    // {
+    //     CalledGrainIdList.Add(sEvent.CompleteGrainId);
+    //     CurrentGrainId = Guid.Empty;
+    // }
 
     public void Apply(TrafficSetAgentSEvent @event)
     {

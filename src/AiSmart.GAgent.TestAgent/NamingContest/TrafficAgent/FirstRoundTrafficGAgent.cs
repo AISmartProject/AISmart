@@ -427,4 +427,24 @@ public class FirstRoundTrafficGAgent : GAgentBase<FirstTrafficState, TrafficEven
     {
         return Task.FromResult((int)State.NamingStep);
     }
+
+    protected override void TransitionState(FirstTrafficState state, object @event)
+    {
+        switch (@event)
+        {
+            case TrafficCallSelectGrainIdSEvent sEvent:
+                State.CurrentGrainId = sEvent.GrainId;
+                Logger.LogInformation($"Call Storage State,CurrentGrainId:{sEvent.GrainId}");
+                break;
+            case TrafficNameStartSEvent sEvent:
+                State.NamingContent = sEvent.Content;
+                break;
+            case TrafficGrainCompleteSEvent sEvent:
+                State.CalledGrainIdList.Add(sEvent.CompleteGrainId);
+                State.CurrentGrainId = Guid.Empty;
+                break;
+        }
+
+        base.TransitionState(state, @event);
+    }
 }
