@@ -600,7 +600,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
                 Winner = winner,
-                VoterId = this.GetPrimaryKey(),
+                AgentId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
             Logger.LogInformation("VoteCharmingCompleteEvent send");
