@@ -287,6 +287,7 @@ public class ElasticIndexingService : IIndexingService
     {
         try
         {
+            _logger.LogInformation("QueryChatLogListAsync rquest:{dto}", JsonConvert.SerializeObject(input));
             if (input == null)
             {
                 return (0, new List<AIChatLogIndex>());
