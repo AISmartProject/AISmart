@@ -7,6 +7,8 @@ using AISmart.CQRS.Dto;
 using Microsoft.Extensions.Logging;
 using Nest;
 using Newtonsoft.Json;
+using Exception = System.Exception;
+
 namespace AISmart.CQRS;
 
 public class ElasticIndexingService : IIndexingService
@@ -30,12 +32,14 @@ public class ElasticIndexingService : IIndexingService
         {
             return;
         }
+
         var createIndexResponse = _elasticClient.Indices.Create(indexName, c => c
             .Map<BaseStateIndex>(m => m.AutoMap())
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating state index {indexName} {error} {createIndexResponse}", indexName , createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating state index {indexName} {error} {createIndexResponse}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
@@ -46,17 +50,17 @@ public class ElasticIndexingService : IIndexingService
     public async Task SaveOrUpdateStateIndexAsync(string typeName, BaseStateIndex baseStateIndex)
     {
         var indexName = typeName.ToLower() + IndexSuffix;
-        _logger.LogInformation("{indexName} save state Successfully.",indexName);
+        _logger.LogInformation("{indexName} save state Successfully.", indexName);
         await _elasticClient.IndexAsync(baseStateIndex, i => i
             .Index(indexName)
             .Id(baseStateIndex.Id)
         );
     }
 
-    public async Task<BaseStateIndex> QueryStateIndexAsync(string id,string indexName)
+    public async Task<BaseStateIndex> QueryStateIndexAsync(string id, string indexName)
     {
         var response = await _elasticClient.GetAsync<BaseStateIndex>(id, g => g.Index(indexName));
-        return response.Source; 
+        return response.Source;
     }
 
     public void CheckExistOrCreateGEventIndex<T>(T gEvent) where T : GEventBase
@@ -119,7 +123,8 @@ public class ElasticIndexingService : IIndexingService
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating gevent index {indexName} {error} {createIndexResponse}", indexName, createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating gevent index {indexName} {error} {createIndexResponse}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
@@ -143,9 +148,10 @@ public class ElasticIndexingService : IIndexingService
             var value = property.GetValue(gEvent);
             document.Add(property.Name, value);
         }
+
         document.Add(CTime, DateTime.Now);
 
-        var response = await _elasticClient.IndexAsync(document , i => i
+        var response = await _elasticClient.IndexAsync(document, i => i
             .Index(indexName)
             .Id(gEvent.Id)
         );
@@ -154,40 +160,41 @@ public class ElasticIndexingService : IIndexingService
         {
             try
             {
-                _logger.LogError("{indexName} save gevent Error, gevent indexing document error:{error} ,response:{response}, document:{document}" ,indexName, response.ServerError, JsonConvert.SerializeObject(response), JsonConvert.SerializeObject(document));
+                _logger.LogError(
+                    "{indexName} save gevent Error, gevent indexing document error:{error} ,response:{response}, document:{document}",
+                    indexName, response.ServerError, JsonConvert.SerializeObject(response),
+                    JsonConvert.SerializeObject(document));
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "{indexName} save gevent Exception");
-
             }
-
         }
         else
         {
-            _logger.LogInformation("{indexName} save gevent Successfully.",indexName);
+            _logger.LogInformation("{indexName} save gevent Successfully.", indexName);
         }
     }
-    
+
     public async Task<string> QueryEventIndexAsync(string id, string indexName)
     {
         try
         {
-            var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName)); 
+            var response = await _elasticClient.GetAsync<dynamic>(id, g => g.Index(indexName));
             var source = response.Source;
             if (source == null)
             {
                 return "";
             }
+
             var documentContent = JsonConvert.SerializeObject(source);
             return documentContent;
         }
         catch (Exception e)
         {
-            _logger.LogError("{indexName} ,id:{id}QueryEventIndexAsync fail.", indexName,id);
+            _logger.LogError("{indexName} ,id:{id}QueryEventIndexAsync fail.", indexName, id);
             throw e;
         }
-        
     }
 
     public async Task<string> QueryEventIndexAsync(DateTime beginDateTime, DateTime endDateTime, string indexName)
@@ -206,7 +213,8 @@ public class ElasticIndexingService : IIndexingService
             );
             if (!response.IsValid)
             {
-                _logger.LogError("Error QueryEventIndexAsync index. {indexName} ,{error}",indexName, response.ServerError?.Error);
+                _logger.LogError("Error QueryEventIndexAsync index. {indexName} ,{error}", indexName,
+                    response.ServerError?.Error);
             }
 
             var source = response.Documents;
@@ -214,12 +222,15 @@ public class ElasticIndexingService : IIndexingService
             {
                 return "";
             }
+
             var documentContent = JsonConvert.SerializeObject(source);
             return documentContent;
         }
         catch (Exception e)
         {
-            _logger.LogError("{indexName} ,beginDateTime:{beginDateTime} ,endDateTime:{endDateTime}  QueryEventIndexAsync fail.", indexName,beginDateTime,endDateTime);
+            _logger.LogError(
+                "{indexName} ,beginDateTime:{beginDateTime} ,endDateTime:{endDateTime}  QueryEventIndexAsync fail.",
+                indexName, beginDateTime, endDateTime);
             throw;
         }
     }
@@ -232,12 +243,14 @@ public class ElasticIndexingService : IIndexingService
         {
             return;
         }
+
         var createIndexResponse = _elasticClient.Indices.Create(indexName, c => c
             .Map<T>(m => m.AutoMap())
         );
         if (!createIndexResponse.IsValid)
         {
-            _logger.LogError("Error creating index. {indexName} ,{error} ,{createIndexResponse}",indexName, createIndexResponse.ServerError?.Error,JsonConvert.SerializeObject(createIndexResponse));
+            _logger.LogError("Error creating index. {indexName} ,{error} ,{createIndexResponse}", indexName,
+                createIndexResponse.ServerError?.Error, JsonConvert.SerializeObject(createIndexResponse));
         }
         else
         {
@@ -251,95 +264,113 @@ public class ElasticIndexingService : IIndexingService
         {
             index.Id = Guid.NewGuid().ToString();
         }
+
         var indexName = index.GetType().Name.ToLower();
         var response = await _elasticClient.IndexAsync(index, i => i
             .Index(indexName)
             .Id(index.Id)
         );
-        
+
         if (!response.IsValid)
         {
-            _logger.LogError("{indexName} save log Error, indexing document error:{error} response:{response}: " ,indexName, response.ServerError,JsonConvert.SerializeObject(response));
+            _logger.LogError("{indexName} save log Error, indexing document error:{error} response:{response}: ",
+                indexName, response.ServerError, JsonConvert.SerializeObject(response));
         }
         else
         {
-            _logger.LogInformation("{indexName} save log Successfully.",indexName);
+            _logger.LogInformation("{indexName} save log Successfully.", indexName);
         }
     }
 
-    public async Task<(long TotalCount,List<AIChatLogIndex> ChatLogs)> QueryChatLogListAsync(ChatLogQueryInputDto input)
+    public async Task<(long TotalCount, List<AIChatLogIndex> ChatLogs)> QueryChatLogListAsync(
+        ChatLogQueryInputDto input)
     {
-        if (input == null)
+        try
         {
-            return (0, new List<AIChatLogIndex>());
-        }
-
-        if (input.BeginTimestamp > input.EndTimestamp)
-        {
-            return (0, new List<AIChatLogIndex>());
-        }
-
-        var mustQuery = new List<Func<QueryContainerDescriptor<AIChatLogIndex>, QueryContainer>>();
-        if (!input.GroupId.IsNullOrEmpty())
-        {
-            mustQuery.Add(q => q.Term(i
-                => i.Field(f => f.GroupId).Field(input.GroupId)));
-        }
-        
-        if (!input.AgentId.IsNullOrEmpty())
-        {
-            mustQuery.Add(q => q.Term(i
-                => i.Field(f => f.AgentId).Field(input.AgentId)));
-        }
-        
-        if (input.Ids?.Count > 0)
-        {
-            mustQuery.Add(q => q.Terms(i => i.Field(f => f.Id).Terms(input.Ids)));
-        }
-        
-        if (input.BeginTimestamp > 0)
-        {
-            mustQuery.Add(q => q.DateRange(i =>
-                i.Field(f => f.Ctime)
-                    .GreaterThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.BeginTimestamp))));
-        }
-
-        if (input.EndTimestamp > 0)
-        {
-            mustQuery.Add(q => q.DateRange(i =>
-                i.Field(f => f.Ctime)
-                    .LessThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.EndTimestamp))));
-        }
-        QueryContainer Filter(QueryContainerDescriptor<AIChatLogIndex> f)
-            => f.Bool(b => b.Must(mustQuery));
-        var searchResponse = _elasticClient.Search<AIChatLogIndex>(s => s
-            .Index(nameof(AIChatLogIndex).ToLower())
-            .Query(q => q
-                .Bool(b => b
-                    .Must(mustQuery)
-                )
-            )
-            .From(input.SkipCount)
-            .Size(input.MaxResultCount)
-            .Sort(ss => ss
-                    .Ascending(a => a.Ctime)
-            )
-        );
-        switch (searchResponse.IsValid)
-        {
-            case true:
+            if (input == null)
             {
-                var chatLogIndexList = new List<AIChatLogIndex>();
-                if (searchResponse.Total != 0)
-                {
-                    chatLogIndexList = searchResponse.Documents.ToList();
-                }
-                return (searchResponse.Total, chatLogIndexList);
+                return (0, new List<AIChatLogIndex>());
             }
-            default:
-                _logger.LogInformation("QueryChatLogListAsync fail errMsg:{errMsg}.",searchResponse.ServerError);
-                break;
+
+            if (input.BeginTimestamp > input.EndTimestamp)
+            {
+                return (0, new List<AIChatLogIndex>());
+            }
+
+            var mustQuery = new List<Func<QueryContainerDescriptor<AIChatLogIndex>, QueryContainer>>();
+            if (!input.GroupId.IsNullOrEmpty())
+            {
+                mustQuery.Add(q => q.Term(i
+                    => i.Field(f => f.GroupId).Field(input.GroupId)));
+            }
+
+            if (!input.AgentId.IsNullOrEmpty())
+            {
+                mustQuery.Add(q => q.Term(i
+                    => i.Field(f => f.AgentId).Field(input.AgentId)));
+            }
+
+            if (input.Ids?.Count > 0)
+            {
+                mustQuery.Add(q => q.Terms(i => i.Field(f => f.Id).Terms(input.Ids)));
+            }
+
+            if (input.BeginTimestamp > 0)
+            {
+                mustQuery.Add(q => q.DateRange(i =>
+                    i.Field(f => f.Ctime)
+                        .GreaterThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.BeginTimestamp))));
+            }
+
+            if (input.EndTimestamp > 0)
+            {
+                mustQuery.Add(q => q.DateRange(i =>
+                    i.Field(f => f.Ctime)
+                        .LessThanOrEquals(DateTime.UnixEpoch.AddMilliseconds((double)input.EndTimestamp))));
+            }
+
+            QueryContainer Filter(QueryContainerDescriptor<AIChatLogIndex> f)
+                => f.Bool(b => b.Must(mustQuery));
+
+            var searchResponse = _elasticClient.Search<AIChatLogIndex>(s => s
+                .Index(nameof(AIChatLogIndex).ToLower())
+                .Query(q => q
+                    .Bool(b => b
+                        .Must(mustQuery)
+                    )
+                )
+                .From(input.SkipCount)
+                .Size(input.MaxResultCount)
+                .Sort(ss => ss
+                    .Ascending(a => a.Ctime)
+                )
+            );
+            _logger.LogInformation("QueryChatLogListAsync Exception searchResponse:{searchResponse}",
+                JsonConvert.SerializeObject(searchResponse));
+
+            switch (searchResponse.IsValid)
+            {
+                case true:
+                {
+                    var chatLogIndexList = new List<AIChatLogIndex>();
+                    if (searchResponse.Total != 0)
+                    {
+                        chatLogIndexList = searchResponse.Documents.ToList();
+                    }
+
+                    return (searchResponse.Total, chatLogIndexList);
+                }
+                default:
+                    _logger.LogInformation("QueryChatLogListAsync fail errMsg:{errMsg}.", searchResponse.ServerError);
+                    break;
+            }
         }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "QueryChatLogListAsync Exception");
+        }
+
+
         return (0, new List<AIChatLogIndex>());
     }
 }
