@@ -227,7 +227,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
 
         // Logger.LogInformation(
         //     $"[CreativeGAgent] TrafficInformDebateGEvent start GrainId:{this.GetPrimaryKey().ToString()}");
-        var debateReply = string.Empty;
+        var debateReply = NamingConstants.DefaultDebateContent;
         var prompt = NamingConstants.DebatePrompt;
         try
         {
@@ -241,7 +241,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
         catch (Exception ex)
         {
             _logger.LogError(ex, "[Creative] TrafficInformDebateGEvent error");
-            debateReply = NamingConstants.DefaultDebateContent;
+            // debateReply = NamingConstants.DefaultDebateContent;
         }
         finally
         {
@@ -600,7 +600,7 @@ public class CreativeGAgent : GAgentBase<CreativeState, CreativeSEventBase>, ICr
             await PublishAsync(new VoteCharmingCompleteEvent()
             {
                 Winner = winner,
-                VoterId = this.GetPrimaryKey(),
+                AgentId = this.GetPrimaryKey(),
                 Round = @event.Round
             });
             Logger.LogInformation("VoteCharmingCompleteEvent send");

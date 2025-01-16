@@ -161,7 +161,7 @@ public class JudgeGAgent : GAgentBase<JudgeState, JudgeCloneSEvent>, IJudgeGAgen
                 await PublishAsync(new VoteCharmingCompleteEvent()
                 {
                     Winner = winner,
-                    VoterId = this.GetPrimaryKey(),
+                    AgentId = GetRealJudgeId(),
                     Round = @event.Round
                 });
             }

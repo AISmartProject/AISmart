@@ -30,7 +30,7 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
           await PublishEventAsync(new VoteCharmingCompleteEvent
           {
               Winner = Guid.Parse(microAIMessage.Content),
-              VoterId = this.GetPrimaryKey(),
+              AgentId = this.GetPrimaryKey(),
               Round = 1
           });
       }
@@ -49,7 +49,7 @@ public class VoteAegntGrain : Grain,IVoteAgentGrain
             await PublishEventAsync(new VoteCharmingCompleteEvent
             {
                 Winner = winner,
-                VoterId = this.GetPrimaryKey(),
+                AgentId = this.GetPrimaryKey(),
                 Round = 1
             });
         }
